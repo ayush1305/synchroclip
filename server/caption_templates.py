@@ -152,12 +152,12 @@ TEMPLATES = {
 
 # Color palette for active word highlighting
 HIGHLIGHT_COLORS = {
-    "yellow": {"name": "Neon Yellow", "hex": "#facc15", "ass": "&H0000FFFF"},
-    "green": {"name": "Toxic Green", "hex": "#4ade80", "ass": "&H0000FF00"},
-    "cyan": {"name": "Electric Cyan", "hex": "#38bdf8", "ass": "&H00FFFF00"},
-    "pink": {"name": "Hot Magenta", "hex": "#f43f5e", "ass": "&H00FF00EA"},
-    "orange": {"name": "Fiery Orange", "hex": "#fb923c", "ass": "&H000088FF"},
-    "white": {"name": "Luminous White", "hex": "#ffffff", "ass": "&H00FFFFFF"}
+    "yellow": {"name": "Neon Yellow", "hex": "#facc15", "ass": "&H0000FFFF&"},
+    "green": {"name": "Toxic Green", "hex": "#4ade80", "ass": "&H0000FF00&"},
+    "cyan": {"name": "Electric Cyan", "hex": "#38bdf8", "ass": "&H00FFFF00&"},
+    "pink": {"name": "Hot Magenta", "hex": "#f43f5e", "ass": "&H00FF00EA&"},
+    "orange": {"name": "Fiery Orange", "hex": "#fb923c", "ass": "&H000088FF&"},
+    "white": {"name": "Luminous White", "hex": "#ffffff", "ass": "&H00FFFFFF&"}
 }
 
 def get_template(template_id: str) -> dict:

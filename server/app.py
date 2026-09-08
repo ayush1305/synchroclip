@@ -323,6 +323,16 @@ async def get_sample_demo():
         "Keep moving forward with purpose, and create something extraordinary today."
     )
 
+    return {
+        "status": "success",
+        "audio_id": demo_id,
+        "filename": "demo_ambient_track.mp3",
+        "duration": info["duration"],
+        "formatted_duration": info["formatted_duration"],
+        "waveform": waveform,
+        "script": sample_script
+    }
+
 @app.get("/api/caption-templates")
 async def get_caption_templates():
     """

@@ -214,8 +214,8 @@ def generate_ass_subtitles(
     
     # Highlight color ASS tag
     color_info = caption_templates.HIGHLIGHT_COLORS.get(highlight_color_key, caption_templates.HIGHLIGHT_COLORS["yellow"])
-    highlight_ass = color_info["ass"]
-    primary_ass = tpl["primary_color"]
+    highlight_ass = color_info["ass"] if color_info["ass"].endswith("&") else f"{color_info['ass']}&"
+    primary_ass = tpl["primary_color"] if tpl["primary_color"].endswith("&") else f"{tpl['primary_color']}&"
 
     events = []
 
@@ -224,17 +224,14 @@ def generate_ass_subtitles(
         if not words:
             continue
 
-        # For each word in this card, generate a dialogue slice during which that word is highlighted
         for target_idx, active_word in enumerate(words):
             slice_start = to_ass_time(active_word["start"])
             slice_end = to_ass_time(active_word["end"])
 
-            # Build line text with active word highlighted
             line_parts = []
             for idx, w in enumerate(words):
                 word_text = w["word"]
                 if idx == target_idx:
-                    # Active word: pop scale + active highlight color
                     if tpl["animation"] == "bounce":
                         line_parts.append(f"{{\\c{highlight_ass}\\fscx112\\fscy112}}{word_text}{{\\r}}")
                     elif tpl["animation"] == "word_zoom":
@@ -246,7 +243,6 @@ def generate_ass_subtitles(
                     else:
                         line_parts.append(f"{{\\c{highlight_ass}}}{word_text}{{\\r}}")
                 else:
-                    # Inactive word
                     line_parts.append(f"{{\\c{primary_ass}}}{word_text}")
 
             line_text = " ".join(line_parts)
