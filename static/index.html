@@ -68,10 +68,10 @@
         <span>Download Project (.ZIP)</span>
       </a>
 
-      <button id="btnGitHub" class="text-xs flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-surface-800 hover:bg-slate-700/60 text-slate-300 transition border border-slate-700">
-        <i data-lucide="github" class="w-3.5 h-3.5 text-slate-300"></i>
-        <span>Publish to GitHub</span>
-      </button>
+      <a id="btnGitHub" href="https://github.com/ayush1305/synchroclip" target="_blank" rel="noopener noreferrer" class="text-xs flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-surface-800 hover:bg-slate-700 text-slate-200 transition border border-slate-700">
+        <i data-lucide="github" class="w-3.5 h-3.5 text-white"></i>
+        <span>GitHub: ayush1305/synchroclip</span>
+      </a>
 
       <button id="btnApiKeyToggle" class="text-xs flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-surface-800 hover:bg-slate-700/60 text-slate-300 transition border border-slate-700">
         <i data-lucide="key" class="w-3.5 h-3.5 text-brand-400"></i>
@@ -816,7 +816,7 @@
         <div class="flex items-center justify-between pb-2 border-b border-slate-800">
           <h3 class="text-base font-semibold text-white flex items-center space-x-2">
             <i data-lucide="github" class="w-4 h-4 text-brand-400"></i>
-            <span>Publish to GitHub</span>
+            <span>Published to GitHub!</span>
           </h3>
           <button id="btnCloseGitHubModal" class="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition">
             <i data-lucide="x" class="w-5 h-5"></i>
@@ -824,20 +824,24 @@
         </div>
 
         <p class="text-xs text-slate-300 leading-relaxed">
-          The Git repository is already initialized with a clean <code class="bg-surface-850 px-1 py-0.5 rounded text-brand-400">.gitignore</code>. To push this codebase to your own GitHub account:
+          The project is published to GitHub at <a href="https://github.com/ayush1305/synchroclip" target="_blank" class="text-brand-400 hover:underline font-mono">ayush1305/synchroclip</a>. You can clone and run it anywhere:
         </p>
 
         <div class="space-y-2">
-          <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Run in terminal:</p>
+          <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Clone and run:</p>
           <div class="bg-surface-950 p-3 rounded-xl border border-slate-800 text-xs font-mono text-slate-300 space-y-1 select-all">
-            <p>git remote add origin https://github.com/&lt;YOUR_USERNAME&gt;/&lt;REPO_NAME&gt;.git</p>
-            <p>git branch -M main</p>
-            <p>git push -u origin main</p>
+            <p>git clone https://github.com/ayush1305/synchroclip.git</p>
+            <p>cd synchroclip</p>
+            <p>pip install -r requirements.txt</p>
+            <p>python run.py</p>
           </div>
         </div>
 
         <div class="pt-3 border-t border-slate-800 flex items-center justify-between">
-          <span class="text-xs text-slate-500">Or download the zip directly:</span>
+          <a href="https://github.com/ayush1305/synchroclip" target="_blank" rel="noopener noreferrer" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold shadow transition flex items-center space-x-1.5 border border-slate-700">
+            <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+            <span>Open on GitHub</span>
+          </a>
           <a href="/api/download-project-zip" download="synchroclip-studio.zip" class="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold shadow transition flex items-center space-x-1.5">
             <i data-lucide="download" class="w-3.5 h-3.5"></i>
             <span>Download .ZIP</span>
