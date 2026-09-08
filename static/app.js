@@ -46,6 +46,9 @@ const elements = {
   btnGenerateScenes: document.getElementById('btnGenerateScenes'),
   // Caption Template Section
   highlightColorPills: document.getElementById('highlightColorPills'),
+  customColorPicker: document.getElementById('customColorPicker'),
+  customColorPreview: document.getElementById('customColorPreview'),
+  customColorHex: document.getElementById('customColorHex'),
   captionTemplatesGrid: document.getElementById('captionTemplatesGrid'),
   captionCatTabs: document.querySelectorAll('.caption-cat-tab'),
   // Storyboard & Live Preview
@@ -123,20 +126,45 @@ async function loadCaptionTemplates() {
   }
 }
 
+function getActiveHighlightHex() {
+  if (state.selectedHighlightColor.startsWith('#')) {
+    return state.selectedHighlightColor;
+  }
+  return state.highlightColors[state.selectedHighlightColor]?.hex || '#facc15';
+}
+
 function renderHighlightColors() {
   elements.highlightColorPills.innerHTML = '';
+  const currentHex = getActiveHighlightHex();
+
   Object.entries(state.highlightColors).forEach(([key, info]) => {
+    const isSelected = state.selectedHighlightColor === key || (state.selectedHighlightColor.startsWith('#') && state.selectedHighlightColor.toLowerCase() === info.hex.toLowerCase());
     const btn = document.createElement('button');
-    btn.className = `w-5 h-5 rounded-full border-2 transition ${state.selectedHighlightColor === key ? 'border-white scale-110 shadow' : 'border-transparent hover:scale-105'}`;
+    btn.className = `w-5 h-5 rounded-full border-2 transition ${isSelected ? 'border-white scale-125 shadow-lg ring-2 ring-brand-500/50' : 'border-transparent hover:scale-110'}`;
     btn.style.backgroundColor = info.hex;
     btn.title = info.name;
     btn.addEventListener('click', () => {
       state.selectedHighlightColor = key;
+      if (elements.customColorPicker) elements.customColorPicker.value = info.hex;
+      if (elements.customColorPreview) elements.customColorPreview.style.backgroundColor = info.hex;
+      if (elements.customColorHex) elements.customColorHex.textContent = info.hex;
       renderHighlightColors();
+      renderCaptionTemplates();
       updateLiveKaraokeCaption(elements.htmlAudio.currentTime || 0);
     });
     elements.highlightColorPills.appendChild(btn);
   });
+
+  // Sync custom picker controls
+  if (elements.customColorPicker) {
+    elements.customColorPicker.value = currentHex;
+  }
+  if (elements.customColorPreview) {
+    elements.customColorPreview.style.backgroundColor = currentHex;
+  }
+  if (elements.customColorHex) {
+    elements.customColorHex.textContent = currentHex;
+  }
 }
 
 function renderCaptionTemplates() {
@@ -190,7 +218,7 @@ function getTemplatePreviewHtml(tpl) {
     return '<span class="text-xs text-slate-500 italic">No Captions</span>';
   }
 
-  const highlightHex = state.highlightColors[state.selectedHighlightColor]?.hex || '#facc15';
+  const highlightHex = getActiveHighlightHex();
 
   if (tpl.id === 'capcut_classic') {
     return `
@@ -200,7 +228,7 @@ function getTemplatePreviewHtml(tpl) {
     `;
   } else if (tpl.id === 'neon_fox') {
     return `
-      <span class="font-extrabold uppercase text-xs tracking-wider" style="color: #ffffff; text-shadow: 0 0 8px #ff00ea, 0 0 15px #00ffff;">
+      <span class="font-extrabold uppercase text-xs tracking-wider" style="color: #ffffff; text-shadow: 0 0 8px ${highlightHex}, 0 0 15px #00ffff;">
         ${tpl.preview_highlight}
       </span>
     `;
@@ -224,7 +252,7 @@ function getTemplatePreviewHtml(tpl) {
     `;
   } else if (tpl.id === 'minimal_monoline') {
     return `
-      <span class="text-[10px] bg-black/60 px-2 py-0.5 rounded-full text-slate-100">
+      <span class="text-[10px] bg-black/60 px-2 py-0.5 rounded-full" style="color: ${highlightHex};">
         ${tpl.preview_highlight}
       </span>
     `;
@@ -243,6 +271,19 @@ function setupEventListeners() {
 
   // Auto-transcribe button
   elements.btnAutoTranscribe.addEventListener('click', handleAutoTranscribe);
+
+  // Custom Color Picker input
+  if (elements.customColorPicker) {
+    elements.customColorPicker.addEventListener('input', (e) => {
+      const hex = e.target.value.toLowerCase();
+      state.selectedHighlightColor = hex;
+      if (elements.customColorPreview) elements.customColorPreview.style.backgroundColor = hex;
+      if (elements.customColorHex) elements.customColorHex.textContent = hex;
+      renderHighlightColors();
+      renderCaptionTemplates();
+      updateLiveKaraokeCaption(elements.htmlAudio.currentTime || 0);
+    });
+  }
 
   // Category filter tabs
   elements.captionCatTabs.forEach(tab => {
@@ -511,7 +552,7 @@ function updateLiveKaraokeCaption(currentTime) {
     return;
   }
 
-  const highlightHex = state.highlightColors[state.selectedHighlightColor]?.hex || '#facc15';
+  const highlightHex = getActiveHighlightHex();
   const tplClass = `tpl-${state.selectedTemplate}`;
 
   elements.liveCaptionOverlay.className = `absolute inset-x-4 bottom-6 flex flex-wrap items-center justify-center text-center pointer-events-none transition duration-150 ${tplClass}`;

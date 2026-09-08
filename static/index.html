@@ -229,10 +229,21 @@
         </div>
 
         <!-- Word Highlight Color Palette -->
-        <div class="flex items-center space-x-2 bg-surface-850 border border-slate-800 px-3 py-1.5 rounded-xl">
+        <div class="flex items-center flex-wrap gap-2 bg-surface-850 border border-slate-800 px-3 py-1.5 rounded-xl">
           <span class="text-xs text-slate-400 font-medium">Highlight:</span>
           <div id="highlightColorPills" class="flex items-center space-x-1.5">
             <!-- Dynamically injected color pills -->
+          </div>
+          <div class="h-4 w-px bg-slate-700 mx-1"></div>
+          <!-- Full Spectrum Custom Color Palette Picker -->
+          <div class="relative flex items-center space-x-1.5">
+            <label for="customColorPicker" class="relative cursor-pointer flex items-center space-x-1.5 text-xs text-slate-300 hover:text-white transition group" title="Open full color palette picker">
+              <div class="w-6 h-6 rounded-full p-0.5 flex items-center justify-center shadow-md transition group-hover:scale-105" style="background: conic-gradient(red, yellow, lime, aqua, blue, magenta, red);">
+                <span id="customColorPreview" class="w-full h-full rounded-full border border-black/50" style="background-color: #facc15;"></span>
+              </div>
+              <span class="text-[11px] font-mono text-slate-300 group-hover:text-brand-400 font-semibold" id="customColorHex">#facc15</span>
+              <input type="color" id="customColorPicker" value="#facc15" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full">
+            </label>
           </div>
         </div>
       </div>

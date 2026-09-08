@@ -191,6 +191,23 @@ def to_ass_time(seconds: float) -> str:
     cs = int(round((seconds - int(seconds)) * 100)) % 100
     return f"{h}:{m:02d}:{s:02d}.{cs:02d}"
 
+def hex_to_ass_color(hex_str: str) -> str:
+    """
+    Converts RGB hex color string (e.g. #FF0055) to ASS BGR format &H00BBGGRR&
+    """
+    cleaned = hex_str.strip().lstrip("#")
+    if len(cleaned) == 6 and all(c in "0123456789abcdefABCDEF" for c in cleaned):
+        r = cleaned[0:2]
+        g = cleaned[2:4]
+        b = cleaned[4:6]
+        return f"&H00{b}{g}{r}&".upper()
+    elif len(cleaned) == 3 and all(c in "0123456789abcdefABCDEF" for c in cleaned):
+        r = cleaned[0] * 2
+        g = cleaned[1] * 2
+        b = cleaned[2] * 2
+        return f"&H00{b}{g}{r}&".upper()
+    return "&H0000FFFF&"
+
 def generate_ass_subtitles(
     caption_cards: list[dict],
     template_id: str = "capcut_classic",
@@ -205,16 +222,22 @@ def generate_ass_subtitles(
     """
     tpl = caption_templates.get_template(template_id)
     if tpl["id"] == "none":
-        # Create empty dummy file or return empty
         with open(output_path, "w", encoding="utf-8") as f:
             f.write("")
         return output_path
 
     header = caption_templates.build_ass_header(template_id, width=width, height=height)
     
-    # Highlight color ASS tag
-    color_info = caption_templates.HIGHLIGHT_COLORS.get(highlight_color_key, caption_templates.HIGHLIGHT_COLORS["yellow"])
-    highlight_ass = color_info["ass"] if color_info["ass"].endswith("&") else f"{color_info['ass']}&"
+    # Highlight color ASS tag: supports any custom hex or preset name
+    cleaned_key = highlight_color_key.strip().lstrip("#")
+    if len(cleaned_key) in (3, 6) and all(c in "0123456789abcdefABCDEF" for c in cleaned_key):
+        highlight_ass = hex_to_ass_color(highlight_color_key)
+    elif highlight_color_key in caption_templates.HIGHLIGHT_COLORS:
+        color_info = caption_templates.HIGHLIGHT_COLORS[highlight_color_key]
+        highlight_ass = color_info["ass"] if color_info["ass"].endswith("&") else f"{color_info['ass']}&"
+    else:
+        highlight_ass = "&H0000FFFF&"
+
     primary_ass = tpl["primary_color"] if tpl["primary_color"].endswith("&") else f"{tpl['primary_color']}&"
 
     events = []
