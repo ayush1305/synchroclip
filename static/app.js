@@ -445,6 +445,173 @@ function getTemplatePreviewHtml(tpl) {
   const activeMarkerColor = state.markerColor || tpl.marker_color || '#4ade80';
 
   // Multi-line Viral MOGRTs & Hierarchy Templates
+  if (tpl.id === 'hier_opportunity') {
+    return `
+      <div class="flex flex-col items-center justify-center text-center space-y-0.5 leading-none select-none">
+        <span class="text-[8px] font-bold"><span style="color: #06b6d4;">This is</span> <span style="color: ${primaryHex};">where</span></span>
+        <span class="text-[13px] font-black uppercase tracking-tight" style="color: #facc15;">the opportunity</span>
+        <span class="text-[10px] font-bold uppercase" style="color: ${primaryHex};">starts</span>
+      </div>
+    `;
+  }
+
+  if (tpl.id === 'hier_changes') {
+    return `
+      <div class="flex flex-col items-center justify-center text-center space-y-0.5 leading-none select-none">
+        <span class="text-[8px] font-medium" style="color: ${primaryHex};">One</span>
+        <div class="flex items-center space-x-1">
+          <span class="text-[9px] font-bold" style="color: #facc15;">move</span>
+          <span class="text-[14px] font-black uppercase tracking-tight" style="color: #06b6d4;">changes</span>
+        </div>
+        <span class="text-[7px] font-medium" style="color: ${primaryHex};">everything.</span>
+      </div>
+    `;
+  }
+
+  if (tpl.id === 'hier_ai_difference') {
+    return `
+      <div class="flex flex-col items-center justify-center text-center space-y-0.5 leading-tight select-none">
+        <span class="text-[7px] font-medium" style="color: ${primaryHex};">Here is</span>
+        <span class="text-[9px] font-black" style="color: #06b6d4;">what makes the difference</span>
+        <span class="text-[7px] font-medium" style="color: ${primaryHex};">using</span>
+        <span class="text-[9px] font-black" style="color: #facc15;">artificial intelligence.</span>
+      </div>
+    `;
+  }
+
+  if (tpl.id === 'hier_video_automation') {
+    return `
+      <div class="flex flex-col items-center justify-center text-center space-y-0.5 leading-none select-none">
+        <span class="text-[8px] font-medium" style="color: ${primaryHex};">we will</span>
+        <span class="text-[12px] italic font-serif" style="color: ${primaryHex}; font-family: 'Playfair Display', serif;">learn</span>
+        <span class="text-[10px] font-black uppercase" style="color: #facc15;">video automation</span>
+        <span class="text-[7px] font-medium" style="color: ${primaryHex};">step by step</span>
+      </div>
+    `;
+  }
+
+  if (tpl.id === 'hier_missing_part') {
+    return `
+      <div class="flex flex-col items-center justify-center text-center space-y-0.5 leading-none select-none">
+        <span class="text-[7px] font-medium" style="color: ${primaryHex};">You might be</span>
+        <span class="text-[13px] font-black uppercase tracking-tight" style="color: ${primaryHex};">missing</span>
+        <span class="text-[13px] font-black uppercase tracking-tight" style="color: #facc15;">this part</span>
+        <span class="text-[8px] font-bold" style="color: ${primaryHex};">today.</span>
+      </div>
+    `;
+  }
+
+  if (tpl.id === 'hier_life_shorter') {
+    return `
+      <div class="flex flex-col items-center justify-center text-center space-y-0.5 leading-none select-none">
+        <span class="text-[9px] font-bold" style="color: ${primaryHex};">Life is</span>
+        <span class="text-[15px] font-black tracking-tighter uppercase" style="color: #06b6d4;">shorter</span>
+        <span class="text-[7px] font-medium" style="color: ${primaryHex};">than</span>
+        <span class="text-[10px] font-black uppercase" style="color: #facc15;">your reality</span>
+      </div>
+    `;
+  }
+
+  if (tpl.id === 'hier_the_logic') {
+    return `
+      <div class="flex flex-col items-center justify-center text-center space-y-0.5 leading-tight select-none">
+        <span class="text-[8px] font-semibold" style="color: #06b6d4;">Here is</span>
+        <span class="text-[12px] italic font-serif" style="color: #facc15; font-family: 'Playfair Display', cursive, serif;">the logic</span>
+        <span class="text-[10px] font-black uppercase" style="color: ${primaryHex};">behind it.</span>
+      </div>
+    `;
+  }
+
+  if (tpl.id === 'hier_talks_about') {
+    return `
+      <div class="flex flex-col items-center justify-center text-center space-y-0.5 leading-none select-none">
+        <span class="text-[7px] font-medium" style="color: ${primaryHex};">Nobody</span>
+        <span class="text-[8px] font-bold" style="color: #facc15;">talks</span>
+        <span class="text-[14px] font-black uppercase tracking-tight" style="color: #06b6d4;">about</span>
+        <span class="text-[7px] font-medium" style="color: ${primaryHex};">it.</span>
+      </div>
+    `;
+  }
+
+  if (tpl.id === 'hier_simplify_founders') {
+    return `
+      <div class="flex flex-col items-center justify-center text-center space-y-0.5 leading-none select-none">
+        <span class="text-[7px] font-medium" style="color: ${primaryHex};">Let's simplify</span>
+        <span class="text-[11px] font-black uppercase" style="color: #facc15;">how</span>
+        <span class="text-[12px] font-black uppercase" style="color: #facc15;">founders</span>
+        <span class="text-[6px] font-medium" style="color: ${primaryHex};">have future mind.</span>
+      </div>
+    `;
+  }
+
+  if (tpl.id === 'hier_look_at') {
+    return `
+      <div class="flex flex-col items-center justify-center text-center space-y-0.5 leading-none select-none">
+        <span class="text-[7px] font-medium" style="color: ${primaryHex};">Let's</span>
+        <span class="text-[12px] italic font-serif" style="color: #facc15; font-family: 'Playfair Display', cursive, serif;">look at</span>
+        <span class="text-[9px] font-black" style="color: #06b6d4;">what is really</span>
+        <span class="text-[7px] font-medium" style="color: ${primaryHex};">happening.</span>
+      </div>
+    `;
+  }
+
+  if (tpl.id === 'hier_how_much') {
+    return `
+      <div class="flex flex-col items-center justify-center text-center space-y-0.5 leading-none select-none">
+        <span class="text-[7px] font-medium" style="color: ${primaryHex};">I will explain</span>
+        <span class="text-[13px] font-black uppercase tracking-tight" style="color: #facc15;">how much</span>
+        <span class="text-[6px] font-medium" style="color: ${primaryHex};">do you need to start camper</span>
+      </div>
+    `;
+  }
+
+  if (tpl.id === 'hier_750_dollar') {
+    return `
+      <div class="flex flex-col items-center justify-center text-center space-y-0.5 leading-none select-none">
+        <span class="text-[17px] italic font-serif font-black" style="color: #ffffff; font-family: 'Playfair Display', serif; text-shadow: 0 0 10px rgba(255,255,255,0.8);">750</span>
+        <div class="flex items-center space-x-1">
+          <span class="text-[7px] font-medium" style="color: ${primaryHex};">How to make</span>
+          <span class="text-[9px] font-black" style="color: #06b6d4;">dollar in a day</span>
+        </div>
+        <span class="text-[6px] italic" style="color: rgba(255,255,255,0.7);">just cooking in your kitchen.</span>
+      </div>
+    `;
+  }
+
+  if (tpl.id === 'hier_wrong_place') {
+    return `
+      <div class="flex flex-col items-center justify-center text-center space-y-0.5 leading-none select-none">
+        <span class="text-[7px] font-bold" style="color: #06b6d4;">Most</span>
+        <span class="text-[13px] font-black uppercase tracking-tight" style="color: ${primaryHex};">people</span>
+        <span class="text-[10px] font-black uppercase" style="color: ${primaryHex};">start</span>
+        <span class="text-[7px] font-black uppercase" style="color: #ef4444;">in the wrong place</span>
+      </div>
+    `;
+  }
+
+  if (tpl.id === 'hier_beginners_miss') {
+    return `
+      <div class="flex flex-col items-center justify-center text-center space-y-0.5 leading-none select-none">
+        <div class="flex items-center space-x-1">
+          <span class="text-[8px] font-bold" style="color: #06b6d4;">Most</span>
+          <span class="text-[8px] font-bold" style="color: ${primaryHex};">beginners</span>
+        </div>
+        <span class="text-[14px] font-black uppercase tracking-tight" style="color: #facc15;">miss</span>
+        <span class="text-[8px] font-bold" style="color: ${primaryHex};">this point.</span>
+      </div>
+    `;
+  }
+
+  if (tpl.id === 'hier_experienced_founders') {
+    return `
+      <div class="flex flex-col items-center justify-center text-center space-y-0.5 leading-none select-none">
+        <span class="text-[7px] font-medium" style="color: ${primaryHex};">This is</span>
+        <span class="text-[10px] font-black uppercase" style="color: #facc15;">what experienced</span>
+        <span class="text-[10px] font-black uppercase" style="color: #facc15;">founders do</span>
+      </div>
+    `;
+  }
+
   if (tpl.id === 'viral_circle_ignore') {
     return `
       <div class="flex flex-col items-center justify-center space-y-0.5 pointer-events-none leading-tight">
@@ -1473,6 +1640,75 @@ function updateLiveKaraokeCaption(currentTime) {
 
   const activeMarker = state.markerStyle !== 'none' ? state.markerStyle : (tpl.marker_style || 'none');
   const activeMarkerColor = state.markerColor || tpl.marker_color || '#4ade80';
+  const isHierarchy = (tpl.category === 'Viral Hierarchy') || tpl.is_hierarchy;
+
+  if (isHierarchy && activeCard.words.length >= 2) {
+    const totalWords = activeCard.words.length;
+    let line1End = 1;
+    let line2End = 2;
+    if (totalWords >= 5) {
+      line1End = 2;
+      line2End = 4;
+    } else if (totalWords === 4) {
+      line1End = 1;
+      line2End = 3;
+    } else if (totalWords === 3) {
+      line1End = 1;
+      line2End = 2;
+    } else {
+      line1End = 1;
+      line2End = 2;
+    }
+
+    const renderWord = (w, idx) => {
+      const isSpoken = (spokenIdx === idx) || (currentTime >= w.start && currentTime <= w.end);
+      const isHeroLine = (idx >= line1End && idx < line2End);
+      const wordAnimClass = (state.wordZoom || anim === 'word_zoom') && isSpoken ? 'anim-word-zoom' : animClass;
+      const targetFont = isHeroLine ? heroFont : bodyFont;
+      const targetColor = isSpoken ? highlightHex : (isHeroLine ? highlightHex : primaryHex);
+      const targetWeight = isHeroLine ? 'font-black uppercase tracking-tight' : isBold;
+
+      if (isSpoken) {
+        if (activeMarker !== 'none') {
+          const formatted = formatHeroWord(w.word, targetFont, highlightHex, activeMarker, activeMarkerColor, Boolean(tpl.italic || tpl.hero_italic), activeShadow);
+          return `<span class="karaoke-word ${targetWeight} active-word ${wordAnimClass} inline-block">${formatted}</span>`;
+        }
+        return `
+          <span class="karaoke-word ${targetWeight} ${isItalic} active-word ${wordAnimClass}" style="font-family: '${targetFont}', cursive, sans-serif; color: ${highlightHex}; ${activeShadow} transform: scale(1.18);">
+            ${w.word}
+          </span>
+        `;
+      } else {
+        return `
+          <span class="karaoke-word ${targetWeight}" style="font-family: '${targetFont}', sans-serif; color: ${targetColor}; text-shadow: 0 2px 5px rgba(0,0,0,0.9);">
+            ${w.word}
+          </span>
+        `;
+      }
+    };
+
+    const l1 = [];
+    for (let i = 0; i < line1End && i < totalWords; i++) {
+      if (!state.wordZoom || i <= spokenIdx) l1.push(renderWord(activeCard.words[i], i));
+    }
+    const l2 = [];
+    for (let i = line1End; i < line2End && i < totalWords; i++) {
+      if (!state.wordZoom || i <= spokenIdx) l2.push(renderWord(activeCard.words[i], i));
+    }
+    const l3 = [];
+    for (let i = line2End; i < totalWords; i++) {
+      if (!state.wordZoom || i <= spokenIdx) l3.push(renderWord(activeCard.words[i], i));
+    }
+
+    elements.liveCaptionOverlay.innerHTML = `
+      <div class="flex flex-col items-center justify-center text-center space-y-0.5 select-none pointer-events-none drop-shadow-2xl">
+        ${l1.length ? `<div class="text-xs sm:text-sm font-semibold tracking-wide" style="font-family: '${bodyFont}', sans-serif;">${l1.join(' ')}</div>` : ''}
+        ${l2.length ? `<div class="text-xl sm:text-2xl md:text-3xl font-black uppercase tracking-tight py-0.5" style="font-family: '${heroFont}', sans-serif;">${l2.join(' ')}</div>` : ''}
+        ${l3.length ? `<div class="text-xs sm:text-base font-bold tracking-wide" style="font-family: '${bodyFont}', sans-serif;">${l3.join(' ')}</div>` : ''}
+      </div>
+    `;
+    return;
+  }
 
   const wordsHtml = wordsToDisplay.map((w, idx) => {
     const isSpoken = (spokenIdx === idx) || (currentTime >= w.start && currentTime <= w.end);

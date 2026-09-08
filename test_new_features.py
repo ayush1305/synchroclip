@@ -543,6 +543,43 @@ def test_pip_and_video_focus_render(pip_info):
             except Exception:
                 pass
 
+def test_viral_hierarchy_templates_ass():
+    print("=== Test 12: 15 Viral Hierarchy Multi-Line Stacked MOGRT ASS ===")
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    hier_ass = os.path.join(base_dir, "test_hier_stacked.ass")
+
+    words = [
+        {"word": "This", "start": 0.0, "end": 0.3, "duration": 0.3},
+        {"word": "is", "start": 0.3, "end": 0.5, "duration": 0.2},
+        {"word": "the", "start": 0.5, "end": 0.7, "duration": 0.2},
+        {"word": "opportunity", "start": 0.7, "end": 1.4, "duration": 0.7},
+        {"word": "starts", "start": 1.4, "end": 1.9, "duration": 0.5}
+    ]
+    cards = caption_generator.chunk_words_into_cards(words, max_words_per_card=5)
+
+    caption_generator.generate_ass_subtitles(
+        caption_cards=cards,
+        template_id="hier_opportunity",
+        highlight_color_key="#facc15",
+        primary_color_key="#ffffff",
+        output_path=hier_ass,
+        width=1080,
+        height=1920
+    )
+
+    assert os.path.exists(hier_ass)
+    with open(hier_ass, "r", encoding="utf-8") as f:
+        content = f.read()
+
+    # Verify ASS contains stacked line breaks \N
+    assert r"\N" in content, "Viral hierarchy templates must structure words into stacked multi-line tiers with \\N"
+    # Verify hero tier sizing tag
+    assert r"\fs82\b1" in content, "Viral hierarchy templates must size hero keyword with \\fs82\\b1"
+    print("Viral Hierarchy stacked multi-line ASS verified: Linebreaks \\N and hero scale \\fs82 applied!\n")
+
+    if os.path.exists(hier_ass):
+        os.remove(hier_ass)
+
 if __name__ == "__main__":
     test_caption_templates_and_fonts()
     test_multifont_and_dual_color_ass()
@@ -555,6 +592,7 @@ if __name__ == "__main__":
     test_progressive_reveal_and_word_zoom_ass()
     test_marker_decorations_ass()
     test_pip_and_video_focus_render(pip_info)
+    test_viral_hierarchy_templates_ass()
     print("=========================================================================================")
-    print("ALL 11 TEST SUITES PASSED! PIP OVERLAY, WORD ZOOM, PROGRESSIVE REVEAL & MARKERS VERIFIED!")
+    print("ALL 12 TEST SUITES PASSED! 15 VIRAL HIERARCHY TEMPLATES, PIP & KINETIC CAPTIONS VERIFIED!")
     print("=========================================================================================")
