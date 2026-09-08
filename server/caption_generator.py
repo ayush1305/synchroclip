@@ -212,14 +212,16 @@ def generate_ass_subtitles(
     caption_cards: list[dict],
     template_id: str = "hormozi_classic",
     highlight_color_key: str = "yellow",
+    primary_color_key: Optional[str] = None,
     output_path: str = "captions.ass",
     width: int = 1920,
     height: int = 1080,
-    font_family_override: Optional[str] = None
+    font_family_override: Optional[str] = None,
+    hero_font_override: Optional[str] = None
 ) -> str:
     """
     Generates Advanced SubStation Alpha (.ass) subtitle file with word-by-word
-    karaoke highlighting and motion graphics matching the chosen template.
+    karaoke highlighting, dual-color styling, and multi-font graphic rendering.
     """
     tpl = caption_templates.get_template(template_id)
     if tpl["id"] == "none":
@@ -227,11 +229,18 @@ def generate_ass_subtitles(
             f.write("")
         return output_path
 
-    header = caption_templates.build_ass_header(template_id, width=width, height=height, font_override=font_family_override)
+    # Determine body and hero fonts
+    is_multi_font = tpl.get("is_multi_font", False) or bool(hero_font_override)
+    body_font = font_family_override or tpl.get("body_font") or tpl.get("fontname") or "Montserrat"
+    hero_font = hero_font_override or tpl.get("hero_font") or body_font
+    hero_italic = tpl.get("hero_italic", 0)
+    hero_scale = tpl.get("hero_scale", 118)
+
+    header = caption_templates.build_ass_header(template_id, width=width, height=height, font_override=body_font)
     
-    # Highlight color ASS tag: supports any custom hex or preset name
-    cleaned_key = highlight_color_key.strip().lstrip("#")
-    if len(cleaned_key) in (3, 6) and all(c in "0123456789abcdefABCDEF" for c in cleaned_key):
+    # Highlight color (Color 2 - Active / Hero Word)
+    cleaned_high = highlight_color_key.strip().lstrip("#") if highlight_color_key else ""
+    if len(cleaned_high) in (3, 6) and all(c in "0123456789abcdefABCDEF" for c in cleaned_high):
         highlight_ass = hex_to_ass_color(highlight_color_key)
     elif highlight_color_key in caption_templates.HIGHLIGHT_COLORS:
         color_info = caption_templates.HIGHLIGHT_COLORS[highlight_color_key]
@@ -239,7 +248,21 @@ def generate_ass_subtitles(
     else:
         highlight_ass = "&H0000FFFF&"
 
-    primary_ass = tpl["primary_color"] if tpl["primary_color"].endswith("&") else f"{tpl['primary_color']}&"
+    # Primary color (Color 1 - Base Words)
+    if primary_color_key:
+        cleaned_prim = primary_color_key.strip().lstrip("#")
+        if len(cleaned_prim) in (3, 6) and all(c in "0123456789abcdefABCDEF" for c in cleaned_prim):
+            primary_ass = hex_to_ass_color(primary_color_key)
+        elif primary_color_key in caption_templates.HIGHLIGHT_COLORS:
+            color_info = caption_templates.HIGHLIGHT_COLORS[primary_color_key]
+            primary_ass = color_info["ass"] if color_info["ass"].endswith("&") else f"{color_info['ass']}&"
+        else:
+            primary_ass = tpl["primary_color"]
+    else:
+        primary_ass = tpl["primary_color"]
+
+    if not primary_ass.endswith("&"):
+        primary_ass = f"{primary_ass}&"
 
     events = []
 
@@ -257,24 +280,33 @@ def generate_ass_subtitles(
             for idx, w in enumerate(words):
                 word_text = w["word"]
                 if idx == target_idx:
+                    extra_tags = ""
+                    if is_multi_font and hero_font != body_font:
+                        extra_tags += f"\\fn{hero_font}"
+                    if hero_italic:
+                        extra_tags += "\\i1"
+
                     if anim in ("bounce", "spring", "elastic", "jelly"):
-                        line_parts.append(f"{{\\c{highlight_ass}\\fscx114\\fscy114}}{word_text}{{\\r}}")
-                    elif anim in ("word_zoom", "mega_zoom", "stomp"):
-                        line_parts.append(f"{{\\c{highlight_ass}\\fscx124\\fscy124}}{word_text}{{\\r}}")
-                    elif anim in ("glow_pulse", "neon_glow", "aura", "laser"):
-                        line_parts.append(f"{{\\c{highlight_ass}\\bord5\\blur4}}{word_text}{{\\r}}")
+                        line_parts.append(f"{{\\c{highlight_ass}{extra_tags}\\fscx{hero_scale}\\fscy{hero_scale}}}{word_text}{{\\r}}")
+                    elif anim in ("word_zoom", "mega_zoom", "stomp", "zoom"):
+                        line_parts.append(f"{{\\c{highlight_ass}{extra_tags}\\fscx{max(124, hero_scale)}\\fscy{max(124, hero_scale)}}}{word_text}{{\\r}}")
+                    elif anim in ("glow_pulse", "neon_glow", "aura", "laser", "glow"):
+                        line_parts.append(f"{{\\c{highlight_ass}{extra_tags}\\bord5\\blur4\\fscx{hero_scale}\\fscy{hero_scale}}}{word_text}{{\\r}}")
                     elif anim in ("fire_pulse", "firestorm"):
-                        line_parts.append(f"{{\\c{highlight_ass}\\bord6\\3c&H000000FF&}}{word_text}{{\\r}}")
-                    elif anim in ("comic_pop", "boom"):
-                        line_parts.append(f"{{\\c{highlight_ass}\\fscx122\\fscy122\\bord5}}{word_text}{{\\r}}")
-                    elif anim in ("slide_up", "drift_left", "diagonal", "elevator", "wave"):
-                        line_parts.append(f"{{\\c{highlight_ass}\\fscx108\\fscy108}}{word_text}{{\\r}}")
+                        line_parts.append(f"{{\\c{highlight_ass}{extra_tags}\\bord6\\3c&H000000FF&\\fscx{hero_scale}\\fscy{hero_scale}}}{word_text}{{\\r}}")
+                    elif anim in ("comic_pop", "boom", "pop"):
+                        line_parts.append(f"{{\\c{highlight_ass}{extra_tags}\\fscx{max(125, hero_scale)}\\fscy{max(125, hero_scale)}\\bord5}}{word_text}{{\\r}}")
+                    elif anim in ("slide_up", "drift_left", "diagonal", "elevator", "wave", "slide"):
+                        line_parts.append(f"{{\\c{highlight_ass}{extra_tags}\\fscx{hero_scale}\\fscy{hero_scale}}}{word_text}{{\\r}}")
                     elif anim in ("glitch", "pixel", "retro_vhs", "matrix"):
-                        line_parts.append(f"{{\\c{highlight_ass}\\fscx110\\fscy110\\blur2}}{word_text}{{\\r}}")
+                        line_parts.append(f"{{\\c{highlight_ass}{extra_tags}\\blur2\\fscx{hero_scale}\\fscy{hero_scale}}}{word_text}{{\\r}}")
                     else:
-                        line_parts.append(f"{{\\c{highlight_ass}}}{word_text}{{\\r}}")
+                        line_parts.append(f"{{\\c{highlight_ass}{extra_tags}\\fscx{hero_scale}\\fscy{hero_scale}}}{word_text}{{\\r}}")
                 else:
-                    line_parts.append(f"{{\\c{primary_ass}}}{word_text}")
+                    if is_multi_font and hero_font != body_font:
+                        line_parts.append(f"{{\\fn{body_font}\\c{primary_ass}}}{word_text}")
+                    else:
+                        line_parts.append(f"{{\\c{primary_ass}}}{word_text}")
 
             line_text = " ".join(line_parts)
             dialogue_line = f"Dialogue: 0,{slice_start},{slice_end},Default,,0,0,0,,{line_text}"

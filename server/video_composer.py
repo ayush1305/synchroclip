@@ -352,3 +352,96 @@ def start_render_job(
     )
     t.start()
     return job_id
+
+def burn_direct_video_task(
+    job_id: str,
+    video_path: str,
+    caption_ass_path: Optional[str] = None,
+    output_dir: str = "output"
+):
+    """
+    Background worker that burns styled ASS captions directly onto a user-uploaded video
+    without re-splicing clips or transitions.
+    """
+    try:
+        RENDER_JOBS[job_id]["status"] = "burning"
+        RENDER_JOBS[job_id]["progress"] = 15
+        RENDER_JOBS[job_id]["message"] = "Preparing video for subtitle burning..."
+
+        os.makedirs(output_dir, exist_ok=True)
+        output_filename = f"export_{job_id}.mp4"
+        output_filepath = os.path.join(output_dir, output_filename)
+        log_filepath = os.path.join(output_dir, f"render_{job_id}.log")
+
+        cmd = ["ffmpeg", "-y", "-i", video_path]
+
+        if caption_ass_path and os.path.exists(caption_ass_path):
+            ass_escaped = caption_ass_path.replace("\\", "/").replace(":", "\\:")
+            cmd.extend([
+                "-vf", f"ass='{ass_escaped}'",
+                "-c:v", "libx264",
+                "-preset", "veryfast",
+                "-crf", "21",
+                "-c:a", "copy"
+            ])
+        else:
+            cmd.extend(["-c", "copy"])
+
+        cmd.extend([
+            "-movflags", "+faststart",
+            output_filepath
+        ])
+
+        RENDER_JOBS[job_id]["progress"] = 40
+        RENDER_JOBS[job_id]["message"] = "Burning animated captions onto video..."
+
+        with open(log_filepath, "w", encoding="utf-8") as log_file:
+            process = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=log_file,
+                universal_newlines=True
+            )
+            process.wait()
+
+        if process.returncode != 0:
+            err_content = "Unknown FFmpeg error"
+            if os.path.exists(log_filepath):
+                with open(log_filepath, "r", encoding="utf-8", errors="ignore") as f:
+                    err_content = f.read()[-400:]
+            RENDER_JOBS[job_id]["status"] = "error"
+            RENDER_JOBS[job_id]["message"] = f"Video encoding error: {err_content}"
+            return
+
+        RENDER_JOBS[job_id]["status"] = "done"
+        RENDER_JOBS[job_id]["progress"] = 100
+        RENDER_JOBS[job_id]["message"] = "Subtitled video generated successfully!"
+        RENDER_JOBS[job_id]["output_file"] = output_filename
+
+    except Exception as e:
+        print(f"Direct render job {job_id} error: {e}")
+        RENDER_JOBS[job_id]["status"] = "error"
+        RENDER_JOBS[job_id]["message"] = str(e)
+
+def start_direct_render_job(
+    video_path: str,
+    caption_ass_path: Optional[str] = None,
+    output_dir: str = "output"
+) -> str:
+    job_id = uuid.uuid4().hex[:12]
+    RENDER_JOBS[job_id] = {
+        "id": job_id,
+        "status": "queued",
+        "progress": 0,
+        "message": "Initializing direct video subtitle burner...",
+        "output_file": None,
+        "created_at": time.time()
+    }
+
+    t = threading.Thread(
+        target=burn_direct_video_task,
+        args=(job_id, video_path, caption_ass_path, output_dir),
+        daemon=True
+    )
+    t.start()
+    return job_id

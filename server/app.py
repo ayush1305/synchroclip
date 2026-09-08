@@ -22,12 +22,16 @@ import zipfile
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
 VIDEO_UPLOAD_DIR = os.path.join(UPLOAD_DIR, "videos")
+DIRECT_VIDEO_DIR = os.path.join(UPLOAD_DIR, "direct_videos")
+AUDIO_DIR = os.path.join(UPLOAD_DIR, "audio")
 OUTPUT_DIR = os.path.join(BASE_DIR, "output")
 CACHE_DIR = os.path.join(BASE_DIR, "cache")
 STATIC_DIR = os.path.join(BASE_DIR, "static")
 
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(VIDEO_UPLOAD_DIR, exist_ok=True)
+os.makedirs(DIRECT_VIDEO_DIR, exist_ok=True)
+os.makedirs(AUDIO_DIR, exist_ok=True)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 os.makedirs(CACHE_DIR, exist_ok=True)
 os.makedirs(STATIC_DIR, exist_ok=True)
@@ -78,14 +82,18 @@ class CaptionRequest(BaseModel):
 
 class RenderRequest(BaseModel):
     audio_id: str
-    scenes: list[dict]
+    scenes: Optional[list[dict]] = None
     transition_type: Optional[str] = "fade"
     transition_duration: Optional[float] = 0.8
     aspect_ratio: Optional[str] = "16:9"
     caption_template: Optional[str] = "none"
+    primary_color: Optional[str] = None
     highlight_color: Optional[str] = "yellow"
     caption_cards: Optional[list[dict]] = None
     font_family: Optional[str] = None
+    hero_font: Optional[str] = None
+    is_direct_video: Optional[bool] = False
+    direct_video_path: Optional[str] = None
 
 def get_video_info_and_thumb(video_path: str, thumb_path: str) -> dict:
     duration = 0.0
@@ -284,9 +292,6 @@ async def render_video(req: RenderRequest):
     audio_path = audio_entry["path"]
     total_audio_duration = audio_entry["info"]["duration"]
 
-    if not req.scenes:
-        raise HTTPException(status_code=400, detail="No scenes provided for rendering")
-
     # Generate ASS subtitles if a caption template is selected
     caption_ass_path = None
     if req.caption_template and req.caption_template != "none" and req.caption_cards:
@@ -298,12 +303,29 @@ async def render_video(req: RenderRequest):
             caption_cards=req.caption_cards,
             template_id=req.caption_template,
             highlight_color_key=req.highlight_color or "yellow",
+            primary_color_key=req.primary_color,
             output_path=sub_path,
             width=width,
             height=height,
-            font_family_override=req.font_family
+            font_family_override=req.font_family,
+            hero_font_override=req.hero_font
         )
         caption_ass_path = sub_path
+
+    # Direct Video Mode (Bypass stock scenes and burn subtitles directly onto pre-existing video)
+    if req.is_direct_video and req.direct_video_path and os.path.exists(req.direct_video_path):
+        job_id = video_composer.start_direct_render_job(
+            video_path=req.direct_video_path,
+            caption_ass_path=caption_ass_path,
+            output_dir=OUTPUT_DIR
+        )
+        return {
+            "status": "started",
+            "job_id": job_id
+        }
+
+    if not req.scenes:
+        raise HTTPException(status_code=400, detail="No scenes provided for rendering")
 
     job_id = video_composer.start_render_job(
         scenes=req.scenes,
@@ -321,6 +343,76 @@ async def render_video(req: RenderRequest):
         "status": "started",
         "job_id": job_id
     }
+
+@app.post("/api/upload-direct-video")
+async def upload_direct_video(file: UploadFile = File(...)):
+    """
+    Uploads an entire pre-existing video (.mp4, .mov, .webm, .mkv).
+    Extracts audio track, analyzes duration/waveform, and registers audio
+    so the user can immediately transcribe and add animated captions directly without generating stock clips!
+    """
+    try:
+        ext = os.path.splitext(file.filename)[1].lower() or ".mp4"
+        valid_exts = {".mp4", ".mov", ".webm", ".mkv", ".avi", ".m4v"}
+        if ext not in valid_exts:
+            raise HTTPException(status_code=400, detail=f"Unsupported format '{ext}'. Allowed: MP4, MOV, WebM, MKV.")
+
+        video_id = uuid.uuid4().hex[:10]
+        audio_id = f"audio_{video_id}"
+        safe_video_name = f"direct_{video_id}{ext}"
+        safe_thumb_name = f"direct_{video_id}_thumb.jpg"
+        safe_audio_name = f"audio_{video_id}.mp3"
+
+        target_video_path = os.path.join(DIRECT_VIDEO_DIR, safe_video_name)
+        target_thumb_path = os.path.join(DIRECT_VIDEO_DIR, safe_thumb_name)
+        target_audio_path = os.path.join(AUDIO_DIR, safe_audio_name)
+
+        with open(target_video_path, "wb") as buf:
+            shutil.copyfileobj(file.file, buf)
+
+        info = get_video_info_and_thumb(target_video_path, target_thumb_path)
+
+        # Extract audio track to MP3
+        cmd_audio = [
+            "ffmpeg", "-y",
+            "-i", target_video_path,
+            "-vn",
+            "-acodec", "libmp3lame",
+            "-ar", "44100",
+            "-ab", "192k",
+            target_audio_path
+        ]
+        subprocess.run(cmd_audio, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+
+        audio_info = audio_analyzer.get_audio_info(target_audio_path)
+        waveform = audio_analyzer.get_waveform_peaks(target_audio_path, num_points=70)
+
+        AUDIO_REGISTRY[audio_id] = {
+            "id": audio_id,
+            "filename": f"Extracted from {file.filename}",
+            "path": target_audio_path,
+            "info": audio_info
+        }
+
+        return {
+            "status": "success",
+            "video_id": video_id,
+            "audio_id": audio_id,
+            "filename": file.filename,
+            "video_url": f"/uploads/direct_videos/{safe_video_name}",
+            "local_video_path": target_video_path,
+            "thumb_url": f"/uploads/direct_videos/{safe_thumb_name}" if os.path.exists(target_thumb_path) else "",
+            "duration": audio_info["duration"],
+            "formatted_duration": audio_info["formatted_duration"],
+            "width": info["width"],
+            "height": info["height"],
+            "waveform": waveform
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error handling direct video upload: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to process video: {str(e)}")
 
 @app.post("/api/upload-video")
 async def upload_video(file: UploadFile = File(...)):
@@ -387,6 +479,7 @@ async def get_render_status(job_id: str):
     if job["status"] == "done" and job.get("output_file"):
         resp["download_url"] = f"/api/download/{job['output_file']}"
         resp["video_url"] = f"/api/download/{job['output_file']}"
+        resp["output_file"] = job["output_file"]
 
     return resp
 

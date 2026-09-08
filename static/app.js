@@ -1,3 +1,14 @@
+// Color 1 Presets (Base text colors)
+const PRIMARY_COLORS = {
+  white: { name: 'Pure White', hex: '#ffffff' },
+  cream: { name: 'Warm Cream', hex: '#fef08a' },
+  silver: { name: 'Slate Silver', hex: '#cbd5e1' },
+  ice_blue: { name: 'Ice Blue', hex: '#bae6fd' },
+  mint: { name: 'Pastel Mint', hex: '#a7f3d0' },
+  pink: { name: 'Pastel Pink', hex: '#fbcfe8' },
+  peach: { name: 'Warm Peach', hex: '#fed7aa' }
+};
+
 // State management
 const state = {
   audioId: null,
@@ -8,9 +19,13 @@ const state = {
   aspectRatio: '16:9',
   transitionType: 'dissolve',
   transitionDuration: 0.8,
-  selectedTemplate: 'hormozi_classic',
-  selectedHighlightColor: 'yellow',
+  selectedTemplate: 'smooth_cross',
+  selectedPrimaryColor: '#ffffff',
+  selectedHighlightColor: '#facc15',
   selectedFontFamily: '',
+  selectedHeroFont: '',
+  studioMode: 'generate', // 'generate' | 'direct'
+  directVideo: null,
   templateSearchTerm: '',
   captionTemplates: [],
   highlightColors: {},
@@ -27,6 +42,13 @@ const state = {
 
 // DOM Elements
 const elements = {
+  // Mode Switcher
+  modeBtnGenerate: document.getElementById('modeBtnGenerate'),
+  modeBtnDirect: document.getElementById('modeBtnDirect'),
+  modeDescriptionText: document.getElementById('modeDescriptionText'),
+  sectionModeA: document.getElementById('sectionModeA'),
+  sectionModeB: document.getElementById('sectionModeB'),
+  // Mode A: Audio Dropzone & Player
   audioDropzone: document.getElementById('audioDropzone'),
   audioFileInput: document.getElementById('audioFileInput'),
   audioPlayerCard: document.getElementById('audioPlayerCard'),
@@ -48,14 +70,38 @@ const elements = {
   sliderTransitionDur: document.getElementById('sliderTransitionDur'),
   transitionDurLabel: document.getElementById('transitionDurLabel'),
   btnGenerateScenes: document.getElementById('btnGenerateScenes'),
-  // Caption Template Section
-  highlightColorPills: document.getElementById('highlightColorPills'),
-  customColorPicker: document.getElementById('customColorPicker'),
-  customColorPreview: document.getElementById('customColorPreview'),
-  customColorHex: document.getElementById('customColorHex'),
+  // Mode B: Direct Video Dropzone & Player
+  directVideoDropzone: document.getElementById('directVideoDropzone'),
+  directVideoFileInput: document.getElementById('directVideoFileInput'),
+  directVideoUploading: document.getElementById('directVideoUploading'),
+  directVideoPlayerCard: document.getElementById('directVideoPlayerCard'),
+  directVideoDurationBadge: document.getElementById('directVideoDurationBadge'),
+  directVideoFileName: document.getElementById('directVideoFileName'),
+  directVideoResBadge: document.getElementById('directVideoResBadge'),
+  directWaveformBars: document.getElementById('directWaveformBars'),
+  directWaveformPlayhead: document.getElementById('directWaveformPlayhead'),
+  btnDirectAudioPlayPause: document.getElementById('btnDirectAudioPlayPause'),
+  directAudioCurrentTime: document.getElementById('directAudioCurrentTime'),
+  directAudioTotalTime: document.getElementById('directAudioTotalTime'),
+  btnRemoveDirectVideo: document.getElementById('btnRemoveDirectVideo'),
+  directScriptInput: document.getElementById('directScriptInput'),
+  directScriptWordCount: document.getElementById('directScriptWordCount'),
+  btnDirectAutoTranscribe: document.getElementById('btnDirectAutoTranscribe'),
+  directCaptionStatusIndicator: document.getElementById('directCaptionStatusIndicator'),
+  btnDirectSyncCaptions: document.getElementById('btnDirectSyncCaptions'),
+  // Caption Template Section & Dual Colors
+  color1Pills: document.getElementById('color1Pills'),
+  customColor1Picker: document.getElementById('customColor1Picker'),
+  customColor1Preview: document.getElementById('customColor1Preview'),
+  customColor1Hex: document.getElementById('customColor1Hex'),
+  color2Pills: document.getElementById('color2Pills'),
+  customColor2Picker: document.getElementById('customColor2Picker'),
+  customColor2Preview: document.getElementById('customColor2Preview'),
+  customColor2Hex: document.getElementById('customColor2Hex'),
   captionTemplatesGrid: document.getElementById('captionTemplatesGrid'),
   captionCatTabs: document.querySelectorAll('.caption-cat-tab'),
   selectFontFamily: document.getElementById('selectFontFamily'),
+  selectHeroFont: document.getElementById('selectHeroFont'),
   captionTemplateSearch: document.getElementById('captionTemplateSearch'),
   templateCountBadge: document.getElementById('templateCountBadge'),
   // Storyboard & Live Preview
@@ -114,6 +160,7 @@ const elements = {
 async function init() {
   updateApiKeyStatusUI();
   setupEventListeners();
+  renderColor1Pills();
   await loadCaptionTemplates();
   lucide.createIcons();
 }
@@ -142,52 +189,82 @@ async function loadCaptionTemplates() {
       state.selectedTemplate = state.captionTemplates[0].id;
     }
 
-    renderHighlightColors();
+    renderColor1Pills();
+    renderColor2Pills();
     renderCaptionTemplates();
   } catch (e) {
     console.error('Failed to load caption templates:', e);
   }
 }
 
+function getActivePrimaryHex() {
+  if (state.selectedPrimaryColor && state.selectedPrimaryColor.startsWith('#')) {
+    return state.selectedPrimaryColor;
+  }
+  return PRIMARY_COLORS[state.selectedPrimaryColor]?.hex || '#ffffff';
+}
+
 function getActiveHighlightHex() {
-  if (state.selectedHighlightColor.startsWith('#')) {
+  if (state.selectedHighlightColor && state.selectedHighlightColor.startsWith('#')) {
     return state.selectedHighlightColor;
   }
   return state.highlightColors[state.selectedHighlightColor]?.hex || '#facc15';
 }
 
-function renderHighlightColors() {
-  elements.highlightColorPills.innerHTML = '';
-  const currentHex = getActiveHighlightHex();
+function renderColor1Pills() {
+  if (!elements.color1Pills) return;
+  elements.color1Pills.innerHTML = '';
+  const currentHex = getActivePrimaryHex().toLowerCase();
+
+  Object.entries(PRIMARY_COLORS).forEach(([key, info]) => {
+    const isSelected = currentHex === info.hex.toLowerCase() || state.selectedPrimaryColor === key;
+    const btn = document.createElement('button');
+    btn.className = `w-5 h-5 rounded-full border-2 transition ${isSelected ? 'border-brand-400 scale-125 shadow-lg ring-2 ring-brand-500/50' : 'border-transparent hover:scale-110'}`;
+    btn.style.backgroundColor = info.hex;
+    btn.title = info.name;
+    btn.addEventListener('click', () => {
+      state.selectedPrimaryColor = info.hex;
+      if (elements.customColor1Picker) elements.customColor1Picker.value = info.hex;
+      if (elements.customColor1Preview) elements.customColor1Preview.style.backgroundColor = info.hex;
+      if (elements.customColor1Hex) elements.customColor1Hex.textContent = info.hex;
+      renderColor1Pills();
+      renderCaptionTemplates();
+      updateLiveKaraokeCaption(elements.htmlAudio.currentTime || 0);
+    });
+    elements.color1Pills.appendChild(btn);
+  });
+
+  if (elements.customColor1Picker) elements.customColor1Picker.value = currentHex;
+  if (elements.customColor1Preview) elements.customColor1Preview.style.backgroundColor = currentHex;
+  if (elements.customColor1Hex) elements.customColor1Hex.textContent = currentHex;
+}
+
+function renderColor2Pills() {
+  if (!elements.color2Pills) return;
+  elements.color2Pills.innerHTML = '';
+  const currentHex = getActiveHighlightHex().toLowerCase();
 
   Object.entries(state.highlightColors).forEach(([key, info]) => {
-    const isSelected = state.selectedHighlightColor === key || (state.selectedHighlightColor.startsWith('#') && state.selectedHighlightColor.toLowerCase() === info.hex.toLowerCase());
+    const isSelected = currentHex === info.hex.toLowerCase() || state.selectedHighlightColor === key;
     const btn = document.createElement('button');
     btn.className = `w-5 h-5 rounded-full border-2 transition ${isSelected ? 'border-white scale-125 shadow-lg ring-2 ring-brand-500/50' : 'border-transparent hover:scale-110'}`;
     btn.style.backgroundColor = info.hex;
     btn.title = info.name;
     btn.addEventListener('click', () => {
-      state.selectedHighlightColor = key;
-      if (elements.customColorPicker) elements.customColorPicker.value = info.hex;
-      if (elements.customColorPreview) elements.customColorPreview.style.backgroundColor = info.hex;
-      if (elements.customColorHex) elements.customColorHex.textContent = info.hex;
-      renderHighlightColors();
+      state.selectedHighlightColor = info.hex;
+      if (elements.customColor2Picker) elements.customColor2Picker.value = info.hex;
+      if (elements.customColor2Preview) elements.customColor2Preview.style.backgroundColor = info.hex;
+      if (elements.customColor2Hex) elements.customColor2Hex.textContent = info.hex;
+      renderColor2Pills();
       renderCaptionTemplates();
       updateLiveKaraokeCaption(elements.htmlAudio.currentTime || 0);
     });
-    elements.highlightColorPills.appendChild(btn);
+    elements.color2Pills.appendChild(btn);
   });
 
-  // Sync custom picker controls
-  if (elements.customColorPicker) {
-    elements.customColorPicker.value = currentHex;
-  }
-  if (elements.customColorPreview) {
-    elements.customColorPreview.style.backgroundColor = currentHex;
-  }
-  if (elements.customColorHex) {
-    elements.customColorHex.textContent = currentHex;
-  }
+  if (elements.customColor2Picker) elements.customColor2Picker.value = currentHex;
+  if (elements.customColor2Preview) elements.customColor2Preview.style.backgroundColor = currentHex;
+  if (elements.customColor2Hex) elements.customColor2Hex.textContent = currentHex;
 }
 
 function renderCaptionTemplates() {
@@ -268,40 +345,90 @@ function getTemplatePreviewHtml(tpl) {
     return '<span class="text-xs text-slate-500 italic">No Captions</span>';
   }
 
+  const primaryHex = getActivePrimaryHex();
   const highlightHex = getActiveHighlightHex();
-  const fontOverride = state.selectedFontFamily ? `'${state.selectedFontFamily}', sans-serif` : (tpl.fontname || 'sans-serif');
-  const isItalic = tpl.italic ? 'font-style: italic;' : '';
-  const isBold = tpl.bold ? 'font-weight: 800;' : 'font-weight: 600;';
+  
+  // Font resolution
+  const bodyFont = state.selectedFontFamily || tpl.body_font || tpl.fontname || 'Montserrat';
+  const heroFont = state.selectedHeroFont || tpl.hero_font || bodyFont;
+  const isItalic = tpl.italic || tpl.hero_italic;
   const anim = tpl.animation || 'bounce';
 
   const previewText = tpl.preview_text || 'AMAZING VIDEO';
   const highlightWord = tpl.preview_highlight || previewText.split(' ')[0] || 'VIDEO';
 
+  let extraShadow = 'text-shadow: 0 2px 4px rgba(0,0,0,0.8);';
+  if (['glow_pulse', 'neon_glow', 'aura', 'laser'].includes(anim)) {
+    extraShadow = `text-shadow: 0 0 8px ${highlightHex}, 0 0 14px #00ffff;`;
+  } else if (['fire_pulse', 'firestorm'].includes(anim)) {
+    extraShadow = `text-shadow: 0 0 8px #ff4500, 0 0 14px #ff0000;`;
+  }
+
+  // Multi-font hybrid templates display
+  if (tpl.category === 'Hybrid' || tpl.hero_font || state.selectedHeroFont) {
+    if (tpl.id === 'creator_hierarchy') {
+      return `
+        <div class="flex flex-col items-center justify-center space-y-0.5 pointer-events-none leading-none">
+          <span class="text-[8px] uppercase tracking-widest font-semibold" style="font-family: '${bodyFont}', sans-serif; color: ${primaryHex}; opacity: 0.85;">WATCH THIS</span>
+          <span class="text-[13px] uppercase font-black tracking-wide" style="font-family: '${heroFont}', sans-serif; color: ${highlightHex}; filter: drop-shadow(0 0 8px ${highlightHex});">GAME CHANGER</span>
+          <span class="text-[8px] uppercase tracking-wider font-semibold" style="font-family: '${bodyFont}', sans-serif; color: ${primaryHex}; opacity: 0.85;">TODAY</span>
+        </div>
+      `;
+    }
+
+    if (tpl.id === 'devin_jatho_fx') {
+      return `
+        <div class="flex flex-col items-center justify-center pointer-events-none leading-tight">
+          <span class="text-[9px] uppercase tracking-widest font-semibold" style="font-family: '${bodyFont}', sans-serif; color: ${primaryHex};">DEVIN JATHO</span>
+          <span class="text-[12px] uppercase font-black" style="font-family: '${heroFont}', sans-serif; color: ${highlightHex}; text-shadow: 0 0 10px ${highlightHex};">TEXT EFFECT</span>
+        </div>
+      `;
+    }
+
+    // Two-tone / multi-font word pair (e.g. Smooth Cross, Serif Punch, MrBeast Duo, Apple Clean Duo)
+    const words = previewText.split(' ');
+    const firstWord = words[0] || 'SMOOTH';
+    const secondWord = words.slice(1).join(' ') || 'CROSS';
+
+    return `
+      <div class="flex items-center justify-center space-x-1.5 pointer-events-none ${extraShadow}">
+        <span class="text-[11px] font-bold" style="font-family: '${bodyFont}', sans-serif; color: ${primaryHex};">
+          ${firstWord}
+        </span>
+        <span class="text-[13px] ${isItalic ? 'italic' : ''} font-black" style="font-family: '${heroFont}', cursive, sans-serif; color: ${highlightHex}; filter: drop-shadow(0 0 6px ${highlightHex});">
+          ${secondWord}
+        </span>
+      </div>
+    `;
+  }
+
+  // Standard templates (Color 1 for non-highlight words, Color 2 for highlight word)
   let formattedHtml = '';
   if (previewText.includes(highlightWord)) {
     const parts = previewText.split(highlightWord);
-    formattedHtml = `${parts[0]}<span style="color: ${highlightHex}; filter: drop-shadow(0 0 6px ${highlightHex}); font-weight: 900;">${highlightWord}</span>${parts.slice(1).join(highlightWord)}`;
+    formattedHtml = `
+      <span style="font-family: '${bodyFont}', sans-serif; color: ${primaryHex};">${parts[0]}</span><span style="font-family: '${heroFont}', sans-serif; color: ${highlightHex}; filter: drop-shadow(0 0 6px ${highlightHex}); font-weight: 900;">${highlightWord}</span><span style="font-family: '${bodyFont}', sans-serif; color: ${primaryHex};">${parts.slice(1).join(highlightWord)}</span>
+    `;
   } else {
-    formattedHtml = `<span style="color: ${highlightHex};">${previewText}</span>`;
-  }
-
-  let extraShadow = 'text-shadow: 0 2px 4px rgba(0,0,0,0.8);';
-  if (anim === 'glow_pulse' || anim === 'neon_glow' || anim === 'aura') {
-    extraShadow = `text-shadow: 0 0 8px ${highlightHex}, 0 0 14px #00ffff;`;
-  } else if (anim === 'fire_pulse' || anim === 'firestorm') {
-    extraShadow = `text-shadow: 0 0 8px #ff4500, 0 0 14px #ff0000;`;
-  } else if (anim === 'word_zoom') {
-    extraShadow = `text-shadow: 0 3px 6px #000;`;
+    formattedHtml = `<span style="font-family: '${heroFont}', sans-serif; color: ${highlightHex};">${previewText}</span>`;
   }
 
   return `
-    <span class="uppercase text-[11px] leading-tight tracking-tight line-clamp-2" style="font-family: ${fontOverride}; ${isBold} ${isItalic} color: #ffffff; ${extraShadow}">
+    <span class="uppercase text-[11px] leading-tight tracking-tight line-clamp-2" style="${tpl.bold ? 'font-weight: 800;' : 'font-weight: 600;'} ${tpl.italic ? 'font-style: italic;' : ''} ${extraShadow}">
       ${formattedHtml}
     </span>
   `;
 }
 
 function setupEventListeners() {
+  // Mode Switcher tabs
+  if (elements.modeBtnGenerate) {
+    elements.modeBtnGenerate.addEventListener('click', () => switchStudioMode('generate'));
+  }
+  if (elements.modeBtnDirect) {
+    elements.modeBtnDirect.addEventListener('click', () => switchStudioMode('direct'));
+  }
+
   // Script input word count
   elements.scriptInput.addEventListener('input', () => {
     const text = elements.scriptInput.value.trim();
@@ -309,17 +436,45 @@ function setupEventListeners() {
     elements.scriptWordCount.textContent = `${words} word${words === 1 ? '' : 's'}`;
   });
 
-  // Auto-transcribe button
-  elements.btnAutoTranscribe.addEventListener('click', handleAutoTranscribe);
+  // Direct video script input word count
+  if (elements.directScriptInput) {
+    elements.directScriptInput.addEventListener('input', () => {
+      const text = elements.directScriptInput.value.trim();
+      const words = text ? text.split(/\s+/).length : 0;
+      elements.directScriptWordCount.textContent = `${words} word${words === 1 ? '' : 's'}`;
+    });
+  }
 
-  // Custom Color Picker input
-  if (elements.customColorPicker) {
-    elements.customColorPicker.addEventListener('input', (e) => {
+  // Auto-transcribe buttons
+  elements.btnAutoTranscribe.addEventListener('click', handleAutoTranscribe);
+  if (elements.btnDirectAutoTranscribe) {
+    elements.btnDirectAutoTranscribe.addEventListener('click', handleDirectAutoTranscribe);
+  }
+  if (elements.btnDirectSyncCaptions) {
+    elements.btnDirectSyncCaptions.addEventListener('click', handleDirectSyncCaptions);
+  }
+
+  // Color 1 Custom Color Picker
+  if (elements.customColor1Picker) {
+    elements.customColor1Picker.addEventListener('input', (e) => {
+      const hex = e.target.value.toLowerCase();
+      state.selectedPrimaryColor = hex;
+      if (elements.customColor1Preview) elements.customColor1Preview.style.backgroundColor = hex;
+      if (elements.customColor1Hex) elements.customColor1Hex.textContent = hex;
+      renderColor1Pills();
+      renderCaptionTemplates();
+      updateLiveKaraokeCaption(elements.htmlAudio.currentTime || 0);
+    });
+  }
+
+  // Color 2 Custom Color Picker
+  if (elements.customColor2Picker) {
+    elements.customColor2Picker.addEventListener('input', (e) => {
       const hex = e.target.value.toLowerCase();
       state.selectedHighlightColor = hex;
-      if (elements.customColorPreview) elements.customColorPreview.style.backgroundColor = hex;
-      if (elements.customColorHex) elements.customColorHex.textContent = hex;
-      renderHighlightColors();
+      if (elements.customColor2Preview) elements.customColor2Preview.style.backgroundColor = hex;
+      if (elements.customColor2Hex) elements.customColor2Hex.textContent = hex;
+      renderColor2Pills();
       renderCaptionTemplates();
       updateLiveKaraokeCaption(elements.htmlAudio.currentTime || 0);
     });
@@ -338,6 +493,24 @@ function setupEventListeners() {
     });
   });
 
+  // Base Font Selector
+  if (elements.selectFontFamily) {
+    elements.selectFontFamily.addEventListener('change', (e) => {
+      state.selectedFontFamily = e.target.value;
+      renderCaptionTemplates();
+      updateLiveKaraokeCaption(elements.htmlAudio.currentTime || 0);
+    });
+  }
+
+  // Hero Font Selector
+  if (elements.selectHeroFont) {
+    elements.selectHeroFont.addEventListener('change', (e) => {
+      state.selectedHeroFont = e.target.value;
+      renderCaptionTemplates();
+      updateLiveKaraokeCaption(elements.htmlAudio.currentTime || 0);
+    });
+  }
+
   // Aspect ratio & transition
   elements.selectAspectRatio.addEventListener('change', (e) => {
     state.aspectRatio = e.target.value;
@@ -350,7 +523,7 @@ function setupEventListeners() {
     elements.transitionDurLabel.textContent = `${state.transitionDuration.toFixed(1)}s`;
   });
 
-  // Audio drag & drop
+  // Audio drag & drop (Mode A)
   elements.audioDropzone.addEventListener('dragover', (e) => {
     e.preventDefault();
     elements.audioDropzone.classList.add('border-brand-500');
@@ -371,14 +544,47 @@ function setupEventListeners() {
     }
   });
 
+  // Direct Video drag & drop (Mode B)
+  if (elements.directVideoDropzone) {
+    elements.directVideoDropzone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      elements.directVideoDropzone.classList.add('border-emerald-500');
+    });
+    elements.directVideoDropzone.addEventListener('dragleave', () => {
+      elements.directVideoDropzone.classList.remove('border-emerald-500');
+    });
+    elements.directVideoDropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      elements.directVideoDropzone.classList.remove('border-emerald-500');
+      if (e.dataTransfer.files.length) {
+        handleDirectVideoUpload(e.dataTransfer.files[0]);
+      }
+    });
+  }
+  if (elements.directVideoFileInput) {
+    elements.directVideoFileInput.addEventListener('change', (e) => {
+      if (e.target.files.length) {
+        handleDirectVideoUpload(e.target.files[0]);
+      }
+    });
+  }
+
   // Audio player controls
   elements.btnAudioPlayPause.addEventListener('click', toggleAudioPlayback);
   elements.btnRemoveAudio.addEventListener('click', resetAudio);
+  if (elements.btnDirectAudioPlayPause) {
+    elements.btnDirectAudioPlayPause.addEventListener('click', toggleAudioPlayback);
+  }
+  if (elements.btnRemoveDirectVideo) {
+    elements.btnRemoveDirectVideo.addEventListener('click', resetDirectVideo);
+  }
+
   elements.htmlAudio.addEventListener('timeupdate', updateAudioPlayhead);
   elements.htmlAudio.addEventListener('ended', () => {
     state.currentPlayingAudio = false;
     updateAudioPlayButtonIcon();
     elements.waveformPlayhead.style.left = '0%';
+    if (elements.directWaveformPlayhead) elements.directWaveformPlayhead.style.left = '0%';
     elements.liveCaptionOverlay.innerHTML = '';
   });
 
@@ -595,7 +801,10 @@ function updateAudioPlayhead() {
   elements.audioCurrentTime.textContent = formatTime(current);
   elements.waveformPlayhead.style.left = `${Math.min(100, percent)}%`;
 
-  // Highlight active waveform bars
+  if (elements.directAudioCurrentTime) elements.directAudioCurrentTime.textContent = formatTime(current);
+  if (elements.directWaveformPlayhead) elements.directWaveformPlayhead.style.left = `${Math.min(100, percent)}%`;
+
+  // Highlight active waveform bars (Mode A)
   const totalBars = elements.waveformBars.children.length;
   const activeCount = Math.floor((percent / 100) * totalBars);
   Array.from(elements.waveformBars.children).forEach((bar, idx) => {
@@ -606,8 +815,27 @@ function updateAudioPlayhead() {
     }
   });
 
+  // Highlight active waveform bars (Mode B)
+  if (elements.directWaveformBars && elements.directWaveformBars.children.length) {
+    const totalDirectBars = elements.directWaveformBars.children.length;
+    const activeDirectCount = Math.floor((percent / 100) * totalDirectBars);
+    Array.from(elements.directWaveformBars.children).forEach((bar, idx) => {
+      if (idx <= activeDirectCount) {
+        bar.classList.add('active');
+      } else {
+        bar.classList.remove('active');
+      }
+    });
+  }
+
   // Sync live video preview
-  syncLiveVideoScene(current);
+  if (state.studioMode === 'direct' && elements.livePreviewVideo.src) {
+    if (Math.abs(elements.livePreviewVideo.currentTime - current) > 0.3) {
+      elements.livePreviewVideo.currentTime = current;
+    }
+  } else {
+    syncLiveVideoScene(current);
+  }
 
   // Sync live CapCut karaoke captions
   updateLiveKaraokeCaption(current);
@@ -629,7 +857,239 @@ function syncLiveVideoScene(currentTime) {
   }
 }
 
-// Real-time CapCut word-by-word highlight in player
+// Mode Switcher function
+function switchStudioMode(mode) {
+  state.studioMode = mode;
+  if (mode === 'direct') {
+    elements.modeBtnDirect.className = 'px-4 py-2 rounded-lg text-xs font-semibold flex items-center space-x-2 transition bg-emerald-600 text-white shadow';
+    elements.modeBtnGenerate.className = 'px-4 py-2 rounded-lg text-xs font-semibold flex items-center space-x-2 transition bg-transparent hover:bg-slate-800 text-slate-300';
+    elements.modeDescriptionText.innerHTML = `
+      <i data-lucide="video" class="w-3.5 h-3.5 text-emerald-400 shrink-0"></i>
+      <span>Upload your full video directly. Auto-extract audio, generate timestamps, and burn styled multi-font captions.</span>
+    `;
+    elements.sectionModeA.classList.add('hidden');
+    elements.sectionModeB.classList.remove('hidden');
+
+    if (state.directVideo) {
+      elements.storyboardSection.classList.remove('hidden');
+      if (elements.timelineSegmentsBar) elements.timelineSegmentsBar.parentElement.classList.add('hidden');
+      if (elements.storyboardGrid) elements.storyboardGrid.classList.add('hidden');
+      if (elements.btnAutoMatchAllAgain) elements.btnAutoMatchAllAgain.classList.add('hidden');
+      if (elements.btnRenderVideo) elements.btnRenderVideo.innerHTML = '<i data-lucide="film" class="w-4 h-4"></i><span>Burn Captions & Export Video</span>';
+    }
+  } else {
+    elements.modeBtnGenerate.className = 'px-4 py-2 rounded-lg text-xs font-semibold flex items-center space-x-2 transition bg-brand-600 text-white shadow';
+    elements.modeBtnDirect.className = 'px-4 py-2 rounded-lg text-xs font-semibold flex items-center space-x-2 transition bg-transparent hover:bg-slate-800 text-slate-300';
+    elements.modeDescriptionText.innerHTML = `
+      <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-400 shrink-0"></i>
+      <span>Upload audio, auto-match visual scenes from Pexels, and add CapCut animated captions.</span>
+    `;
+    elements.sectionModeB.classList.add('hidden');
+    elements.sectionModeA.classList.remove('hidden');
+
+    if (elements.timelineSegmentsBar) elements.timelineSegmentsBar.parentElement.classList.remove('hidden');
+    if (elements.storyboardGrid) elements.storyboardGrid.classList.remove('hidden');
+    if (elements.btnAutoMatchAllAgain) elements.btnAutoMatchAllAgain.classList.remove('hidden');
+    if (elements.btnRenderVideo) elements.btnRenderVideo.innerHTML = '<i data-lucide="film" class="w-4 h-4"></i><span>Render Final Video</span>';
+  }
+  lucide.createIcons();
+}
+
+// Direct Video Upload Handler
+async function handleDirectVideoUpload(file) {
+  if (!elements.directVideoUploading || !elements.directVideoDropzone) return;
+  elements.directVideoUploading.classList.remove('hidden');
+  elements.directVideoDropzone.classList.add('opacity-50', 'pointer-events-none');
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  try {
+    const resp = await fetch('/api/upload-direct-video', {
+      method: 'POST',
+      body: formData
+    });
+    if (!resp.ok) {
+      const err = await resp.json();
+      throw new Error(err.detail || 'Failed to process video');
+    }
+
+    const data = await resp.json();
+    setDirectVideoState(data);
+  } catch (err) {
+    alert('Video upload error: ' + err.message);
+  } finally {
+    elements.directVideoUploading.classList.add('hidden');
+    elements.directVideoDropzone.classList.remove('opacity-50', 'pointer-events-none');
+  }
+}
+
+function setDirectVideoState(data) {
+  state.directVideo = data;
+  state.audioId = data.audio_id;
+  state.audioDuration = data.duration;
+  state.audioFileName = data.filename;
+  state.waveformPeaks = data.waveform || [];
+
+  // Update Direct UI
+  elements.directVideoDropzone.classList.add('hidden');
+  elements.directVideoPlayerCard.classList.remove('hidden');
+  elements.directVideoDurationBadge.classList.remove('hidden');
+  elements.directVideoDurationBadge.textContent = data.formatted_duration;
+  elements.directVideoFileName.textContent = data.filename;
+  elements.directVideoResBadge.textContent = `${data.width}x${data.height}`;
+  elements.directAudioTotalTime.textContent = formatTime(data.duration);
+  elements.directAudioCurrentTime.textContent = '00:00';
+
+  // Audio element source
+  elements.htmlAudio.src = `/api/audio/${data.audio_id}`;
+  elements.htmlAudio.load();
+
+  // Live video preview
+  elements.livePreviewVideo.dataset.src = data.video_url;
+  elements.livePreviewVideo.src = data.video_url;
+  elements.livePreviewVideo.load();
+
+  // Render direct waveform bars
+  renderDirectWaveform(state.waveformPeaks);
+
+  // Show storyboard section in direct mode
+  elements.storyboardSection.classList.remove('hidden');
+  if (elements.timelineSegmentsBar) elements.timelineSegmentsBar.parentElement.classList.add('hidden');
+  if (elements.storyboardGrid) elements.storyboardGrid.classList.add('hidden');
+  if (elements.btnAutoMatchAllAgain) elements.btnAutoMatchAllAgain.classList.add('hidden');
+  if (elements.btnRenderVideo) elements.btnRenderVideo.innerHTML = '<i data-lucide="film" class="w-4 h-4"></i><span>Burn Captions & Export Video</span>';
+  lucide.createIcons();
+}
+
+function resetDirectVideo() {
+  state.directVideo = null;
+  state.audioId = null;
+  state.audioDuration = 0;
+  elements.htmlAudio.pause();
+  elements.htmlAudio.src = '';
+  elements.livePreviewVideo.pause();
+  elements.livePreviewVideo.src = '';
+  elements.directVideoPlayerCard.classList.add('hidden');
+  elements.directVideoDropzone.classList.remove('hidden');
+  elements.directVideoDurationBadge.classList.add('hidden');
+  elements.liveCaptionOverlay.innerHTML = '';
+}
+
+function renderDirectWaveform(peaks) {
+  if (!elements.directWaveformBars) return;
+  elements.directWaveformBars.innerHTML = '';
+  peaks.forEach((peak, i) => {
+    const bar = document.createElement('div');
+    bar.className = 'waveform-bar w-1 bg-slate-700 rounded-full cursor-pointer hover:bg-emerald-400';
+    bar.style.height = `${Math.max(12, peak * 100)}%`;
+    bar.dataset.index = i;
+    bar.addEventListener('click', () => {
+      const progress = i / peaks.length;
+      elements.htmlAudio.currentTime = progress * state.audioDuration;
+      if (elements.livePreviewVideo) {
+        elements.livePreviewVideo.currentTime = elements.htmlAudio.currentTime;
+      }
+      if (!state.currentPlayingAudio) toggleAudioPlayback();
+    });
+    elements.directWaveformBars.appendChild(bar);
+  });
+}
+
+async function handleDirectAutoTranscribe() {
+  if (!state.audioId) {
+    alert('Please upload a video file first.');
+    return;
+  }
+
+  elements.btnDirectAutoTranscribe.disabled = true;
+  elements.btnDirectAutoTranscribe.innerHTML = '<i data-lucide="loader-2" class="w-3 h-3 animate-spin"></i><span>Transcribing...</span>';
+  lucide.createIcons();
+
+  try {
+    const resp = await fetch('/api/generate-captions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        audio_id: state.audioId,
+        script_text: '',
+        template_id: state.selectedTemplate
+      })
+    });
+    if (!resp.ok) throw new Error('Speech recognition failed');
+    const data = await resp.json();
+
+    if (data.transcript) {
+      elements.directScriptInput.value = data.transcript;
+      elements.directScriptInput.dispatchEvent(new Event('input'));
+    }
+
+    state.captionCards = data.cards || [];
+    state.timedWords = data.words || [];
+    elements.directCaptionStatusIndicator.textContent = `Aligned ${state.timedWords.length} words`;
+    updateLiveKaraokeCaption(elements.htmlAudio.currentTime || 0);
+  } catch (err) {
+    alert('Speech recognition error: ' + err.message);
+  } finally {
+    elements.btnDirectAutoTranscribe.disabled = false;
+    elements.btnDirectAutoTranscribe.innerHTML = '<i data-lucide="mic" class="w-3 h-3"></i><span>Auto-Transcribe Video Audio</span>';
+    lucide.createIcons();
+  }
+}
+
+async function handleDirectSyncCaptions() {
+  if (!state.audioId) {
+    alert('Please upload a video file first.');
+    return;
+  }
+
+  const scriptText = elements.directScriptInput.value.trim();
+  if (!scriptText) {
+    alert('Please enter or transcribe a script for caption alignment.');
+    return;
+  }
+
+  elements.btnDirectSyncCaptions.disabled = true;
+  elements.btnDirectSyncCaptions.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i><span>Aligning Word Timestamps...</span>';
+  lucide.createIcons();
+
+  try {
+    const resp = await fetch('/api/generate-captions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        audio_id: state.audioId,
+        script_text: scriptText,
+        template_id: state.selectedTemplate
+      })
+    });
+    if (!resp.ok) throw new Error('Failed to align captions');
+    const data = await resp.json();
+
+    state.captionCards = data.cards || [];
+    state.timedWords = data.words || [];
+    elements.directCaptionStatusIndicator.textContent = `Aligned ${state.timedWords.length} words`;
+
+    // Ensure player is ready
+    elements.storyboardSection.classList.remove('hidden');
+    elements.livePreviewVideo.dataset.src = state.directVideo.video_url;
+    elements.livePreviewVideo.src = state.directVideo.video_url;
+    elements.livePreviewVideo.currentTime = 0;
+    elements.htmlAudio.currentTime = 0;
+    updateLiveKaraokeCaption(0);
+
+    // Scroll to player
+    elements.storyboardSection.scrollIntoView({ behavior: 'smooth' });
+  } catch (err) {
+    alert('Alignment error: ' + err.message);
+  } finally {
+    elements.btnDirectSyncCaptions.disabled = false;
+    elements.btnDirectSyncCaptions.innerHTML = '<i data-lucide="subtitles" class="w-4 h-4"></i><span>Align Speech & Preview Captions</span>';
+    lucide.createIcons();
+  }
+}
+
+// Real-time CapCut word-by-word highlight in player with Multi-Font and Dual-Colors
 function updateLiveKaraokeCaption(currentTime) {
   if (state.selectedTemplate === 'none' || !state.captionCards.length) {
     elements.liveCaptionOverlay.innerHTML = '';
@@ -644,8 +1104,10 @@ function updateLiveKaraokeCaption(currentTime) {
   }
 
   const tpl = state.captionTemplates.find(t => t.id === state.selectedTemplate) || {};
+  const primaryHex = getActivePrimaryHex();
   const highlightHex = getActiveHighlightHex();
-  const fontOverride = state.selectedFontFamily ? `'${state.selectedFontFamily}', sans-serif` : (tpl.fontname || 'sans-serif');
+  const bodyFont = state.selectedFontFamily || tpl.body_font || tpl.fontname || 'Montserrat';
+  const heroFont = state.selectedHeroFont || tpl.hero_font || bodyFont;
   const anim = tpl.animation || 'bounce';
 
   // Map anim name to CSS anim class
@@ -657,23 +1119,26 @@ function updateLiveKaraokeCaption(currentTime) {
   else if (['slide_up', 'drift_left', 'elevator', 'wave'].includes(anim)) animClass = 'anim-slide';
   else if (['glitch', 'pixel', 'retro_vhs', 'matrix'].includes(anim)) animClass = 'anim-glitch';
 
-  const isItalic = tpl.italic ? 'italic' : '';
+  const isItalic = (tpl.italic || tpl.hero_italic) ? 'italic' : '';
   const isBold = tpl.bold ? 'font-black' : 'font-bold';
 
   elements.liveCaptionOverlay.className = `absolute inset-x-4 bottom-6 flex flex-wrap items-center justify-center text-center pointer-events-none transition duration-150`;
-  elements.liveCaptionOverlay.style.fontFamily = fontOverride;
 
   const wordsHtml = activeCard.words.map(w => {
     const isSpoken = currentTime >= w.start && currentTime <= w.end;
-    const wordStyle = isSpoken
-      ? `color: ${highlightHex}; text-shadow: 0 0 16px ${highlightHex}, 0 2px 6px #000;`
-      : `color: #ffffff; text-shadow: 0 2px 5px rgba(0,0,0,0.85);`;
-
-    return `
-      <span class="karaoke-word ${isBold} ${isItalic} ${isSpoken ? `active-word ${animClass}` : ''}" style="${wordStyle}">
-        ${w.word}
-      </span>
-    `;
+    if (isSpoken) {
+      return `
+        <span class="karaoke-word ${isBold} ${isItalic} active-word ${animClass}" style="font-family: '${heroFont}', cursive, sans-serif; color: ${highlightHex}; text-shadow: 0 0 16px ${highlightHex}, 0 2px 6px #000; transform: scale(1.18);">
+          ${w.word}
+        </span>
+      `;
+    } else {
+      return `
+        <span class="karaoke-word ${isBold}" style="font-family: '${bodyFont}', sans-serif; color: ${primaryHex}; text-shadow: 0 2px 5px rgba(0,0,0,0.9);">
+          ${w.word}
+        </span>
+      `;
+    }
   }).join(' ');
 
   elements.liveCaptionOverlay.innerHTML = wordsHtml;
@@ -1223,6 +1688,65 @@ function renderSwapResults(videos) {
 
 // Render Video with FFmpeg
 async function handleRenderVideo() {
+  // Mode B: Direct Video Mode
+  if (state.studioMode === 'direct') {
+    if (!state.directVideo || !state.audioId) {
+      alert('Please upload your video file first.');
+      return;
+    }
+
+    if (!state.captionCards.length) {
+      const text = elements.directScriptInput ? elements.directScriptInput.value.trim() : '';
+      if (text) {
+        await handleDirectSyncCaptions();
+      } else {
+        alert('Please auto-transcribe or enter a script to generate animated captions.');
+        return;
+      }
+    }
+
+    elements.renderProgressModal.classList.remove('hidden');
+    elements.renderResultBox.classList.add('hidden');
+    elements.renderProgressBar.style.width = '5%';
+    elements.renderPercentText.textContent = '5%';
+    elements.renderPhaseText.textContent = 'Burning styled captions directly onto video with FFmpeg...';
+
+    try {
+      const isVertical = state.directVideo.height > state.directVideo.width;
+      const resp = await fetch('/api/render', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          audio_id: state.audioId,
+          scenes: [],
+          is_direct_video: true,
+          direct_video_path: state.directVideo.local_video_path,
+          caption_template: state.selectedTemplate,
+          primary_color: getActivePrimaryHex(),
+          highlight_color: getActiveHighlightHex(),
+          font_family: state.selectedFontFamily || null,
+          hero_font: state.selectedHeroFont || null,
+          caption_cards: state.captionCards,
+          aspect_ratio: isVertical ? '9:16' : '16:9'
+        })
+      });
+
+      if (!resp.ok) {
+        const err = await resp.json();
+        throw new Error(err.detail || 'Direct rendering failed');
+      }
+
+      const { job_id } = await resp.json();
+      pollRenderStatus(job_id);
+
+    } catch (e) {
+      alert('Render failed: ' + e.message);
+      elements.renderProgressModal.classList.add('hidden');
+    }
+    return;
+  }
+
+  // Mode A: Generated Scenes Mode
   if (!state.audioId || !state.scenes.length) {
     alert('Please prepare audio and scenes first.');
     return;
@@ -1246,9 +1770,11 @@ async function handleRenderVideo() {
         transition_duration: state.transitionDuration,
         aspect_ratio: state.aspectRatio,
         caption_template: state.selectedTemplate,
-        highlight_color: state.selectedHighlightColor,
-        caption_cards: state.captionCards,
-        font_family: state.selectedFontFamily || null
+        primary_color: getActivePrimaryHex(),
+        highlight_color: getActiveHighlightHex(),
+        font_family: state.selectedFontFamily || null,
+        hero_font: state.selectedHeroFont || null,
+        caption_cards: state.captionCards
       })
     });
 
