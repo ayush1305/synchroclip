@@ -1,34 +1,41 @@
 # SynchroClip — AI Audio-Synced Stock Video Studio
 
-A web application that combines multiple stock video clips from the **Pexels API** synchronized to an uploaded audio track and transcript, featuring smooth transitions and **zero hardcoded captions**.
+A web application that combines multiple stock video clips from the **Pexels API** synchronized to an uploaded audio track, with **CapCut-style animated caption templates**, **word-by-word karaoke highlighting**, smooth cinematic transitions, and 1-click export.
 
 ---
 
 ## 🌟 Key Features
 
 1. **Audio Track Upload & Waveform Analysis**:
-   - Upload any voiceover, speech, or music file (`.mp3`, `.wav`, `.m4a`, `.ogg`, `.flac`, `.aac`).
-   - Visual waveform generator and audio playhead with millisecond-accurate timing via `ffprobe`.
+   - Upload voiceovers, speeches, or music (`.mp3`, `.wav`, `.m4a`, `.ogg`, `.flac`, `.aac`).
+   - Interactive waveform visualizer and audio playhead with millisecond-accurate timing via `ffprobe`.
 
-2. **Smart Script Segmentation & Keyword Extraction**:
-   - Analyzes your transcript and breaks it into timed visual scenes matching the audio's duration.
-   - Automatically extracts contextual keywords (nouns, action verbs, scene descriptors).
+2. **CapCut-Style Animated Caption Templates**:
+   - **Trending / Classic Hormozi**: Bold uppercase font with bright yellow active word pop, thick outline, and bounce animation.
+   - **Neon Glow (Purple / Magenta / Cyan)**: Glowing text with diffused neon drop aura.
+   - **Red Fire Glow**: Crimson aura with blazing yellow active word.
+   - **Cinematic Serif**: Elegant editorial multiline typography (Playfair / Georgia) with white-to-cyan glow.
+   - **Word Pop / Single Focus**: High-impact centered word display with zoom-pop per spoken word.
+   - **Minimal Monoline**: Clean white text with translucent rounded pill badge.
+   - **No Captions**: 1-click option to keep the video clean without subtitles.
 
-3. **Pexels Stock Video Search & Matching**:
-   - Automatically queries the Pexels Video API for high-resolution 1080p clips matching each scene's keywords.
-   - Interactive **Swap Clip** drawer: search any query on Pexels and pick alternative footage with 1 click.
-   - Built-in curated stock video library for instant testing out-of-the-box.
+3. **Word-by-Word Karaoke Highlighting**:
+   - As audio plays, each word highlights in real-time.
+   - Customizable highlight colors: **Neon Yellow**, **Toxic Green**, **Electric Cyan**, **Hot Magenta**, **Fiery Orange**, **Luminous White**.
+   - Rendered natively in FFmpeg using Advanced SubStation Alpha (`.ass`) with motion scaling and color styling.
 
-4. **Cinematic Transitions & Normalization**:
+4. **Automated Caption Generation & Alignment**:
+   - Speech-to-Text auto-transcription directly from audio via `SpeechRecognition`.
+   - Voice activity detection via FFmpeg `silencedetect` to anchor word timestamps to speech energy bursts.
+
+5. **Pexels Stock Video Search & Matching**:
+   - Automatically queries Pexels Video API for high-definition 1080p clips matching each scene's keywords.
+   - **Swap Clip** modal: search any query on Pexels and pick alternative footage with 1 click.
+   - Includes curated stock clips for instant out-of-the-box testing.
+
+6. **Seamless Transitions & Normalization**:
    - Employs FFmpeg's `xfade` filter (smooth dissolve, crossfade, dip to black/white, smooth wipe, circle iris).
-   - Normalizes all clips to identical resolution (1080p 16:9 or 9:16 vertical shorts), 30fps, and subtle color tone so transitions feel like one cohesive video.
-   - Scene timings are mathematically calibrated with transition overlaps to match the exact audio duration.
-
-5. **No Subtitles / Captions Added**:
-   - The visual video canvas is kept 100% clean without burnt-in captions, so you can add your custom captions and typography yourself.
-
-6. **Preserved Uploaded Audio**:
-   - Muxes your uploaded audio track in high-fidelity AAC directly onto the final stitched video.
+   - Normalizes all clips to identical resolution (1080p 16:9 or 9:16 vertical shorts), 30fps, and subtle color tone.
 
 ---
 
@@ -46,24 +53,23 @@ A web application that combines multiple stock video clips from the **Pexels API
 
 3. Open your browser at:
    ```
-   http://localhost:8000
+   http://localhost:8080
    ```
 
 ---
 
-## 🖥️ How to Use
+## 📦 Publishing to GitHub
 
-1. **Upload Audio**: Drag and drop your audio file or click "Try Demo Sample" to load a preconfigured audio & script.
-2. **Paste Transcript**: Paste the transcript or text of your audio in the script box.
-3. **Configure Settings**:
-   - Choose **Aspect Ratio** (16:9 for YouTube or 9:16 for Shorts/Reels).
-   - Choose **Transition Type** (Smooth Dissolve, Crossfade, Dip to Black, etc.) and transition duration (e.g. 0.8s).
-4. **Click "Analyze & Auto-Match Clips"**:
-   - The app will automatically split the script into timed scenes and find matching Pexels clips.
-5. **Review Storyboard**:
-   - Hover over any clip to preview video playback.
-   - Click **Swap Clip** to search Pexels for alternative clips.
-   - Use the arrow buttons to reorder scenes.
-6. **Click "Render Final Video"**:
-   - FFmpeg will stitch the clips with seamless crossfades and mux your uploaded audio.
-   - Watch real-time progress and download the completed master MP4!
+The Git repository is already initialized with an initial commit and clean `.gitignore`.
+
+To publish this repository to your GitHub account:
+
+1. Create a new empty repository on [GitHub](https://github.com/new) (e.g. `synchroclip`).
+2. Run these commands in terminal:
+   ```bash
+   git remote add origin https://github.com/<YOUR_USERNAME>/<YOUR_REPO_NAME>.git
+   git branch -M main
+   git push -u origin main
+   ```
+
+You can also download the complete project ZIP anytime by clicking **"Download Project (.ZIP)"** in the top navigation bar of the web app or visiting `http://localhost:8080/api/download-project-zip`.
