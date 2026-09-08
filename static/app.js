@@ -8,13 +8,17 @@ const state = {
   aspectRatio: '16:9',
   transitionType: 'dissolve',
   transitionDuration: 0.8,
-  selectedTemplate: 'capcut_classic',
+  selectedTemplate: 'hormozi_classic',
   selectedHighlightColor: 'yellow',
+  selectedFontFamily: '',
+  templateSearchTerm: '',
   captionTemplates: [],
   highlightColors: {},
+  famousFonts: [],
   captionCards: [],
   timedWords: [],
   activeCategory: 'All',
+  userClips: [],
   pexelsApiKey: localStorage.getItem('synchro_pexels_api_key') || '',
   activeSwapSceneIndex: null,
   currentPlayingAudio: false,
@@ -51,6 +55,9 @@ const elements = {
   customColorHex: document.getElementById('customColorHex'),
   captionTemplatesGrid: document.getElementById('captionTemplatesGrid'),
   captionCatTabs: document.querySelectorAll('.caption-cat-tab'),
+  selectFontFamily: document.getElementById('selectFontFamily'),
+  captionTemplateSearch: document.getElementById('captionTemplateSearch'),
+  templateCountBadge: document.getElementById('templateCountBadge'),
   // Storyboard & Live Preview
   storyboardSection: document.getElementById('storyboardSection'),
   storyboardGrid: document.getElementById('storyboardGrid'),
@@ -74,14 +81,24 @@ const elements = {
   btnSaveApiKey: document.getElementById('btnSaveApiKey'),
   apiKeyStatusDot: document.getElementById('apiKeyStatusDot'),
   apiKeyLabel: document.getElementById('apiKeyLabel'),
-  // Swap Clip Modal
+  // Swap Clip Modal & Video Upload
   swapClipModal: document.getElementById('swapClipModal'),
   btnCloseSwapModal: document.getElementById('btnCloseSwapModal'),
+  swapModalTitle: document.getElementById('swapModalTitle'),
   swapModalSubtitle: document.getElementById('swapModalSubtitle'),
+  tabBtnPexels: document.getElementById('tabBtnPexels'),
+  tabBtnUpload: document.getElementById('tabBtnUpload'),
+  tabContentPexels: document.getElementById('tabContentPexels'),
+  tabContentUpload: document.getElementById('tabContentUpload'),
   swapSearchInput: document.getElementById('swapSearchInput'),
   btnExecuteSearch: document.getElementById('btnExecuteSearch'),
   swapSuggestedChips: document.getElementById('swapSuggestedChips'),
   swapResultsGrid: document.getElementById('swapResultsGrid'),
+  videoUploadDropzone: document.getElementById('videoUploadDropzone'),
+  userVideoFileInput: document.getElementById('userVideoFileInput'),
+  videoUploadLoading: document.getElementById('videoUploadLoading'),
+  userClipsGrid: document.getElementById('userClipsGrid'),
+  userClipsCount: document.getElementById('userClipsCount'),
   // Render Progress Modal
   renderProgressModal: document.getElementById('renderProgressModal'),
   renderProgressBar: document.getElementById('renderProgressBar'),
@@ -118,6 +135,12 @@ async function loadCaptionTemplates() {
     const data = await resp.json();
     state.captionTemplates = data.templates || [];
     state.highlightColors = data.colors || {};
+    state.famousFonts = data.famous_fonts || [];
+
+    // If active template is not in list, fallback to first
+    if (state.captionTemplates.length && !state.captionTemplates.find(t => t.id === state.selectedTemplate)) {
+      state.selectedTemplate = state.captionTemplates[0].id;
+    }
 
     renderHighlightColors();
     renderCaptionTemplates();
@@ -170,39 +193,66 @@ function renderHighlightColors() {
 function renderCaptionTemplates() {
   elements.captionTemplatesGrid.innerHTML = '';
 
+  const search = (state.templateSearchTerm || '').toLowerCase();
+  const category = state.activeCategory;
+
   const filtered = state.captionTemplates.filter(tpl => {
-    if (state.activeCategory === 'All') return true;
-    return tpl.category.toLowerCase() === state.activeCategory.toLowerCase();
+    // Category match
+    const catMatch = (category === 'All') || (tpl.category && tpl.category.toLowerCase() === category.toLowerCase());
+    if (!catMatch) return false;
+
+    // Search match
+    if (search) {
+      const nameMatch = (tpl.name || '').toLowerCase().includes(search);
+      const catNameMatch = (tpl.category || '').toLowerCase().includes(search);
+      const animMatch = (tpl.animation || '').toLowerCase().includes(search);
+      const badgeMatch = (tpl.badge || '').toLowerCase().includes(search);
+      return nameMatch || catNameMatch || animMatch || badgeMatch;
+    }
+    return true;
   });
+
+  if (elements.templateCountBadge) {
+    elements.templateCountBadge.textContent = `${filtered.length} template${filtered.length === 1 ? '' : 's'}`;
+  }
+
+  if (!filtered.length) {
+    elements.captionTemplatesGrid.innerHTML = `
+      <div class="col-span-full py-8 text-center text-xs text-slate-500">
+        No templates found matching "${search}". Try another keyword or select "All".
+      </div>
+    `;
+    return;
+  }
 
   filtered.forEach(tpl => {
     const isSelected = state.selectedTemplate === tpl.id;
     const card = document.createElement('div');
-    card.className = `caption-card relative bg-surface-850 border border-slate-800 rounded-xl p-3 flex flex-col justify-between h-28 select-none ${isSelected ? 'active-tpl' : ''}`;
+    card.className = `caption-card relative bg-surface-850 border border-slate-800 rounded-xl p-2.5 flex flex-col justify-between h-28 select-none transition ${isSelected ? 'active-tpl' : 'hover:border-slate-700'}`;
     
     // Top badge
-    const badgeText = tpl.badge || 'Pro';
+    const badgeText = tpl.badge || tpl.category || 'Pro';
     const badgeColor = tpl.id === 'none' ? 'bg-slate-700 text-slate-300' : 'bg-brand-500/20 text-brand-400 border border-brand-500/30';
 
     card.innerHTML = `
-      <div class="flex items-center justify-between">
-        <span class="text-[9px] uppercase font-bold px-1.5 py-0.5 rounded ${badgeColor}">${badgeText}</span>
+      <div class="flex items-center justify-between pointer-events-none">
+        <span class="text-[9px] uppercase font-bold px-1.5 py-0.2 rounded ${badgeColor}">${badgeText}</span>
         ${isSelected ? '<i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-brand-400"></i>' : ''}
       </div>
 
-      <!-- Preview Text Display Styled Like Reference Image -->
-      <div class="flex-1 flex items-center justify-center text-center px-1 my-1 overflow-hidden">
+      <!-- Preview Text Display -->
+      <div class="flex-1 flex items-center justify-center text-center px-1 my-1 overflow-hidden pointer-events-none">
         ${getTemplatePreviewHtml(tpl)}
       </div>
 
-      <div class="text-[10px] text-slate-400 font-medium truncate text-center">
+      <div class="text-[10px] text-slate-400 font-medium truncate text-center pointer-events-none" title="${tpl.name}">
         ${tpl.name}
       </div>
     `;
 
     card.addEventListener('click', () => {
       state.selectedTemplate = tpl.id;
-      elements.activeTemplateBadge.textContent = tpl.name;
+      if (elements.activeTemplateBadge) elements.activeTemplateBadge.textContent = tpl.name;
       renderCaptionTemplates();
       updateLiveKaraokeCaption(elements.htmlAudio.currentTime || 0);
     });
@@ -219,46 +269,36 @@ function getTemplatePreviewHtml(tpl) {
   }
 
   const highlightHex = getActiveHighlightHex();
+  const fontOverride = state.selectedFontFamily ? `'${state.selectedFontFamily}', sans-serif` : (tpl.fontname || 'sans-serif');
+  const isItalic = tpl.italic ? 'font-style: italic;' : '';
+  const isBold = tpl.bold ? 'font-weight: 800;' : 'font-weight: 600;';
+  const anim = tpl.animation || 'bounce';
 
-  if (tpl.id === 'capcut_classic') {
-    return `
-      <span class="font-extrabold uppercase text-[11px] tracking-tight leading-tight" style="font-family: Impact, Arial Black; color: #ffffff; text-shadow: 0 2px 4px #000;">
-        THE <span style="color: ${highlightHex};">${tpl.preview_highlight}</span>
-      </span>
-    `;
-  } else if (tpl.id === 'neon_fox') {
-    return `
-      <span class="font-extrabold uppercase text-xs tracking-wider" style="color: #ffffff; text-shadow: 0 0 8px ${highlightHex}, 0 0 15px #00ffff;">
-        ${tpl.preview_highlight}
-      </span>
-    `;
-  } else if (tpl.id === 'red_fire') {
-    return `
-      <span class="font-extrabold uppercase text-[11px] tracking-tight" style="color: #ff2a2a; text-shadow: 0 0 10px #ff0000;">
-        THE <span style="color: ${highlightHex};">${tpl.preview_highlight}</span>
-      </span>
-    `;
-  } else if (tpl.id === 'cinematic_serif') {
-    return `
-      <span class="font-serif italic text-[11px] leading-tight" style="color: #ffffff; text-shadow: 0 1px 4px rgba(0,0,0,0.8);">
-        The <span style="color: ${highlightHex};">${tpl.preview_highlight}</span> fox
-      </span>
-    `;
-  } else if (tpl.id === 'word_pop') {
-    return `
-      <span class="font-extrabold uppercase text-base" style="font-family: Impact; color: ${highlightHex}; text-shadow: 0 3px 6px #000;">
-        ${tpl.preview_highlight}
-      </span>
-    `;
-  } else if (tpl.id === 'minimal_monoline') {
-    return `
-      <span class="text-[10px] bg-black/60 px-2 py-0.5 rounded-full" style="color: ${highlightHex};">
-        ${tpl.preview_highlight}
-      </span>
-    `;
+  const previewText = tpl.preview_text || 'AMAZING VIDEO';
+  const highlightWord = tpl.preview_highlight || previewText.split(' ')[0] || 'VIDEO';
+
+  let formattedHtml = '';
+  if (previewText.includes(highlightWord)) {
+    const parts = previewText.split(highlightWord);
+    formattedHtml = `${parts[0]}<span style="color: ${highlightHex}; filter: drop-shadow(0 0 6px ${highlightHex}); font-weight: 900;">${highlightWord}</span>${parts.slice(1).join(highlightWord)}`;
+  } else {
+    formattedHtml = `<span style="color: ${highlightHex};">${previewText}</span>`;
   }
 
-  return `<span class="text-xs font-bold uppercase text-white">${tpl.preview_highlight}</span>`;
+  let extraShadow = 'text-shadow: 0 2px 4px rgba(0,0,0,0.8);';
+  if (anim === 'glow_pulse' || anim === 'neon_glow' || anim === 'aura') {
+    extraShadow = `text-shadow: 0 0 8px ${highlightHex}, 0 0 14px #00ffff;`;
+  } else if (anim === 'fire_pulse' || anim === 'firestorm') {
+    extraShadow = `text-shadow: 0 0 8px #ff4500, 0 0 14px #ff0000;`;
+  } else if (anim === 'word_zoom') {
+    extraShadow = `text-shadow: 0 3px 6px #000;`;
+  }
+
+  return `
+    <span class="uppercase text-[11px] leading-tight tracking-tight line-clamp-2" style="font-family: ${fontOverride}; ${isBold} ${isItalic} color: #ffffff; ${extraShadow}">
+      ${formattedHtml}
+    </span>
+  `;
 }
 
 function setupEventListeners() {
@@ -387,6 +427,57 @@ function setupEventListeners() {
   elements.swapSearchInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') executeSwapSearch();
   });
+
+  // Creator Font Style Selector
+  if (elements.selectFontFamily) {
+    elements.selectFontFamily.addEventListener('change', (e) => {
+      state.selectedFontFamily = e.target.value;
+      renderCaptionTemplates();
+      updateLiveKaraokeCaption(elements.htmlAudio.currentTime || 0);
+    });
+  }
+
+  // Template Search Bar
+  if (elements.captionTemplateSearch) {
+    elements.captionTemplateSearch.addEventListener('input', (e) => {
+      state.templateSearchTerm = e.target.value;
+      renderCaptionTemplates();
+    });
+  }
+
+  // Swap Clip Modal Tabs
+  if (elements.tabBtnPexels) {
+    elements.tabBtnPexels.addEventListener('click', () => switchSwapModalTab('pexels'));
+  }
+  if (elements.tabBtnUpload) {
+    elements.tabBtnUpload.addEventListener('click', () => switchSwapModalTab('upload'));
+  }
+
+  // Custom Video Upload file input & dropzone
+  if (elements.userVideoFileInput) {
+    elements.userVideoFileInput.addEventListener('change', (e) => {
+      if (e.target.files.length) {
+        handleCustomVideoUpload(e.target.files[0]);
+      }
+    });
+  }
+
+  if (elements.videoUploadDropzone) {
+    elements.videoUploadDropzone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      elements.videoUploadDropzone.classList.add('dragover', 'border-brand-500');
+    });
+    elements.videoUploadDropzone.addEventListener('dragleave', () => {
+      elements.videoUploadDropzone.classList.remove('dragover', 'border-brand-500');
+    });
+    elements.videoUploadDropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      elements.videoUploadDropzone.classList.remove('dragover', 'border-brand-500');
+      if (e.dataTransfer.files.length) {
+        handleCustomVideoUpload(e.dataTransfer.files[0]);
+      }
+    });
+  }
 
   // Render progress modal close
   elements.btnCloseRenderModal.addEventListener('click', () => {
@@ -552,18 +643,34 @@ function updateLiveKaraokeCaption(currentTime) {
     return;
   }
 
+  const tpl = state.captionTemplates.find(t => t.id === state.selectedTemplate) || {};
   const highlightHex = getActiveHighlightHex();
-  const tplClass = `tpl-${state.selectedTemplate}`;
+  const fontOverride = state.selectedFontFamily ? `'${state.selectedFontFamily}', sans-serif` : (tpl.fontname || 'sans-serif');
+  const anim = tpl.animation || 'bounce';
 
-  elements.liveCaptionOverlay.className = `absolute inset-x-4 bottom-6 flex flex-wrap items-center justify-center text-center pointer-events-none transition duration-150 ${tplClass}`;
+  // Map anim name to CSS anim class
+  let animClass = 'anim-bounce';
+  if (['word_zoom', 'mega_zoom', 'stomp'].includes(anim)) animClass = 'anim-zoom';
+  else if (['glow_pulse', 'neon_glow', 'aura', 'laser'].includes(anim)) animClass = 'anim-glow';
+  else if (['fire_pulse', 'firestorm'].includes(anim)) animClass = 'anim-fire';
+  else if (['comic_pop', 'boom'].includes(anim)) animClass = 'anim-pop';
+  else if (['slide_up', 'drift_left', 'elevator', 'wave'].includes(anim)) animClass = 'anim-slide';
+  else if (['glitch', 'pixel', 'retro_vhs', 'matrix'].includes(anim)) animClass = 'anim-glitch';
+
+  const isItalic = tpl.italic ? 'italic' : '';
+  const isBold = tpl.bold ? 'font-black' : 'font-bold';
+
+  elements.liveCaptionOverlay.className = `absolute inset-x-4 bottom-6 flex flex-wrap items-center justify-center text-center pointer-events-none transition duration-150`;
+  elements.liveCaptionOverlay.style.fontFamily = fontOverride;
 
   const wordsHtml = activeCard.words.map(w => {
     const isSpoken = currentTime >= w.start && currentTime <= w.end;
-    const highlightStyle = isSpoken
-      ? `color: ${highlightHex}; text-shadow: 0 0 16px ${highlightHex}, 0 2px 4px #000; font-weight: 900;`
-      : '';
+    const wordStyle = isSpoken
+      ? `color: ${highlightHex}; text-shadow: 0 0 16px ${highlightHex}, 0 2px 6px #000;`
+      : `color: #ffffff; text-shadow: 0 2px 5px rgba(0,0,0,0.85);`;
+
     return `
-      <span class="karaoke-word ${isSpoken ? 'active-word' : ''}" style="${highlightStyle}">
+      <span class="karaoke-word ${isBold} ${isItalic} ${isSpoken ? `active-word ${animClass}` : ''}" style="${wordStyle}">
         ${w.word}
       </span>
     `;
@@ -791,10 +898,16 @@ function renderStoryboard() {
           </button>
         </div>
 
-        <button class="btn-swap-clip text-xs px-2.5 py-1.5 rounded-lg bg-surface-900 hover:bg-slate-800 text-brand-400 hover:text-brand-300 border border-slate-700 flex items-center space-x-1.5 transition">
-          <i data-lucide="refresh-ccw" class="w-3 h-3"></i>
-          <span>Swap Clip</span>
-        </button>
+        <div class="flex items-center space-x-1.5">
+          <button class="btn-upload-clip text-xs px-2.5 py-1.5 rounded-lg bg-surface-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700 flex items-center space-x-1 transition" title="Upload your own video clip for this scene">
+            <i data-lucide="upload-cloud" class="w-3.5 h-3.5 text-brand-400"></i>
+            <span>Upload</span>
+          </button>
+          <button class="btn-swap-clip text-xs px-2.5 py-1.5 rounded-lg bg-surface-900 hover:bg-slate-800 text-brand-400 hover:text-brand-300 border border-slate-700 flex items-center space-x-1 transition" title="Search Pexels stock video">
+            <i data-lucide="refresh-ccw" class="w-3.5 h-3.5"></i>
+            <span>Pexels</span>
+          </button>
+        </div>
       </div>
     `;
 
@@ -813,8 +926,11 @@ function renderStoryboard() {
     card.querySelector('.btn-move-left').addEventListener('click', () => moveScene(index, index - 1));
     card.querySelector('.btn-move-right').addEventListener('click', () => moveScene(index, index + 1));
     
-    // Swap clip handler
-    card.querySelector('.btn-swap-clip').addEventListener('click', () => openSwapModal(index));
+    // Upload custom clip handler
+    card.querySelector('.btn-upload-clip').addEventListener('click', () => openSwapModal(index, 'upload'));
+
+    // Swap clip handler (Pexels)
+    card.querySelector('.btn-swap-clip').addEventListener('click', () => openSwapModal(index, 'pexels'));
 
     elements.storyboardGrid.appendChild(card);
   });
@@ -870,7 +986,7 @@ function moveScene(fromIndex, toIndex) {
 }
 
 // Swap Clip Modal Logic
-function openSwapModal(sceneIndex) {
+function openSwapModal(sceneIndex, initialTab = 'pexels') {
   state.activeSwapSceneIndex = sceneIndex;
   const scene = state.scenes[sceneIndex];
 
@@ -891,7 +1007,133 @@ function openSwapModal(sceneIndex) {
   });
 
   elements.swapClipModal.classList.remove('hidden');
-  executeSwapSearch();
+  switchSwapModalTab(initialTab);
+}
+
+function switchSwapModalTab(tab) {
+  if (tab === 'pexels') {
+    elements.tabBtnPexels.className = 'px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-brand-600 text-white flex items-center space-x-1.5 transition';
+    elements.tabBtnUpload.className = 'px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-surface-850 hover:bg-slate-800 text-slate-300 flex items-center space-x-1.5 transition';
+    elements.tabContentPexels.classList.remove('hidden');
+    elements.tabContentUpload.classList.add('hidden');
+    executeSwapSearch();
+  } else {
+    elements.tabBtnUpload.className = 'px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-brand-600 text-white flex items-center space-x-1.5 transition';
+    elements.tabBtnPexels.className = 'px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-surface-850 hover:bg-slate-800 text-slate-300 flex items-center space-x-1.5 transition';
+    elements.tabContentUpload.classList.remove('hidden');
+    elements.tabContentPexels.classList.add('hidden');
+    renderUserClipsGrid();
+  }
+  lucide.createIcons();
+}
+
+// Custom User Video Upload Handler
+async function handleCustomVideoUpload(file) {
+  if (!file) return;
+
+  const validTypes = ['video/mp4', 'video/quicktime', 'video/webm', 'video/x-matroska', 'video/avi'];
+  if (!file.type.startsWith('video/') && !validTypes.includes(file.type)) {
+    alert('Please select a valid video file (.mp4, .mov, .webm, .mkv).');
+    return;
+  }
+
+  elements.videoUploadLoading.classList.remove('hidden');
+  const formData = new FormData();
+  formData.append('file', file);
+
+  try {
+    const resp = await fetch('/api/upload-video', {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!resp.ok) {
+      const err = await resp.json();
+      throw new Error(err.detail || 'Upload failed');
+    }
+
+    const data = await resp.json();
+    const clip = data.clip;
+
+    // Add to local user clips session store
+    if (!state.userClips.some(c => c.id === clip.id)) {
+      state.userClips.unshift(clip);
+    }
+
+    // Assign to active scene
+    if (state.activeSwapSceneIndex !== null && state.scenes[state.activeSwapSceneIndex]) {
+      state.scenes[state.activeSwapSceneIndex].selected_clip = clip;
+      renderStoryboard();
+      renderTimelineOverview();
+      syncLiveVideoScene(elements.htmlAudio.currentTime || 0);
+      elements.swapClipModal.classList.add('hidden');
+    }
+
+    renderUserClipsGrid();
+
+  } catch (e) {
+    alert('Failed to upload video: ' + e.message);
+  } finally {
+    elements.videoUploadLoading.classList.add('hidden');
+    if (elements.userVideoFileInput) elements.userVideoFileInput.value = '';
+  }
+}
+
+function renderUserClipsGrid() {
+  if (!elements.userClipsGrid) return;
+  elements.userClipsGrid.innerHTML = '';
+  if (elements.userClipsCount) {
+    elements.userClipsCount.textContent = `${state.userClips.length} clip${state.userClips.length === 1 ? '' : 's'}`;
+  }
+
+  if (!state.userClips.length) {
+    elements.userClipsGrid.innerHTML = `
+      <div class="col-span-full py-8 text-center text-xs text-slate-500">
+        No custom videos uploaded yet. Drag & drop a video above to use it in this scene!
+      </div>
+    `;
+    return;
+  }
+
+  state.userClips.forEach(clip => {
+    const card = document.createElement('div');
+    card.className = 'group relative rounded-xl overflow-hidden border border-slate-800 hover:border-brand-500 bg-surface-850 flex flex-col justify-between transition cursor-pointer';
+
+    card.innerHTML = `
+      <div class="relative aspect-video bg-black overflow-hidden">
+        <img src="${clip.preview_url || clip.image}" class="w-full h-full object-cover group-hover:opacity-0 transition duration-300">
+        <video src="${clip.video_url}" muted loop preload="none" class="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition duration-300"></video>
+        <span class="absolute top-1.5 right-1.5 bg-brand-600/90 text-[10px] font-mono font-semibold text-white px-1.5 py-0.5 rounded">
+          ${clip.duration}s
+        </span>
+      </div>
+      <div class="p-2.5 flex items-center justify-between">
+        <span class="text-[11px] text-slate-300 font-medium truncate max-w-[130px]">${clip.title}</span>
+        <button class="btn-select-clip px-2.5 py-1 bg-brand-600 hover:bg-brand-500 text-white rounded text-[10px] font-semibold transition">
+          Use
+        </button>
+      </div>
+    `;
+
+    const videoEl = card.querySelector('video');
+    card.addEventListener('mouseenter', () => videoEl.play().catch(() => {}));
+    card.addEventListener('mouseleave', () => {
+      videoEl.pause();
+      videoEl.currentTime = 0;
+    });
+
+    card.querySelector('.btn-select-clip').addEventListener('click', () => {
+      if (state.activeSwapSceneIndex !== null && state.scenes[state.activeSwapSceneIndex]) {
+        state.scenes[state.activeSwapSceneIndex].selected_clip = clip;
+        renderStoryboard();
+        renderTimelineOverview();
+        syncLiveVideoScene(elements.htmlAudio.currentTime || 0);
+        elements.swapClipModal.classList.add('hidden');
+      }
+    });
+
+    elements.userClipsGrid.appendChild(card);
+  });
 }
 
 async function executeSwapSearch() {
@@ -1005,7 +1247,8 @@ async function handleRenderVideo() {
         aspect_ratio: state.aspectRatio,
         caption_template: state.selectedTemplate,
         highlight_color: state.selectedHighlightColor,
-        caption_cards: state.captionCards
+        caption_cards: state.captionCards,
+        font_family: state.selectedFontFamily || null
       })
     });
 

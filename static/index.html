@@ -33,7 +33,11 @@
       }
     }
   </script>
-  <link rel="stylesheet" href="/style.css?v=2.0">
+  <!-- Google Fonts: Viral Creator & Famous Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Bangers&family=Bebas+Neue&family=Cinzel:wght@600;800&family=Inter:wght@400;600;800&family=Montserrat:wght@700;900&family=Orbitron:wght@700;900&family=Oswald:wght@600;700&family=Pacifico&family=Playfair+Display:ital,wght@0,700;1,700&family=Poppins:wght@700;900&family=Rubik:wght@700;900&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css?v=3.0">
 </head>
 <body class="bg-surface-950 text-slate-100 min-h-screen flex flex-col font-sans antialiased selection:bg-brand-500 selection:text-white">
 
@@ -221,11 +225,11 @@
           <div class="flex items-center space-x-2">
             <h2 class="text-base font-bold text-white flex items-center space-x-2">
               <i data-lucide="subtitles" class="w-5 h-5 text-brand-400"></i>
-              <span>3. CapCut Caption Design & Templates</span>
+              <span>3. Animated Caption Design & Templates</span>
             </h2>
-            <span class="text-[10px] uppercase font-bold bg-gradient-to-r from-amber-500 to-rose-500 text-white px-2 py-0.5 rounded-full shadow-sm">Pro Styles</span>
+            <span class="text-[10px] uppercase font-bold bg-gradient-to-r from-amber-500 to-rose-500 text-white px-2 py-0.5 rounded-full shadow-sm">60+ Pro Styles</span>
           </div>
-          <p class="text-xs text-slate-400">Pick from trending motion graphics templates with word-by-word karaoke highlight</p>
+          <p class="text-xs text-slate-400">CapCut & viral creator motion typography with word-by-word active highlighting</p>
         </div>
 
         <!-- Word Highlight Color Palette -->
@@ -248,18 +252,59 @@
         </div>
       </div>
 
-      <!-- Category Filter Tabs (Matching user's reference screenshot) -->
-      <div class="flex items-center space-x-2 overflow-x-auto pb-1 custom-scrollbar">
-        <button class="caption-cat-tab active px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-brand-600 text-white transition" data-cat="All">All</button>
-        <button class="caption-cat-tab px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-surface-850 hover:bg-slate-800 text-slate-300 transition" data-cat="Trending">Trending</button>
-        <button class="caption-cat-tab px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-surface-850 hover:bg-slate-800 text-slate-300 transition" data-cat="Word">Word</button>
-        <button class="caption-cat-tab px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-surface-850 hover:bg-slate-800 text-slate-300 transition" data-cat="Glow">Glow</button>
-        <button class="caption-cat-tab px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-surface-850 hover:bg-slate-800 text-slate-300 transition" data-cat="Serif">Serif</button>
-        <button class="caption-cat-tab px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-surface-850 hover:bg-slate-800 text-slate-300 transition" data-cat="Monoline">Monoline</button>
+      <!-- Font Family & Search Controls Bar -->
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-surface-850 border border-slate-800 p-2.5 rounded-xl">
+        <!-- Font Family Selector -->
+        <div class="flex items-center space-x-2">
+          <span class="text-xs font-semibold text-slate-400 flex items-center space-x-1.5 whitespace-nowrap">
+            <i data-lucide="type" class="w-3.5 h-3.5 text-brand-400"></i>
+            <span>Creator Font:</span>
+          </span>
+          <select id="selectFontFamily" class="bg-surface-900 border border-slate-700 text-xs text-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-brand-500 font-medium cursor-pointer">
+            <option value="">Auto (Template Default)</option>
+            <option value="Montserrat">Montserrat (Viral Standard)</option>
+            <option value="Bebas Neue">Bebas Neue (High Energy)</option>
+            <option value="Impact">Impact (Bold Punch)</option>
+            <option value="Anton">Anton (Ultra Bold)</option>
+            <option value="Bangers">Bangers (MrBeast Comic)</option>
+            <option value="Poppins">Poppins (Modern Clean)</option>
+            <option value="Oswald">Oswald (Editorial Bold)</option>
+            <option value="Cinzel">Cinzel (Cinematic Title)</option>
+            <option value="Playfair Display">Playfair Display (Luxury Serif)</option>
+            <option value="Orbitron">Orbitron (Sci-Fi Cyber)</option>
+            <option value="Inter">Inter (Minimalist Sans)</option>
+            <option value="Pacifico">Pacifico (Creative Script)</option>
+            <option value="Syne">Syne (Trend Avant-Garde)</option>
+            <option value="Rubik">Rubik (Friendly Punch)</option>
+          </select>
+        </div>
+
+        <!-- Template Search Bar -->
+        <div class="relative flex-1 max-w-sm">
+          <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5 pointer-events-none"></i>
+          <input type="text" id="captionTemplateSearch" placeholder="Search 60+ styles (Hormozi, Beast, Glow, Bounce)..." class="w-full bg-surface-900 border border-slate-700 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500">
+        </div>
+
+        <!-- Count info -->
+        <div class="text-[11px] text-slate-400 flex items-center space-x-1 sm:ml-auto">
+          <span id="templateCountBadge" class="bg-brand-500/20 text-brand-400 px-2.5 py-0.5 rounded-full font-mono font-semibold text-[11px]">68 templates</span>
+        </div>
       </div>
 
-      <!-- Templates Grid (Rendered to match the user's reference screenshot cards) -->
-      <div id="captionTemplatesGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3">
+      <!-- Category Filter Tabs -->
+      <div class="flex items-center space-x-2 overflow-x-auto pb-1 custom-scrollbar">
+        <button class="caption-cat-tab active px-3 py-1.5 rounded-lg text-xs font-semibold bg-brand-600 text-white transition whitespace-nowrap" data-cat="All">All (68)</button>
+        <button class="caption-cat-tab px-3 py-1.5 rounded-lg text-xs font-semibold bg-surface-850 hover:bg-slate-800 text-slate-300 transition whitespace-nowrap" data-cat="Creators">Viral Creators (12)</button>
+        <button class="caption-cat-tab px-3 py-1.5 rounded-lg text-xs font-semibold bg-surface-850 hover:bg-slate-800 text-slate-300 transition whitespace-nowrap" data-cat="Bounce">Bounce & Pop (10)</button>
+        <button class="caption-cat-tab px-3 py-1.5 rounded-lg text-xs font-semibold bg-surface-850 hover:bg-slate-800 text-slate-300 transition whitespace-nowrap" data-cat="Glow">Neon & Glow (10)</button>
+        <button class="caption-cat-tab px-3 py-1.5 rounded-lg text-xs font-semibold bg-surface-850 hover:bg-slate-800 text-slate-300 transition whitespace-nowrap" data-cat="Kinetic">Kinetic Motion (10)</button>
+        <button class="caption-cat-tab px-3 py-1.5 rounded-lg text-xs font-semibold bg-surface-850 hover:bg-slate-800 text-slate-300 transition whitespace-nowrap" data-cat="Cinematic">Cinematic Serif (10)</button>
+        <button class="caption-cat-tab px-3 py-1.5 rounded-lg text-xs font-semibold bg-surface-850 hover:bg-slate-800 text-slate-300 transition whitespace-nowrap" data-cat="FX">FX & Glitch (10)</button>
+        <button class="caption-cat-tab px-3 py-1.5 rounded-lg text-xs font-semibold bg-surface-850 hover:bg-slate-800 text-slate-300 transition whitespace-nowrap" data-cat="Clean">Clean Badges (6)</button>
+      </div>
+
+      <!-- Templates Grid (Scrollable grid supporting 68+ templates) -->
+      <div id="captionTemplatesGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7 gap-3 max-h-[380px] overflow-y-auto pr-1 custom-scrollbar">
         <!-- Template cards injected dynamically -->
       </div>
     </section>
@@ -369,42 +414,98 @@
       </div>
     </div>
 
-    <!-- Swap Clip Modal (Pexels Search) -->
+    <!-- Swap Clip Modal (Pexels Search + Custom Video Upload) -->
     <div id="swapClipModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
       <div class="bg-surface-900 border border-slate-800 rounded-2xl max-w-4xl w-full p-6 space-y-4 shadow-2xl max-h-[90vh] flex flex-col">
         <div class="flex items-center justify-between pb-3 border-b border-slate-800">
           <div>
             <h3 class="text-base font-semibold text-white flex items-center space-x-2">
-              <i data-lucide="search" class="w-4 h-4 text-brand-400"></i>
-              <span>Search Pexels Stock Video</span>
+              <i data-lucide="video" class="w-4 h-4 text-brand-400"></i>
+              <span id="swapModalTitle">Choose Clip for Scene</span>
             </h3>
-            <p id="swapModalSubtitle" class="text-xs text-slate-400">Replacing footage for Scene #1</p>
+            <p id="swapModalSubtitle" class="text-xs text-slate-400">Select stock footage or upload your own video clip</p>
           </div>
           <button id="btnCloseSwapModal" class="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition">
             <i data-lucide="x" class="w-5 h-5"></i>
           </button>
         </div>
 
-        <!-- Search Input Bar -->
-        <div class="flex items-center space-x-2">
-          <div class="relative flex-1">
-            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-3"></i>
-            <input type="text" id="swapSearchInput" placeholder="Search keywords (e.g., sunrise coffee, city traffic, office typing)..." class="w-full bg-surface-850 border border-slate-700 rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-500">
-          </div>
-          <button id="btnExecuteSearch" class="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold transition">
-            Search
+        <!-- Modal Mode Tabs: Stock vs Upload -->
+        <div class="flex items-center space-x-2 border-b border-slate-800/80 pb-2">
+          <button id="tabBtnPexels" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-brand-600 text-white flex items-center space-x-1.5 transition">
+            <i data-lucide="search" class="w-3.5 h-3.5"></i>
+            <span>Pexels Stock Videos</span>
+          </button>
+          <button id="tabBtnUpload" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-surface-850 hover:bg-slate-800 text-slate-300 flex items-center space-x-1.5 transition">
+            <i data-lucide="upload-cloud" class="w-3.5 h-3.5 text-brand-400"></i>
+            <span>Upload Your Own Video</span>
           </button>
         </div>
 
-        <!-- Suggested Chips -->
-        <div id="swapSuggestedChips" class="flex flex-wrap gap-1.5 text-xs">
-          <!-- Chips injected dynamically -->
+        <!-- TAB 1: Pexels Stock Video Search -->
+        <div id="tabContentPexels" class="flex-1 flex flex-col space-y-3 overflow-hidden">
+          <!-- Search Input Bar -->
+          <div class="flex items-center space-x-2">
+            <div class="relative flex-1">
+              <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-3"></i>
+              <input type="text" id="swapSearchInput" placeholder="Search keywords (e.g., sunrise coffee, city traffic, office typing)..." class="w-full bg-surface-850 border border-slate-700 rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-500">
+            </div>
+            <button id="btnExecuteSearch" class="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold transition">
+              Search
+            </button>
+          </div>
+
+          <!-- Suggested Chips -->
+          <div id="swapSuggestedChips" class="flex flex-wrap gap-1.5 text-xs">
+            <!-- Chips injected dynamically -->
+          </div>
+
+          <!-- Video Results Grid -->
+          <div id="swapResultsGrid" class="flex-1 overflow-y-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 py-2 pr-1 custom-scrollbar">
+            <!-- Video cards injected dynamically -->
+          </div>
         </div>
 
-        <!-- Video Results Grid -->
-        <div id="swapResultsGrid" class="flex-1 overflow-y-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 py-2 pr-1 custom-scrollbar">
-          <!-- Video cards injected dynamically -->
+        <!-- TAB 2: Custom Video Upload Dropzone & Library -->
+        <div id="tabContentUpload" class="hidden flex-1 flex flex-col space-y-4 overflow-y-auto pr-1 custom-scrollbar">
+          <!-- Video Dropzone -->
+          <div id="videoUploadDropzone" class="video-dropzone rounded-2xl p-6 text-center cursor-pointer relative group flex flex-col items-center justify-center space-y-2 border-2 border-dashed border-slate-700 hover:border-brand-500 bg-surface-850 transition">
+            <input type="file" id="userVideoFileInput" accept="video/mp4,video/quicktime,video/webm,video/x-matroska,video/avi" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+            <div class="w-12 h-12 rounded-2xl bg-brand-500/20 text-brand-400 flex items-center justify-center group-hover:scale-110 transition shadow-lg">
+              <i data-lucide="video" class="w-6 h-6"></i>
+            </div>
+            <div class="text-xs text-slate-200 font-semibold">
+              Drop your video file here, or <span class="text-brand-400 underline">browse</span>
+            </div>
+            <p class="text-[11px] text-slate-500">Supports MP4, MOV, WebM, MKV (up to 4K resolution)</p>
+          </div>
+
+          <!-- Uploading Spinner / Progress -->
+          <div id="videoUploadLoading" class="hidden bg-surface-850 border border-slate-800 rounded-xl p-4 flex items-center space-x-3">
+            <i data-lucide="loader-2" class="w-5 h-5 animate-spin text-brand-400"></i>
+            <div class="text-xs">
+              <p class="font-semibold text-white">Uploading & analyzing clip...</p>
+              <p class="text-slate-400 text-[11px]">Generating fast thumbnail and probing video duration</p>
+            </div>
+          </div>
+
+          <!-- User Uploaded Videos Library -->
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <h4 class="text-xs font-semibold uppercase text-slate-400 flex items-center space-x-1.5">
+                <i data-lucide="folder-video" class="w-3.5 h-3.5 text-brand-400"></i>
+                <span>Your Uploaded Clips</span>
+              </h4>
+              <span id="userClipsCount" class="text-[11px] text-slate-500">0 clips</span>
+            </div>
+            <div id="userClipsGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+              <div class="col-span-full py-8 text-center text-xs text-slate-500">
+                No custom videos uploaded yet. Drag & drop a video above to use it in this scene!
+              </div>
+            </div>
+          </div>
         </div>
+
       </div>
     </div>
 
@@ -484,6 +585,6 @@
     <span>SynchroClip Video Studio • CapCut-style Animated Captions & Pexels Stock Video Synthesis</span>
   </footer>
 
-  <script src="/app.js?v=2.0"></script>
+  <script src="/app.js?v=3.0"></script>
 </body>
 </html>

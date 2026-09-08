@@ -92,8 +92,14 @@ def render_video_task(
                     "message": f"Downloading clip {scene_idx + 1} of {num_scenes}..."
                 })
 
-            if url.startswith("http://") or url.startswith("https://"):
+            if clip_info.get("local_path") and os.path.exists(clip_info["local_path"]):
+                local_clip_path = clip_info["local_path"]
+            elif url.startswith("http://") or url.startswith("https://"):
                 download_file(url, local_clip_path, make_dl_cb(i))
+            elif os.path.isabs(url) and os.path.exists(url):
+                local_clip_path = url
+            elif os.path.exists(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), url.lstrip("/"))):
+                local_clip_path = os.path.normpath(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), url.lstrip("/")))
             else:
                 local_clip_path = url
 

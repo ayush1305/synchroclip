@@ -55,57 +55,99 @@
 /* Live Karaoke Text Pop in browser player */
 .karaoke-word {
   display: inline-block;
-  transition: transform 0.12s ease-out, color 0.12s ease-out, text-shadow 0.12s ease-out;
-  padding: 0 0.18em;
+  transition: transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.12s ease-out, text-shadow 0.12s ease-out;
+  padding: 0 0.15em;
   font-weight: 800;
-}
-.karaoke-word.active-word {
-  transform: scale(1.18);
-  z-index: 10;
+  transform-origin: center center;
 }
 
-/* Specific template styles for live player */
-.tpl-capcut_classic {
-  font-family: 'Impact', 'Arial Black', sans-serif;
-  text-transform: uppercase;
-  color: #ffffff;
-  -webkit-text-stroke: 2px #000000;
-  text-shadow: 0 4px 8px rgba(0,0,0,0.8);
+/* Animations for active karaoke words */
+.anim-bounce.active-word {
+  animation: word-bounce 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
-.tpl-neon_fox {
-  font-family: 'Arial Black', sans-serif;
-  text-transform: uppercase;
-  color: #ffffff;
-  text-shadow: 0 0 10px #ff00ea, 0 0 20px #00ffff, 0 0 30px #d400ff;
+.anim-zoom.active-word {
+  animation: word-zoom 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
-.tpl-red_fire {
-  font-family: 'Impact', 'Arial Black', sans-serif;
-  text-transform: uppercase;
-  color: #ff2a2a;
-  text-shadow: 0 0 12px #ff0000, 0 0 24px #ff5500;
+.anim-glow.active-word {
+  animation: word-glow 0.6s infinite alternate ease-in-out;
 }
-.tpl-cinematic_serif {
-  font-family: 'Georgia', serif;
-  font-style: italic;
-  color: #ffffff;
-  text-shadow: 0 2px 10px rgba(0,0,0,0.9), 0 0 15px rgba(255,255,255,0.4);
+.anim-fire.active-word {
+  animation: word-fire 0.4s infinite alternate ease-in-out;
 }
-.tpl-word_pop {
-  font-family: 'Impact', 'Arial Black', sans-serif;
-  text-transform: uppercase;
-  font-size: 2.2rem;
-  color: #ffffff;
-  -webkit-text-stroke: 3px #000000;
-  text-shadow: 0 6px 12px rgba(0,0,0,0.9);
+.anim-pop.active-word {
+  animation: word-pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
-.tpl-minimal_monoline {
-  font-family: 'Segoe UI', 'Inter', sans-serif;
-  color: #ffffff;
-  background: rgba(0, 0, 0, 0.65);
-  padding: 6px 14px;
-  border-radius: 9999px;
-  backdrop-filter: blur(4px);
-  text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+.anim-slide.active-word {
+  animation: word-slide 0.3s ease-out forwards;
+}
+.anim-glitch.active-word {
+  animation: word-glitch 0.3s infinite ease-in-out;
+}
+
+@keyframes word-bounce {
+  0% { transform: scale(0.9) translateY(4px); }
+  50% { transform: scale(1.24) translateY(-3px); }
+  100% { transform: scale(1.16) translateY(0); }
+}
+
+@keyframes word-zoom {
+  0% { transform: scale(0.85); }
+  100% { transform: scale(1.28); }
+}
+
+@keyframes word-pop {
+  0% { transform: scale(0.7); }
+  70% { transform: scale(1.3); }
+  100% { transform: scale(1.2); }
+}
+
+@keyframes word-slide {
+  0% { transform: translateY(8px); opacity: 0.7; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes word-glow {
+  0% { filter: drop-shadow(0 0 4px currentColor); }
+  100% { filter: drop-shadow(0 0 16px currentColor) drop-shadow(0 0 28px currentColor); }
+}
+
+@keyframes word-fire {
+  0% { filter: drop-shadow(0 0 6px #ff4500); transform: scale(1.12); }
+  100% { filter: drop-shadow(0 0 18px #ff0000) drop-shadow(0 0 24px #ffa500); transform: scale(1.18); }
+}
+
+@keyframes word-glitch {
+  0%, 100% { transform: translate(0); }
+  20% { transform: translate(-2px, 1px); }
+  40% { transform: translate(2px, -1px); }
+  60% { transform: translate(-1px, 2px); }
+  80% { transform: translate(1px, -2px); }
+}
+
+/* Base Template Styles for Overlay & Card Previews */
+.font-montserrat { font-family: 'Montserrat', sans-serif !important; }
+.font-bebas { font-family: 'Bebas Neue', sans-serif !important; }
+.font-anton { font-family: 'Anton', sans-serif !important; }
+.font-bangers { font-family: 'Bangers', cursive !important; }
+.font-poppins { font-family: 'Poppins', sans-serif !important; }
+.font-oswald { font-family: 'Oswald', sans-serif !important; }
+.font-cinzel { font-family: 'Cinzel', serif !important; }
+.font-playfair { font-family: 'Playfair Display', serif !important; }
+.font-orbitron { font-family: 'Orbitron', sans-serif !important; }
+.font-inter { font-family: 'Inter', sans-serif !important; }
+.font-pacifico { font-family: 'Pacifico', cursive !important; }
+.font-syne { font-family: 'Syne', sans-serif !important; }
+.font-rubik { font-family: 'Rubik', sans-serif !important; }
+
+/* Custom Video Dropzone */
+.video-dropzone {
+  border: 2px dashed #3b4661;
+  background-color: #0e1424;
+  transition: all 0.2s ease;
+}
+.video-dropzone:hover, .video-dropzone.dragover {
+  border-color: #6366f1;
+  background-color: #141b2f;
 }
 
 /* Pulse animation for active rendering */

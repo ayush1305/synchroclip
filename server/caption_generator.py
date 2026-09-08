@@ -210,11 +210,12 @@ def hex_to_ass_color(hex_str: str) -> str:
 
 def generate_ass_subtitles(
     caption_cards: list[dict],
-    template_id: str = "capcut_classic",
+    template_id: str = "hormozi_classic",
     highlight_color_key: str = "yellow",
     output_path: str = "captions.ass",
     width: int = 1920,
-    height: int = 1080
+    height: int = 1080,
+    font_family_override: Optional[str] = None
 ) -> str:
     """
     Generates Advanced SubStation Alpha (.ass) subtitle file with word-by-word
@@ -226,7 +227,7 @@ def generate_ass_subtitles(
             f.write("")
         return output_path
 
-    header = caption_templates.build_ass_header(template_id, width=width, height=height)
+    header = caption_templates.build_ass_header(template_id, width=width, height=height, font_override=font_family_override)
     
     # Highlight color ASS tag: supports any custom hex or preset name
     cleaned_key = highlight_color_key.strip().lstrip("#")
@@ -247,6 +248,7 @@ def generate_ass_subtitles(
         if not words:
             continue
 
+        anim = tpl.get("animation", "bounce")
         for target_idx, active_word in enumerate(words):
             slice_start = to_ass_time(active_word["start"])
             slice_end = to_ass_time(active_word["end"])
@@ -255,14 +257,20 @@ def generate_ass_subtitles(
             for idx, w in enumerate(words):
                 word_text = w["word"]
                 if idx == target_idx:
-                    if tpl["animation"] == "bounce":
-                        line_parts.append(f"{{\\c{highlight_ass}\\fscx112\\fscy112}}{word_text}{{\\r}}")
-                    elif tpl["animation"] == "word_zoom":
-                        line_parts.append(f"{{\\c{highlight_ass}\\fscx120\\fscy120}}{word_text}{{\\r}}")
-                    elif tpl["animation"] == "glow_pulse":
+                    if anim in ("bounce", "spring", "elastic", "jelly"):
+                        line_parts.append(f"{{\\c{highlight_ass}\\fscx114\\fscy114}}{word_text}{{\\r}}")
+                    elif anim in ("word_zoom", "mega_zoom", "stomp"):
+                        line_parts.append(f"{{\\c{highlight_ass}\\fscx124\\fscy124}}{word_text}{{\\r}}")
+                    elif anim in ("glow_pulse", "neon_glow", "aura", "laser"):
                         line_parts.append(f"{{\\c{highlight_ass}\\bord5\\blur4}}{word_text}{{\\r}}")
-                    elif tpl["animation"] == "fire_pulse":
+                    elif anim in ("fire_pulse", "firestorm"):
                         line_parts.append(f"{{\\c{highlight_ass}\\bord6\\3c&H000000FF&}}{word_text}{{\\r}}")
+                    elif anim in ("comic_pop", "boom"):
+                        line_parts.append(f"{{\\c{highlight_ass}\\fscx122\\fscy122\\bord5}}{word_text}{{\\r}}")
+                    elif anim in ("slide_up", "drift_left", "diagonal", "elevator", "wave"):
+                        line_parts.append(f"{{\\c{highlight_ass}\\fscx108\\fscy108}}{word_text}{{\\r}}")
+                    elif anim in ("glitch", "pixel", "retro_vhs", "matrix"):
+                        line_parts.append(f"{{\\c{highlight_ass}\\fscx110\\fscy110\\blur2}}{word_text}{{\\r}}")
                     else:
                         line_parts.append(f"{{\\c{highlight_ass}}}{word_text}{{\\r}}")
                 else:

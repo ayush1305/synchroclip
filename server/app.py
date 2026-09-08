@@ -1,6 +1,8 @@
 import os
 import uuid
 import shutil
+import json
+import subprocess
 from typing import Optional
 from fastapi import FastAPI, File, UploadFile, Form, HTTPException, BackgroundTasks
 from fastapi.responses import FileResponse, JSONResponse
@@ -19,11 +21,13 @@ import zipfile
 # Resolve base directories
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
+VIDEO_UPLOAD_DIR = os.path.join(UPLOAD_DIR, "videos")
 OUTPUT_DIR = os.path.join(BASE_DIR, "output")
 CACHE_DIR = os.path.join(BASE_DIR, "cache")
 STATIC_DIR = os.path.join(BASE_DIR, "static")
 
 os.makedirs(UPLOAD_DIR, exist_ok=True)
+os.makedirs(VIDEO_UPLOAD_DIR, exist_ok=True)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 os.makedirs(CACHE_DIR, exist_ok=True)
 os.makedirs(STATIC_DIR, exist_ok=True)
@@ -81,6 +85,65 @@ class RenderRequest(BaseModel):
     caption_template: Optional[str] = "none"
     highlight_color: Optional[str] = "yellow"
     caption_cards: Optional[list[dict]] = None
+    font_family: Optional[str] = None
+
+def get_video_info_and_thumb(video_path: str, thumb_path: str) -> dict:
+    duration = 0.0
+    width = 1920
+    height = 1080
+    try:
+        cmd = [
+            "ffprobe", "-v", "quiet",
+            "-print_format", "json",
+            "-show_format", "-show_streams",
+            video_path
+        ]
+        res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=True)
+        data = json.loads(res.stdout)
+        duration = float(data.get("format", {}).get("duration", 0))
+        for s in data.get("streams", []):
+            if s.get("codec_type") == "video":
+                width = int(s.get("width", 1920))
+                height = int(s.get("height", 1080))
+                if duration == 0 and "duration" in s:
+                    try:
+                        duration = float(s["duration"])
+                    except Exception:
+                        pass
+                break
+    except Exception as e:
+        print(f"Warning: ffprobe failed on {video_path}: {e}")
+
+    try:
+        seek_pos = "00:00:01.000" if duration > 1.5 else "00:00:00.100"
+        thumb_cmd = [
+            "ffmpeg", "-y",
+            "-ss", seek_pos,
+            "-i", video_path,
+            "-vframes", "1",
+            "-vf", "scale=640:-2",
+            "-q:v", "3",
+            thumb_path
+        ]
+        subprocess.run(thumb_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+    except Exception as e:
+        try:
+            fallback_cmd = [
+                "ffmpeg", "-y",
+                "-i", video_path,
+                "-vframes", "1",
+                "-q:v", "3",
+                thumb_path
+            ]
+            subprocess.run(fallback_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except Exception:
+            pass
+
+    return {
+        "duration": round(duration, 2),
+        "width": width,
+        "height": height
+    }
 
 @app.post("/api/upload-audio")
 async def upload_audio(file: UploadFile = File(...)):
@@ -237,7 +300,8 @@ async def render_video(req: RenderRequest):
             highlight_color_key=req.highlight_color or "yellow",
             output_path=sub_path,
             width=width,
-            height=height
+            height=height,
+            font_family_override=req.font_family
         )
         caption_ass_path = sub_path
 
@@ -257,6 +321,52 @@ async def render_video(req: RenderRequest):
         "status": "started",
         "job_id": job_id
     }
+
+@app.post("/api/upload-video")
+async def upload_video(file: UploadFile = File(...)):
+    """
+    Uploads a user video clip (.mp4, .mov, .webm, .mkv), extracts duration & dimensions,
+    generates a thumbnail, and returns clip metadata ready for storyboard integration.
+    """
+    try:
+        ext = os.path.splitext(file.filename)[1].lower() or ".mp4"
+        valid_exts = {".mp4", ".mov", ".webm", ".mkv", ".avi", ".m4v"}
+        if ext not in valid_exts:
+            raise HTTPException(status_code=400, detail=f"Unsupported video format '{ext}'. Allowed: MP4, MOV, WebM, MKV.")
+
+        video_id = uuid.uuid4().hex[:10]
+        safe_name = f"user_{video_id}{ext}"
+        thumb_name = f"user_{video_id}_thumb.jpg"
+        target_video_path = os.path.join(VIDEO_UPLOAD_DIR, safe_name)
+        target_thumb_path = os.path.join(VIDEO_UPLOAD_DIR, thumb_name)
+
+        with open(target_video_path, "wb") as buf:
+            shutil.copyfileobj(file.file, buf)
+
+        info = get_video_info_and_thumb(target_video_path, target_thumb_path)
+        base_title = os.path.splitext(file.filename)[0]
+
+        return {
+            "status": "success",
+            "clip": {
+                "id": f"upload_{video_id}",
+                "title": f"My Video: {base_title[:24]}",
+                "video_url": f"/uploads/videos/{safe_name}",
+                "local_path": target_video_path,
+                "preview_url": f"/uploads/videos/{thumb_name}" if os.path.exists(target_thumb_path) else f"/uploads/videos/{safe_name}",
+                "image": f"/uploads/videos/{thumb_name}" if os.path.exists(target_thumb_path) else "",
+                "duration": info["duration"],
+                "width": info["width"],
+                "height": info["height"],
+                "author": "My Upload",
+                "is_user_upload": True
+            }
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error handling video upload: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to process video: {str(e)}")
 
 @app.get("/api/render-status/{job_id}")
 async def get_render_status(job_id: str):
@@ -344,12 +454,13 @@ async def get_sample_demo():
 @app.get("/api/caption-templates")
 async def get_caption_templates():
     """
-    Returns available CapCut-style caption templates and highlight color palette.
+    Returns available CapCut-style caption templates, highlight color palette, and famous fonts.
     """
     return {
         "status": "success",
         "templates": list(caption_templates.TEMPLATES.values()),
-        "colors": caption_templates.HIGHLIGHT_COLORS
+        "colors": caption_templates.HIGHLIGHT_COLORS,
+        "famous_fonts": caption_templates.FAMOUS_FONTS
     }
 
 @app.post("/api/generate-captions")
@@ -420,6 +531,9 @@ async def get_git_info():
             "git push -u origin main"
         ]
     }
+
+# Mount uploads directory so browser can preview uploaded video clips & thumbs
+app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
 # Mount static web UI
 app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="static")
