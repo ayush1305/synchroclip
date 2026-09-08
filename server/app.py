@@ -18,8 +18,16 @@ import caption_templates
 import caption_generator
 import zipfile
 
-# Resolve base directories
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+import sys
+
+# Resolve base directories (supporting standalone PyInstaller frozen app)
+if getattr(sys, 'frozen', False):
+    APP_DIR = getattr(sys, '_MEIPASS', os.path.dirname(sys.executable))
+    BASE_DIR = os.path.dirname(sys.executable)
+else:
+    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    APP_DIR = BASE_DIR
+
 UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
 VIDEO_UPLOAD_DIR = os.path.join(UPLOAD_DIR, "videos")
 DIRECT_VIDEO_DIR = os.path.join(UPLOAD_DIR, "direct_videos")
@@ -27,7 +35,7 @@ PIP_UPLOAD_DIR = os.path.join(UPLOAD_DIR, "pip")
 AUDIO_DIR = os.path.join(UPLOAD_DIR, "audio")
 OUTPUT_DIR = os.path.join(BASE_DIR, "output")
 CACHE_DIR = os.path.join(BASE_DIR, "cache")
-STATIC_DIR = os.path.join(BASE_DIR, "static")
+STATIC_DIR = os.path.join(APP_DIR, "static")
 
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(VIDEO_UPLOAD_DIR, exist_ok=True)
@@ -669,6 +677,16 @@ async def download_project_zip():
                 zipf.write(file_path, arcname=rel_path)
 
     return FileResponse(zip_path, media_type="application/zip", filename="synchroclip-studio.zip")
+
+@app.get("/api/download-app-exe")
+async def download_app_exe():
+    """
+    Direct standalone Windows Executable (.exe) download - no zip needed.
+    """
+    exe_path = os.path.join(BASE_DIR, "dist", "SynchroClip.exe")
+    if not os.path.exists(exe_path):
+        raise HTTPException(status_code=404, detail="Standalone executable not found.")
+    return FileResponse(exe_path, media_type="application/vnd.microsoft.portable-executable", filename="SynchroClip.exe")
 
 @app.get("/api/git-info")
 async def get_git_info():

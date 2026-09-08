@@ -63,9 +63,14 @@
         <span>Try Demo Sample</span>
       </button>
 
-      <a id="btnDownloadZip" href="/api/download-project-zip" download="synchroclip-studio.zip" class="text-xs flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-brand-600/20 hover:bg-brand-600/30 text-brand-300 transition border border-brand-500/30">
-        <i data-lucide="folder-archive" class="w-3.5 h-3.5 text-brand-400"></i>
-        <span>Download Project (.ZIP)</span>
+      <a id="btnDownloadExe" href="/api/download-app-exe" download="SynchroClip.exe" class="text-xs flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 transition border border-emerald-500/30 shadow-sm font-semibold">
+        <i data-lucide="download-cloud" class="w-3.5 h-3.5 text-emerald-400"></i>
+        <span>Direct App (.EXE)</span>
+      </a>
+
+      <a id="btnDownloadZip" href="/api/download-project-zip" download="synchroclip-studio.zip" class="text-xs flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition border border-slate-700">
+        <i data-lucide="folder-archive" class="w-3.5 h-3.5 text-slate-400"></i>
+        <span>Source Code (.ZIP)</span>
       </a>
 
       <a id="btnGitHub" href="https://github.com/ayush1305/synchroclip" target="_blank" rel="noopener noreferrer" class="text-xs flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-surface-800 hover:bg-slate-700 text-slate-200 transition border border-slate-700">
@@ -837,15 +842,21 @@
           </div>
         </div>
 
-        <div class="pt-3 border-t border-slate-800 flex items-center justify-between">
-          <a href="https://github.com/ayush1305/synchroclip" target="_blank" rel="noopener noreferrer" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold shadow transition flex items-center space-x-1.5 border border-slate-700">
-            <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
-            <span>Open on GitHub</span>
+        <div class="pt-3 border-t border-slate-800 flex items-center justify-between gap-2 flex-wrap">
+          <a href="/api/download-app-exe" download="SynchroClip.exe" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow transition flex items-center space-x-1.5">
+            <i data-lucide="download-cloud" class="w-3.5 h-3.5"></i>
+            <span>Download App (.EXE)</span>
           </a>
-          <a href="/api/download-project-zip" download="synchroclip-studio.zip" class="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold shadow transition flex items-center space-x-1.5">
-            <i data-lucide="download" class="w-3.5 h-3.5"></i>
-            <span>Download .ZIP</span>
-          </a>
+          <div class="flex items-center space-x-2">
+            <a href="https://github.com/ayush1305/synchroclip" target="_blank" rel="noopener noreferrer" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold shadow transition flex items-center space-x-1.5 border border-slate-700">
+              <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+              <span>GitHub</span>
+            </a>
+            <a href="/api/download-project-zip" download="synchroclip-studio.zip" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition border border-slate-700 flex items-center space-x-1.5">
+              <i data-lucide="folder-archive" class="w-3.5 h-3.5"></i>
+              <span>Source (.ZIP)</span>
+            </a>
+          </div>
         </div>
       </div>
     </div>
