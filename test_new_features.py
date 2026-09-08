@@ -78,6 +78,54 @@ def test_multifont_and_dual_color_ass():
     if os.path.exists(ass_path):
         os.remove(ass_path)
 
+def test_shine_toggle_ass_output():
+    print("=== Test 2b: Crisp Matte ASS vs. Optional Shine Glow Toggle ===")
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    clean_ass = os.path.join(base_dir, "test_clean_matte.ass")
+    shine_ass = os.path.join(base_dir, "test_with_shine.ass")
+
+    words = [
+        {"word": "CLEAN", "start": 0.0, "end": 0.5, "duration": 0.5},
+        {"word": "MATTE", "start": 0.5, "end": 1.0, "duration": 0.5}
+    ]
+    cards = caption_generator.chunk_words_into_cards(words, max_words_per_card=2)
+
+    # 1. Default (enable_shine=False): Must be crisp with NO \blur glowing aura
+    caption_generator.generate_ass_subtitles(
+        caption_cards=cards,
+        template_id="creator_hierarchy",
+        highlight_color_key="#06b6d4",
+        primary_color_key="#ffffff",
+        output_path=clean_ass,
+        enable_shine=False
+    )
+    assert os.path.exists(clean_ass)
+    with open(clean_ass, "r", encoding="utf-8") as f:
+        clean_content = f.read()
+
+    assert r"\blur" not in clean_content, "Default ASS subtitles should have zero blur or glowing halo"
+    print("Clean matte ASS verified: Zero blur, pure sharp crisp text!")
+
+    # 2. Enabled (enable_shine=True): Must include shine glow tag
+    caption_generator.generate_ass_subtitles(
+        caption_cards=cards,
+        template_id="creator_hierarchy",
+        highlight_color_key="#06b6d4",
+        primary_color_key="#ffffff",
+        output_path=shine_ass,
+        enable_shine=True
+    )
+    assert os.path.exists(shine_ass)
+    with open(shine_ass, "r", encoding="utf-8") as f:
+        shine_content = f.read()
+
+    assert r"\blur3" in shine_content or r"\blur4" in shine_content, "Shine-enabled ASS should contain blur/glow tags"
+    print("Shine-enabled ASS verified: Glow aura present when toggled ON!\n")
+
+    for p in [clean_ass, shine_ass]:
+        if os.path.exists(p):
+            os.remove(p)
+
 def test_api_caption_templates_endpoint():
     print("=== Test 3: GET /api/caption-templates Endpoint ===")
     resp = client.get("/api/caption-templates")
@@ -265,10 +313,11 @@ def test_full_render_with_custom_video_and_captions():
 if __name__ == "__main__":
     test_caption_templates_and_fonts()
     test_multifont_and_dual_color_ass()
+    test_shine_toggle_ass_output()
     test_api_caption_templates_endpoint()
     direct_info = test_direct_video_upload_endpoint()
     test_direct_video_render_burn(direct_info)
     test_full_render_with_custom_video_and_captions()
     print("==================================================================")
-    print("ALL 6 TEST SUITES PASSED! DIRECT VIDEO, MULTI-FONT & DUAL-COLORS OK!")
+    print("ALL 7 TEST SUITES PASSED! CRISP MATTE SUBTITLES & SHINE TOGGLE OK!")
     print("==================================================================")

@@ -24,6 +24,7 @@ const state = {
   selectedHighlightColor: '#facc15',
   selectedFontFamily: '',
   selectedHeroFont: '',
+  enableShine: false,
   studioMode: 'generate', // 'generate' | 'direct'
   directVideo: null,
   templateSearchTerm: '',
@@ -98,6 +99,9 @@ const elements = {
   customColor2Picker: document.getElementById('customColor2Picker'),
   customColor2Preview: document.getElementById('customColor2Preview'),
   customColor2Hex: document.getElementById('customColor2Hex'),
+  btnToggleShine: document.getElementById('btnToggleShine'),
+  shineIcon: document.getElementById('shineIcon'),
+  shineStatusLabel: document.getElementById('shineStatusLabel'),
   captionTemplatesGrid: document.getElementById('captionTemplatesGrid'),
   captionCatTabs: document.querySelectorAll('.caption-cat-tab'),
   selectFontFamily: document.getElementById('selectFontFamily'),
@@ -159,6 +163,7 @@ const elements = {
 // Initialize UI
 async function init() {
   updateApiKeyStatusUI();
+  updateShineButtonUI();
   setupEventListeners();
   renderColor1Pills();
   await loadCaptionTemplates();
@@ -357,11 +362,20 @@ function getTemplatePreviewHtml(tpl) {
   const previewText = tpl.preview_text || 'AMAZING VIDEO';
   const highlightWord = tpl.preview_highlight || previewText.split(' ')[0] || 'VIDEO';
 
-  let extraShadow = 'text-shadow: 0 2px 4px rgba(0,0,0,0.8);';
-  if (['glow_pulse', 'neon_glow', 'aura', 'laser'].includes(anim)) {
-    extraShadow = `text-shadow: 0 0 8px ${highlightHex}, 0 0 14px #00ffff;`;
-  } else if (['fire_pulse', 'firestorm'].includes(anim)) {
-    extraShadow = `text-shadow: 0 0 8px #ff4500, 0 0 14px #ff0000;`;
+  // Crisp, matte base text shadow - NO blurry glowing halo by default
+  let extraShadow = 'text-shadow: 0 1px 2px rgba(0,0,0,0.9);';
+  let heroShineFilter = '';
+  let heroTextShadow = 'text-shadow: 0 1px 2px rgba(0,0,0,0.9);';
+
+  // Only apply glowing halos IF user explicitly turned Shine ON via the toggle button
+  if (state.enableShine) {
+    heroShineFilter = `filter: drop-shadow(0 0 6px ${highlightHex});`;
+    heroTextShadow = `text-shadow: 0 0 10px ${highlightHex};`;
+    if (['glow_pulse', 'neon_glow', 'aura', 'laser'].includes(anim)) {
+      extraShadow = `text-shadow: 0 0 8px ${highlightHex}, 0 0 14px #00ffff;`;
+    } else if (['fire_pulse', 'firestorm'].includes(anim)) {
+      extraShadow = `text-shadow: 0 0 8px #ff4500, 0 0 14px #ff0000;`;
+    }
   }
 
   // Multi-font hybrid templates display
@@ -370,7 +384,7 @@ function getTemplatePreviewHtml(tpl) {
       return `
         <div class="flex flex-col items-center justify-center space-y-0.5 pointer-events-none leading-none">
           <span class="text-[8px] uppercase tracking-widest font-semibold" style="font-family: '${bodyFont}', sans-serif; color: ${primaryHex}; opacity: 0.85;">WATCH THIS</span>
-          <span class="text-[13px] uppercase font-black tracking-wide" style="font-family: '${heroFont}', sans-serif; color: ${highlightHex}; filter: drop-shadow(0 0 8px ${highlightHex});">GAME CHANGER</span>
+          <span class="text-[13px] uppercase font-black tracking-wide" style="font-family: '${heroFont}', sans-serif; color: ${highlightHex}; ${state.enableShine ? `filter: drop-shadow(0 0 8px ${highlightHex});` : ''}">GAME CHANGER</span>
           <span class="text-[8px] uppercase tracking-wider font-semibold" style="font-family: '${bodyFont}', sans-serif; color: ${primaryHex}; opacity: 0.85;">TODAY</span>
         </div>
       `;
@@ -380,7 +394,7 @@ function getTemplatePreviewHtml(tpl) {
       return `
         <div class="flex flex-col items-center justify-center pointer-events-none leading-tight">
           <span class="text-[9px] uppercase tracking-widest font-semibold" style="font-family: '${bodyFont}', sans-serif; color: ${primaryHex};">DEVIN JATHO</span>
-          <span class="text-[12px] uppercase font-black" style="font-family: '${heroFont}', sans-serif; color: ${highlightHex}; text-shadow: 0 0 10px ${highlightHex};">TEXT EFFECT</span>
+          <span class="text-[12px] uppercase font-black" style="font-family: '${heroFont}', sans-serif; color: ${highlightHex}; ${heroTextShadow}">TEXT EFFECT</span>
         </div>
       `;
     }
@@ -395,7 +409,7 @@ function getTemplatePreviewHtml(tpl) {
         <span class="text-[11px] font-bold" style="font-family: '${bodyFont}', sans-serif; color: ${primaryHex};">
           ${firstWord}
         </span>
-        <span class="text-[13px] ${isItalic ? 'italic' : ''} font-black" style="font-family: '${heroFont}', cursive, sans-serif; color: ${highlightHex}; filter: drop-shadow(0 0 6px ${highlightHex});">
+        <span class="text-[13px] ${isItalic ? 'italic' : ''} font-black" style="font-family: '${heroFont}', cursive, sans-serif; color: ${highlightHex}; ${heroShineFilter}">
           ${secondWord}
         </span>
       </div>
@@ -407,7 +421,7 @@ function getTemplatePreviewHtml(tpl) {
   if (previewText.includes(highlightWord)) {
     const parts = previewText.split(highlightWord);
     formattedHtml = `
-      <span style="font-family: '${bodyFont}', sans-serif; color: ${primaryHex};">${parts[0]}</span><span style="font-family: '${heroFont}', sans-serif; color: ${highlightHex}; filter: drop-shadow(0 0 6px ${highlightHex}); font-weight: 900;">${highlightWord}</span><span style="font-family: '${bodyFont}', sans-serif; color: ${primaryHex};">${parts.slice(1).join(highlightWord)}</span>
+      <span style="font-family: '${bodyFont}', sans-serif; color: ${primaryHex};">${parts[0]}</span><span style="font-family: '${heroFont}', sans-serif; color: ${highlightHex}; ${heroShineFilter} font-weight: 900;">${highlightWord}</span><span style="font-family: '${bodyFont}', sans-serif; color: ${primaryHex};">${parts.slice(1).join(highlightWord)}</span>
     `;
   } else {
     formattedHtml = `<span style="font-family: '${heroFont}', sans-serif; color: ${highlightHex};">${previewText}</span>`;
@@ -418,6 +432,21 @@ function getTemplatePreviewHtml(tpl) {
       ${formattedHtml}
     </span>
   `;
+}
+
+function updateShineButtonUI() {
+  if (!elements.btnToggleShine || !elements.shineStatusLabel) return;
+  if (state.enableShine) {
+    elements.btnToggleShine.className = 'flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-amber-500/20 border border-amber-500/50 text-xs font-semibold text-amber-300 transition shadow-sm cursor-pointer select-none ring-1 ring-amber-500/40';
+    if (elements.shineIcon) elements.shineIcon.className = 'w-3.5 h-3.5 text-amber-400 animate-pulse';
+    elements.shineStatusLabel.textContent = 'ON ✨';
+    elements.shineStatusLabel.className = 'text-amber-300 font-bold';
+  } else {
+    elements.btnToggleShine.className = 'flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-surface-850 border border-slate-700 hover:border-slate-500 text-xs font-semibold text-slate-300 transition shadow-sm cursor-pointer select-none';
+    if (elements.shineIcon) elements.shineIcon.className = 'w-3.5 h-3.5 text-slate-400';
+    elements.shineStatusLabel.textContent = 'OFF';
+    elements.shineStatusLabel.className = 'text-slate-400 font-bold';
+  }
 }
 
 function setupEventListeners() {
@@ -475,6 +504,16 @@ function setupEventListeners() {
       if (elements.customColor2Preview) elements.customColor2Preview.style.backgroundColor = hex;
       if (elements.customColor2Hex) elements.customColor2Hex.textContent = hex;
       renderColor2Pills();
+      renderCaptionTemplates();
+      updateLiveKaraokeCaption(elements.htmlAudio.currentTime || 0);
+    });
+  }
+
+  // Shine / Glow Toggle Button (Default: OFF for crisp matte typography)
+  if (elements.btnToggleShine) {
+    elements.btnToggleShine.addEventListener('click', () => {
+      state.enableShine = !state.enableShine;
+      updateShineButtonUI();
       renderCaptionTemplates();
       updateLiveKaraokeCaption(elements.htmlAudio.currentTime || 0);
     });
@@ -1110,11 +1149,11 @@ function updateLiveKaraokeCaption(currentTime) {
   const heroFont = state.selectedHeroFont || tpl.hero_font || bodyFont;
   const anim = tpl.animation || 'bounce';
 
-  // Map anim name to CSS anim class
+  // Map anim name to CSS anim class (only use glow/fire animation if enableShine is true)
   let animClass = 'anim-bounce';
   if (['word_zoom', 'mega_zoom', 'stomp'].includes(anim)) animClass = 'anim-zoom';
-  else if (['glow_pulse', 'neon_glow', 'aura', 'laser'].includes(anim)) animClass = 'anim-glow';
-  else if (['fire_pulse', 'firestorm'].includes(anim)) animClass = 'anim-fire';
+  else if (['glow_pulse', 'neon_glow', 'aura', 'laser'].includes(anim)) animClass = state.enableShine ? 'anim-glow' : 'anim-bounce';
+  else if (['fire_pulse', 'firestorm'].includes(anim)) animClass = state.enableShine ? 'anim-fire' : 'anim-bounce';
   else if (['comic_pop', 'boom'].includes(anim)) animClass = 'anim-pop';
   else if (['slide_up', 'drift_left', 'elevator', 'wave'].includes(anim)) animClass = 'anim-slide';
   else if (['glitch', 'pixel', 'retro_vhs', 'matrix'].includes(anim)) animClass = 'anim-glitch';
@@ -1124,11 +1163,15 @@ function updateLiveKaraokeCaption(currentTime) {
 
   elements.liveCaptionOverlay.className = `absolute inset-x-4 bottom-6 flex flex-wrap items-center justify-center text-center pointer-events-none transition duration-150`;
 
+  const activeShadow = state.enableShine
+    ? `text-shadow: 0 0 16px ${highlightHex}, 0 2px 6px #000;`
+    : `text-shadow: 0 2px 4px rgba(0,0,0,0.95);`;
+
   const wordsHtml = activeCard.words.map(w => {
     const isSpoken = currentTime >= w.start && currentTime <= w.end;
     if (isSpoken) {
       return `
-        <span class="karaoke-word ${isBold} ${isItalic} active-word ${animClass}" style="font-family: '${heroFont}', cursive, sans-serif; color: ${highlightHex}; text-shadow: 0 0 16px ${highlightHex}, 0 2px 6px #000; transform: scale(1.18);">
+        <span class="karaoke-word ${isBold} ${isItalic} active-word ${animClass}" style="font-family: '${heroFont}', cursive, sans-serif; color: ${highlightHex}; ${activeShadow} transform: scale(1.18);">
           ${w.word}
         </span>
       `;
@@ -1726,6 +1769,7 @@ async function handleRenderVideo() {
           highlight_color: getActiveHighlightHex(),
           font_family: state.selectedFontFamily || null,
           hero_font: state.selectedHeroFont || null,
+          enable_shine: Boolean(state.enableShine),
           caption_cards: state.captionCards,
           aspect_ratio: isVertical ? '9:16' : '16:9'
         })
@@ -1774,6 +1818,7 @@ async function handleRenderVideo() {
         highlight_color: getActiveHighlightHex(),
         font_family: state.selectedFontFamily || null,
         hero_font: state.selectedHeroFont || null,
+        enable_shine: Boolean(state.enableShine),
         caption_cards: state.captionCards
       })
     });

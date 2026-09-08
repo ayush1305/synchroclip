@@ -217,7 +217,8 @@ def generate_ass_subtitles(
     width: int = 1920,
     height: int = 1080,
     font_family_override: Optional[str] = None,
-    hero_font_override: Optional[str] = None
+    hero_font_override: Optional[str] = None,
+    enable_shine: bool = False
 ) -> str:
     """
     Generates Advanced SubStation Alpha (.ass) subtitle file with word-by-word
@@ -286,22 +287,30 @@ def generate_ass_subtitles(
                     if hero_italic:
                         extra_tags += "\\i1"
 
+                    shine_tag = "\\bord4\\blur3" if enable_shine else ""
+
                     if anim in ("bounce", "spring", "elastic", "jelly"):
-                        line_parts.append(f"{{\\c{highlight_ass}{extra_tags}\\fscx{hero_scale}\\fscy{hero_scale}}}{word_text}{{\\r}}")
+                        line_parts.append(f"{{\\c{highlight_ass}{extra_tags}{shine_tag}\\fscx{hero_scale}\\fscy{hero_scale}}}{word_text}{{\\r}}")
                     elif anim in ("word_zoom", "mega_zoom", "stomp", "zoom"):
-                        line_parts.append(f"{{\\c{highlight_ass}{extra_tags}\\fscx{max(124, hero_scale)}\\fscy{max(124, hero_scale)}}}{word_text}{{\\r}}")
+                        line_parts.append(f"{{\\c{highlight_ass}{extra_tags}{shine_tag}\\fscx{max(124, hero_scale)}\\fscy{max(124, hero_scale)}}}{word_text}{{\\r}}")
                     elif anim in ("glow_pulse", "neon_glow", "aura", "laser", "glow"):
-                        line_parts.append(f"{{\\c{highlight_ass}{extra_tags}\\bord5\\blur4\\fscx{hero_scale}\\fscy{hero_scale}}}{word_text}{{\\r}}")
+                        if enable_shine:
+                            line_parts.append(f"{{\\c{highlight_ass}{extra_tags}\\bord5\\blur4\\fscx{hero_scale}\\fscy{hero_scale}}}{word_text}{{\\r}}")
+                        else:
+                            line_parts.append(f"{{\\c{highlight_ass}{extra_tags}\\fscx{hero_scale}\\fscy{hero_scale}}}{word_text}{{\\r}}")
                     elif anim in ("fire_pulse", "firestorm"):
-                        line_parts.append(f"{{\\c{highlight_ass}{extra_tags}\\bord6\\3c&H000000FF&\\fscx{hero_scale}\\fscy{hero_scale}}}{word_text}{{\\r}}")
+                        if enable_shine:
+                            line_parts.append(f"{{\\c{highlight_ass}{extra_tags}\\bord6\\3c&H000000FF&\\fscx{hero_scale}\\fscy{hero_scale}}}{word_text}{{\\r}}")
+                        else:
+                            line_parts.append(f"{{\\c{highlight_ass}{extra_tags}\\fscx{hero_scale}\\fscy{hero_scale}}}{word_text}{{\\r}}")
                     elif anim in ("comic_pop", "boom", "pop"):
-                        line_parts.append(f"{{\\c{highlight_ass}{extra_tags}\\fscx{max(125, hero_scale)}\\fscy{max(125, hero_scale)}\\bord5}}{word_text}{{\\r}}")
+                        line_parts.append(f"{{\\c{highlight_ass}{extra_tags}{shine_tag}\\fscx{max(125, hero_scale)}\\fscy{max(125, hero_scale)}}}{word_text}{{\\r}}")
                     elif anim in ("slide_up", "drift_left", "diagonal", "elevator", "wave", "slide"):
-                        line_parts.append(f"{{\\c{highlight_ass}{extra_tags}\\fscx{hero_scale}\\fscy{hero_scale}}}{word_text}{{\\r}}")
+                        line_parts.append(f"{{\\c{highlight_ass}{extra_tags}{shine_tag}\\fscx{hero_scale}\\fscy{hero_scale}}}{word_text}{{\\r}}")
                     elif anim in ("glitch", "pixel", "retro_vhs", "matrix"):
-                        line_parts.append(f"{{\\c{highlight_ass}{extra_tags}\\blur2\\fscx{hero_scale}\\fscy{hero_scale}}}{word_text}{{\\r}}")
+                        line_parts.append(f"{{\\c{highlight_ass}{extra_tags}{shine_tag}\\fscx{hero_scale}\\fscy{hero_scale}}}{word_text}{{\\r}}")
                     else:
-                        line_parts.append(f"{{\\c{highlight_ass}{extra_tags}\\fscx{hero_scale}\\fscy{hero_scale}}}{word_text}{{\\r}}")
+                        line_parts.append(f"{{\\c{highlight_ass}{extra_tags}{shine_tag}\\fscx{hero_scale}\\fscy{hero_scale}}}{word_text}{{\\r}}")
                 else:
                     if is_multi_font and hero_font != body_font:
                         line_parts.append(f"{{\\fn{body_font}\\c{primary_ass}}}{word_text}")

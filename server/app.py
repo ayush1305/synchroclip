@@ -94,6 +94,7 @@ class RenderRequest(BaseModel):
     hero_font: Optional[str] = None
     is_direct_video: Optional[bool] = False
     direct_video_path: Optional[str] = None
+    enable_shine: Optional[bool] = False
 
 def get_video_info_and_thumb(video_path: str, thumb_path: str) -> dict:
     duration = 0.0
@@ -308,7 +309,8 @@ async def render_video(req: RenderRequest):
             width=width,
             height=height,
             font_family_override=req.font_family,
-            hero_font_override=req.hero_font
+            hero_font_override=req.hero_font,
+            enable_shine=bool(req.enable_shine)
         )
         caption_ass_path = sub_path
 
