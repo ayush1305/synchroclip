@@ -58,7 +58,9 @@ def render_video_task(
     aspect_ratio: str = "16:9",
     caption_ass_path: Optional[str] = None,
     cache_dir: str = "cache",
-    output_dir: str = "output"
+    output_dir: str = "output",
+    video_focus: bool = False,
+    pip_info: Optional[dict] = None
 ):
     """
     Background worker that downloads clips, builds the FFmpeg filter graph,
@@ -231,6 +233,33 @@ def render_video_task(
             current_sum += durations[k]
             prev_link = out_link
 
+        # Video Focus filter (subtle cinematic spotlight vignette)
+        if video_focus:
+            filter_parts.append(f"[{prev_link}]vignette=PI/4,eq=contrast=1.06:brightness=-0.05[vfocus]")
+            prev_link = "vfocus"
+
+        # PiP image overlay
+        has_pip = bool(pip_info and pip_info.get("image_path") and os.path.exists(pip_info["image_path"]))
+        if has_pip:
+            pip_idx = len(clip_paths) + 1
+            input_args.extend(["-i", pip_info["image_path"]])
+            pos = pip_info.get("position", "top-right")
+            size = pip_info.get("size", "medium")
+            scale_factor = 0.45 if size == "large" else (0.35 if size == "medium" else 0.25)
+            scale_w = int(target_width * scale_factor)
+            if pos == "top-left":
+                coords = "x=40:y=50"
+            elif pos == "center-card":
+                coords = "x=(W-w)/2:y=(H-h)/3.4"
+            elif pos == "center":
+                coords = "x=(W-w)/2:y=(H-h)/2"
+            else:
+                coords = "x=W-w-40:y=50"
+
+            filter_parts.append(f"[{pip_idx}:v]scale={scale_w}:-1,format=rgba[pipscaled]")
+            filter_parts.append(f"[{prev_link}][pipscaled]overlay={coords}[vpip]")
+            prev_link = "vpip"
+
         # If captions are enabled, attach ass filter to last video link
         final_video_label = "vfinal"
         if has_captions:
@@ -319,7 +348,9 @@ def start_render_job(
     aspect_ratio: str = "16:9",
     caption_ass_path: Optional[str] = None,
     cache_dir: str = "cache",
-    output_dir: str = "output"
+    output_dir: str = "output",
+    video_focus: bool = False,
+    pip_info: Optional[dict] = None
 ) -> str:
     """
     Creates and initiates a background render job.
@@ -346,7 +377,9 @@ def start_render_job(
             aspect_ratio,
             caption_ass_path,
             cache_dir,
-            output_dir
+            output_dir,
+            video_focus,
+            pip_info
         ),
         daemon=True
     )
@@ -357,16 +390,17 @@ def burn_direct_video_task(
     job_id: str,
     video_path: str,
     caption_ass_path: Optional[str] = None,
-    output_dir: str = "output"
+    output_dir: str = "output",
+    video_focus: bool = False,
+    pip_info: Optional[dict] = None
 ):
     """
-    Background worker that burns styled ASS captions directly onto a user-uploaded video
-    without re-splicing clips or transitions.
+    Background worker that burns styled ASS captions and PiP overlays directly onto a video.
     """
     try:
         RENDER_JOBS[job_id]["status"] = "burning"
         RENDER_JOBS[job_id]["progress"] = 15
-        RENDER_JOBS[job_id]["message"] = "Preparing video for subtitle burning..."
+        RENDER_JOBS[job_id]["message"] = "Preparing video for subtitle & PiP burning..."
 
         os.makedirs(output_dir, exist_ok=True)
         output_filename = f"export_{job_id}.mp4"
@@ -374,11 +408,45 @@ def burn_direct_video_task(
         log_filepath = os.path.join(output_dir, f"render_{job_id}.log")
 
         cmd = ["ffmpeg", "-y", "-i", video_path]
+        filter_parts = []
+        cur_v = "0:v"
+
+        has_pip = bool(pip_info and pip_info.get("image_path") and os.path.exists(pip_info["image_path"]))
+        if has_pip:
+            cmd.extend(["-i", pip_info["image_path"]])
+
+        # Video Focus filter
+        if video_focus:
+            filter_parts.append(f"[{cur_v}]vignette=PI/4,eq=contrast=1.06:brightness=-0.05[vfocus]")
+            cur_v = "vfocus"
+
+        if has_pip:
+            pos = pip_info.get("position", "top-right")
+            size = pip_info.get("size", "medium")
+            scale_w = 480 if size == "large" else (360 if size == "medium" else 260)
+            if pos == "top-left":
+                coords = "x=40:y=50"
+            elif pos == "center-card":
+                coords = "x=(W-w)/2:y=(H-h)/3.4"
+            elif pos == "center":
+                coords = "x=(W-w)/2:y=(H-h)/2"
+            else:
+                coords = "x=W-w-40:y=50"
+
+            filter_parts.append(f"[1:v]scale={scale_w}:-1,format=rgba[pipscaled]")
+            filter_parts.append(f"[{cur_v}][pipscaled]overlay={coords}[vpip]")
+            cur_v = "vpip"
 
         if caption_ass_path and os.path.exists(caption_ass_path):
             ass_escaped = caption_ass_path.replace("\\", "/").replace(":", "\\:")
+            filter_parts.append(f"[{cur_v}]ass='{ass_escaped}'[vfinal]")
+            cur_v = "vfinal"
+
+        if filter_parts:
             cmd.extend([
-                "-vf", f"ass='{ass_escaped}'",
+                "-filter_complex", ";".join(filter_parts),
+                "-map", f"[{cur_v}]",
+                "-map", "0:a?",
                 "-c:v", "libx264",
                 "-preset", "veryfast",
                 "-crf", "21",
@@ -393,7 +461,7 @@ def burn_direct_video_task(
         ])
 
         RENDER_JOBS[job_id]["progress"] = 40
-        RENDER_JOBS[job_id]["message"] = "Burning animated captions onto video..."
+        RENDER_JOBS[job_id]["message"] = "Burning animated captions & PiP onto video..."
 
         with open(log_filepath, "w", encoding="utf-8") as log_file:
             process = subprocess.Popen(
@@ -426,7 +494,9 @@ def burn_direct_video_task(
 def start_direct_render_job(
     video_path: str,
     caption_ass_path: Optional[str] = None,
-    output_dir: str = "output"
+    output_dir: str = "output",
+    video_focus: bool = False,
+    pip_info: Optional[dict] = None
 ) -> str:
     job_id = uuid.uuid4().hex[:12]
     RENDER_JOBS[job_id] = {
@@ -440,7 +510,7 @@ def start_direct_render_job(
 
     t = threading.Thread(
         target=burn_direct_video_task,
-        args=(job_id, video_path, caption_ass_path, output_dir),
+        args=(job_id, video_path, caption_ass_path, output_dir, video_focus, pip_info),
         daemon=True
     )
     t.start()

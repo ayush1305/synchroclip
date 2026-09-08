@@ -310,6 +310,239 @@ def test_full_render_with_custom_video_and_captions():
             except Exception:
                 pass
 
+def test_pip_image_upload_and_preview():
+    print("=== Test 8: POST /api/upload-pip-image Endpoint ===")
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    test_img_path = os.path.join(base_dir, "test_pip_source.png")
+
+    # Generate test 300x300 PNG with ffmpeg
+    subprocess.run([
+        "ffmpeg", "-y",
+        "-f", "lavfi", "-i", "color=c=coral:s=300x300:d=1",
+        "-frames:v", "1",
+        test_img_path
+    ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+
+    with open(test_img_path, "rb") as f:
+        resp = client.post("/api/upload-pip-image", files={"file": ("test_pip_source.png", f, "image/png")})
+
+    assert resp.status_code == 200, f"PiP upload failed: {resp.text}"
+    result = resp.json()
+    assert result["status"] == "success"
+    assert "pip_id" in result
+    assert result["filename"] == "test_pip_source.png"
+    assert os.path.exists(result["path"])
+    print(f"PiP Image uploaded successfully! ID: {result['pip_id']}, Path: {result['path']}, URL: {result['url']}\n")
+
+    if os.path.exists(test_img_path):
+        os.remove(test_img_path)
+
+    return result
+
+def test_progressive_reveal_and_word_zoom_ass():
+    print("=== Test 9: Progressive Sentence Reveal & Kinetic Word Zoom ASS ===")
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    zoom_ass = os.path.join(base_dir, "test_progressive_zoom.ass")
+
+    words = [
+        {"word": "DON'T", "start": 0.0, "end": 0.4, "duration": 0.4},
+        {"word": "IGNORE", "start": 0.4, "end": 0.9, "duration": 0.5},
+        {"word": "THIS", "start": 0.9, "end": 1.4, "duration": 0.5},
+        {"word": "TRICK", "start": 1.4, "end": 1.9, "duration": 0.5}
+    ]
+    cards = caption_generator.chunk_words_into_cards(words, max_words_per_card=4)
+
+    caption_generator.generate_ass_subtitles(
+        caption_cards=cards,
+        template_id="viral_circle_ignore",
+        highlight_color_key="#facc15",
+        primary_color_key="#ffffff",
+        output_path=zoom_ass,
+        width=1080,
+        height=1920,
+        progressive_reveal=True,
+        word_zoom=True
+    )
+
+    assert os.path.exists(zoom_ass)
+    with open(zoom_ass, "r", encoding="utf-8") as f:
+        content = f.read()
+
+    # Verify kinetic zoom tags \fscx and \fscy are applied on active words
+    assert r"\fscx" in content and r"\fscy" in content, "Kinetic word zoom should scale active word"
+    assert r"\t(0,140," in content, "Kinetic word zoom should include smooth spring transform transition"
+
+    # Verify progressive reveal: dialogues should only contain words up to target index
+    lines = [line for line in content.splitlines() if line.startswith("Dialogue:")]
+    assert len(lines) == 4, f"Expected 4 progressive dialogue events, got {len(lines)}"
+
+    # First event should only have "DON'T", not future words
+    assert "DON'T" in lines[0]
+    assert "TRICK" not in lines[0], "First progressive dialogue event must not reveal future word 'TRICK'"
+
+    # Last event should reveal all words
+    assert "TRICK" in lines[3]
+
+    print("Progressive reveal and kinetic word zoom verified successfully in ASS!\n")
+
+    if os.path.exists(zoom_ass):
+        os.remove(zoom_ass)
+
+def test_marker_decorations_ass():
+    print("=== Test 10: Marker FX (Neon Circle, Highlighter Box, Accent Underline) ===")
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+
+    words = [
+        {"word": "CUT", "start": 0.0, "end": 0.5, "duration": 0.5},
+        {"word": "HOURS", "start": 0.5, "end": 1.0, "duration": 0.5},
+        {"word": "WORK", "start": 1.0, "end": 1.5, "duration": 0.5}
+    ]
+    cards = caption_generator.chunk_words_into_cards(words, max_words_per_card=3)
+
+    # 1. Circle marker
+    circle_ass = os.path.join(base_dir, "test_marker_circle.ass")
+    caption_generator.generate_ass_subtitles(
+        caption_cards=cards,
+        template_id="viral_circle_ignore",
+        output_path=circle_ass,
+        marker_style="circle",
+        marker_color="#4ade80"
+    )
+    with open(circle_ass, "r", encoding="utf-8") as f:
+        c_content = f.read()
+    assert r"\bord4" in c_content, "Circle marker should apply bold border/outline effect"
+    print("Circle marker ASS verified: Border/outline stroke applied!")
+
+    # 2. Underline marker
+    underline_ass = os.path.join(base_dir, "test_marker_underline.ass")
+    caption_generator.generate_ass_subtitles(
+        caption_cards=cards,
+        template_id="viral_workflow_hours",
+        output_path=underline_ass,
+        marker_style="underline",
+        marker_color="#38bdf8"
+    )
+    with open(underline_ass, "r", encoding="utf-8") as f:
+        u_content = f.read()
+    assert r"\u1" in u_content, "Underline marker should apply ASS underline tag"
+    print("Underline marker ASS verified: Underline tag applied!")
+
+    # 3. Box marker
+    box_ass = os.path.join(base_dir, "test_marker_box.ass")
+    caption_generator.generate_ass_subtitles(
+        caption_cards=cards,
+        template_id="hormozi_classic",
+        output_path=box_ass,
+        marker_style="box",
+        marker_color="#facc15"
+    )
+    with open(box_ass, "r", encoding="utf-8") as f:
+        b_content = f.read()
+    assert r"\bord5" in b_content, "Box marker should apply border box styling"
+    print("Highlighter box marker ASS verified: Box styling applied!\n")
+
+    for p in [circle_ass, underline_ass, box_ass]:
+        if os.path.exists(p):
+            os.remove(p)
+
+def test_pip_and_video_focus_render(pip_info):
+    print("=== Test 11: Render Video with Video Focus Vignette & PiP Overlay ===")
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+
+    audio_path = os.path.join(base_dir, "test_fx_audio.mp3")
+    subprocess.run([
+        "ffmpeg", "-y",
+        "-f", "lavfi", "-i", "sine=frequency=520:duration=3",
+        "-c:a", "libmp3lame",
+        audio_path
+    ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+
+    clip_path = os.path.join(base_dir, "test_fx_clip.mp4")
+    subprocess.run([
+        "ffmpeg", "-y",
+        "-f", "lavfi", "-i", "color=c=indigo:s=720x1280:d=3",
+        "-c:v", "libx264", "-pix_fmt", "yuv420p",
+        clip_path
+    ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+
+    words = [
+        {"word": "EXCLUSIVE", "start": 0.2, "end": 1.4, "duration": 1.2},
+        {"word": "INSIGHT", "start": 1.4, "end": 2.8, "duration": 1.4}
+    ]
+    cards = caption_generator.chunk_words_into_cards(words, max_words_per_card=2)
+    ass_path = os.path.join(base_dir, "test_fx_subs.ass")
+
+    caption_generator.generate_ass_subtitles(
+        caption_cards=cards,
+        template_id="viral_circle_ignore",
+        highlight_color_key="#4ade80",
+        primary_color_key="#ffffff",
+        output_path=ass_path,
+        width=720,
+        height=1280,
+        marker_style="circle",
+        marker_color="#4ade80",
+        word_zoom=True,
+        progressive_reveal=True
+    )
+
+    scenes = [{
+        "id": 1,
+        "duration": 3.0,
+        "start_time": 0.0,
+        "end_time": 3.0,
+        "selected_clip": {
+            "id": "fx_clip_1",
+            "video_url": clip_path,
+            "local_path": clip_path,
+            "duration": 3.0
+        }
+    }]
+
+    job_id = "test_pip_focus_job"
+    video_composer.RENDER_JOBS[job_id] = {
+        "id": job_id,
+        "status": "queued",
+        "progress": 0,
+        "message": "Starting PiP & Focus test render"
+    }
+
+    out_dir = os.path.join(base_dir, "output")
+    cache_dir = os.path.join(base_dir, "cache")
+
+    video_composer.render_video_task(
+        job_id=job_id,
+        scenes=scenes,
+        audio_path=audio_path,
+        total_audio_duration=3.0,
+        transition_type="fade",
+        transition_duration=0.5,
+        aspect_ratio="9:16",
+        caption_ass_path=ass_path,
+        cache_dir=cache_dir,
+        output_dir=out_dir,
+        video_focus=True,
+        pip_info={
+            "image_path": pip_info["path"],
+            "position": "center-card",
+            "size": "medium"
+        }
+    )
+
+    job_state = video_composer.RENDER_JOBS[job_id]
+    assert job_state["status"] == "done", f"Render failed: {job_state.get('message')}"
+    output_video_path = os.path.join(out_dir, job_state["output_file"])
+    assert os.path.exists(output_video_path)
+    assert os.path.getsize(output_video_path) > 1000
+    print(f"PiP Overlay & Video Focus render completed successfully: {output_video_path} ({os.path.getsize(output_video_path)} bytes)!\n")
+
+    for f in [audio_path, clip_path, ass_path, output_video_path]:
+        if os.path.exists(f):
+            try:
+                os.remove(f)
+            except Exception:
+                pass
+
 if __name__ == "__main__":
     test_caption_templates_and_fonts()
     test_multifont_and_dual_color_ass()
@@ -318,6 +551,10 @@ if __name__ == "__main__":
     direct_info = test_direct_video_upload_endpoint()
     test_direct_video_render_burn(direct_info)
     test_full_render_with_custom_video_and_captions()
-    print("==================================================================")
-    print("ALL 7 TEST SUITES PASSED! CRISP MATTE SUBTITLES & SHINE TOGGLE OK!")
-    print("==================================================================")
+    pip_info = test_pip_image_upload_and_preview()
+    test_progressive_reveal_and_word_zoom_ass()
+    test_marker_decorations_ass()
+    test_pip_and_video_focus_render(pip_info)
+    print("=========================================================================================")
+    print("ALL 11 TEST SUITES PASSED! PIP OVERLAY, WORD ZOOM, PROGRESSIVE REVEAL & MARKERS VERIFIED!")
+    print("=========================================================================================")

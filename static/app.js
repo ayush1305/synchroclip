@@ -25,6 +25,14 @@ const state = {
   selectedFontFamily: '',
   selectedHeroFont: '',
   enableShine: false,
+  markerStyle: 'none',
+  markerColor: '#4ade80',
+  wordZoom: false,
+  videoFocus: false,
+  customFont: '',
+  pipImage: null,
+  pipPosition: 'top-right',
+  pipSize: 'medium',
   studioMode: 'generate', // 'generate' | 'direct'
   directVideo: null,
   templateSearchTerm: '',
@@ -102,6 +110,21 @@ const elements = {
   btnToggleShine: document.getElementById('btnToggleShine'),
   shineIcon: document.getElementById('shineIcon'),
   shineStatusLabel: document.getElementById('shineStatusLabel'),
+  selectMarkerStyle: document.getElementById('selectMarkerStyle'),
+  btnToggleWordZoom: document.getElementById('btnToggleWordZoom'),
+  zoomIcon: document.getElementById('zoomIcon'),
+  zoomStatusLabel: document.getElementById('zoomStatusLabel'),
+  btnToggleVideoFocus: document.getElementById('btnToggleVideoFocus'),
+  focusIcon: document.getElementById('focusIcon'),
+  focusStatusLabel: document.getElementById('focusStatusLabel'),
+  inputCustomFont: document.getElementById('inputCustomFont'),
+  btnApplyCustomFont: document.getElementById('btnApplyCustomFont'),
+  pipFileInput: document.getElementById('pipFileInput'),
+  pipUploadBtnLabel: document.getElementById('pipUploadBtnLabel'),
+  btnRemovePip: document.getElementById('btnRemovePip'),
+  pipControlsGroup: document.getElementById('pipControlsGroup'),
+  selectPipPosition: document.getElementById('selectPipPosition'),
+  selectPipSize: document.getElementById('selectPipSize'),
   captionTemplatesGrid: document.getElementById('captionTemplatesGrid'),
   captionCatTabs: document.querySelectorAll('.caption-cat-tab'),
   selectFontFamily: document.getElementById('selectFontFamily'),
@@ -117,6 +140,9 @@ const elements = {
   btnRenderVideo: document.getElementById('btnRenderVideo'),
   btnLoadDemo: document.getElementById('btnLoadDemo'),
   livePreviewVideo: document.getElementById('livePreviewVideo'),
+  pipPreviewOverlay: document.getElementById('pipPreviewOverlay'),
+  pipPreviewImg: document.getElementById('pipPreviewImg'),
+  videoFocusOverlay: document.getElementById('videoFocusOverlay'),
   liveCaptionOverlay: document.getElementById('liveCaptionOverlay'),
   activeTemplateBadge: document.getElementById('activeTemplateBadge'),
   // GitHub & Download
@@ -164,6 +190,8 @@ const elements = {
 async function init() {
   updateApiKeyStatusUI();
   updateShineButtonUI();
+  updateWordZoomButtonUI();
+  updateVideoFocusButtonUI();
   setupEventListeners();
   renderColor1Pills();
   await loadCaptionTemplates();
@@ -345,6 +373,40 @@ function renderCaptionTemplates() {
   lucide.createIcons();
 }
 
+function formatHeroWord(word, heroFont, highlightHex, markerStyle = 'none', markerColor = '#4ade80', isItalic = false, extraStyles = '') {
+  const italicClass = isItalic ? 'italic' : '';
+  const effectiveMarkerColor = markerColor || '#4ade80';
+
+  if (markerStyle === 'circle') {
+    return `
+      <span class="marker-circle-wrap inline-block relative ${italicClass}" style="font-family: '${heroFont}', cursive, sans-serif; color: ${highlightHex}; font-weight: 900; ${extraStyles}">
+        <span class="relative z-10 px-1 py-0.5">${word}</span>
+        <svg class="marker-circle-svg" viewBox="0 0 100 50" preserveAspectRatio="none">
+          <path class="marker-circle-path" d="M 10,25 C 10,10 90,8 92,24 C 94,40 12,42 8,26 C 6,15 40,8 88,12" stroke="${effectiveMarkerColor}" stroke-width="4" fill="none" stroke-linecap="round" />
+        </svg>
+      </span>
+    `;
+  } else if (markerStyle === 'box') {
+    return `
+      <span class="marker-highlight-box inline-block px-1.5 py-0.5 rounded text-black font-black ${italicClass}" style="font-family: '${heroFont}', sans-serif; background-color: ${effectiveMarkerColor}; ${extraStyles}">
+        ${word}
+      </span>
+    `;
+  } else if (markerStyle === 'underline') {
+    return `
+      <span class="marker-accent-underline inline-block pb-0.5 ${italicClass}" style="font-family: '${heroFont}', sans-serif; color: ${highlightHex}; border-bottom: 3px solid ${effectiveMarkerColor}; font-weight: 900; ${extraStyles}">
+        ${word}
+      </span>
+    `;
+  }
+
+  return `
+    <span class="${italicClass}" style="font-family: '${heroFont}', cursive, sans-serif; color: ${highlightHex}; font-weight: 900; ${extraStyles}">
+      ${word}
+    </span>
+  `;
+}
+
 function getTemplatePreviewHtml(tpl) {
   if (tpl.id === 'none') {
     return '<span class="text-xs text-slate-500 italic">No Captions</span>';
@@ -378,28 +440,75 @@ function getTemplatePreviewHtml(tpl) {
     }
   }
 
+  // Active marker styling
+  const activeMarker = state.markerStyle !== 'none' ? state.markerStyle : (tpl.marker_style || 'none');
+  const activeMarkerColor = state.markerColor || tpl.marker_color || '#4ade80';
+
+  // Multi-line Viral MOGRTs & Hierarchy Templates
+  if (tpl.id === 'viral_circle_ignore') {
+    return `
+      <div class="flex flex-col items-center justify-center space-y-0.5 pointer-events-none leading-tight">
+        <span class="text-[8px] uppercase tracking-wider font-bold" style="font-family: '${bodyFont}', sans-serif; color: ${primaryHex};">DON'T</span>
+        ${formatHeroWord('IGNORE', heroFont, highlightHex, activeMarker !== 'none' ? activeMarker : 'circle', activeMarkerColor, isItalic, 'font-size: 13px;')}
+        <span class="text-[8px] uppercase tracking-wider font-bold" style="font-family: '${bodyFont}', sans-serif; color: ${primaryHex};">THIS TRICK</span>
+      </div>
+    `;
+  }
+
+  if (tpl.id === 'viral_workflow_hours') {
+    return `
+      <div class="flex flex-col items-center justify-center space-y-0.5 pointer-events-none leading-none">
+        <div class="flex items-center space-x-1">
+          <span class="text-[9px] font-bold" style="font-family: '${bodyFont}', sans-serif; color: ${primaryHex};">CUT</span>
+          ${formatHeroWord('HOURS', heroFont, highlightHex, activeMarker !== 'none' ? activeMarker : 'underline', '#38bdf8', false, 'font-size: 11px;')}
+        </div>
+        <div class="flex items-center space-x-1">
+          <span class="text-[9px] font-bold" style="font-family: '${bodyFont}', sans-serif; color: ${primaryHex};">OF</span>
+          ${formatHeroWord('WORK', heroFont, highlightHex, 'none', activeMarkerColor, false, 'font-size: 11px;')}
+        </div>
+      </div>
+    `;
+  }
+
+  if (tpl.id === 'mogrt_opportunity') {
+    return `
+      <div class="flex flex-col items-center justify-center space-y-0.5 pointer-events-none leading-none">
+        <span class="text-[8px] tracking-widest font-semibold" style="font-family: '${bodyFont}', sans-serif; color: ${primaryHex};">THE OPPORTUNITY</span>
+        <span class="text-[13px] uppercase font-black" style="font-family: '${heroFont}', sans-serif; color: ${highlightHex}; ${heroShineFilter}">STARTS NOW</span>
+      </div>
+    `;
+  }
+
+  if (tpl.id === 'mogrt_changes') {
+    return `
+      <div class="flex flex-col items-center justify-center space-y-0.5 pointer-events-none leading-none">
+        <span class="text-[9px] uppercase font-black" style="font-family: '${bodyFont}', sans-serif; color: ${primaryHex};">ONE MOVE</span>
+        ${formatHeroWord('CHANGES', heroFont, highlightHex, activeMarker !== 'none' ? activeMarker : 'underline', '#38bdf8', isItalic, 'font-size: 13px;')}
+      </div>
+    `;
+  }
+
+  if (tpl.id === 'creator_hierarchy') {
+    return `
+      <div class="flex flex-col items-center justify-center space-y-0.5 pointer-events-none leading-none">
+        <span class="text-[8px] uppercase tracking-widest font-semibold" style="font-family: '${bodyFont}', sans-serif; color: ${primaryHex}; opacity: 0.85;">WATCH THIS</span>
+        <span class="text-[13px] uppercase font-black tracking-wide" style="font-family: '${heroFont}', sans-serif; color: ${highlightHex}; ${state.enableShine ? `filter: drop-shadow(0 0 8px ${highlightHex});` : ''}">GAME CHANGER</span>
+        <span class="text-[8px] uppercase tracking-wider font-semibold" style="font-family: '${bodyFont}', sans-serif; color: ${primaryHex}; opacity: 0.85;">TODAY</span>
+      </div>
+    `;
+  }
+
+  if (tpl.id === 'devin_jatho_fx') {
+    return `
+      <div class="flex flex-col items-center justify-center pointer-events-none leading-tight">
+        <span class="text-[9px] uppercase tracking-widest font-semibold" style="font-family: '${bodyFont}', sans-serif; color: ${primaryHex};">DEVIN JATHO</span>
+        <span class="text-[12px] uppercase font-black" style="font-family: '${heroFont}', sans-serif; color: ${highlightHex}; ${heroTextShadow}">TEXT EFFECT</span>
+      </div>
+    `;
+  }
+
   // Multi-font hybrid templates display
   if (tpl.category === 'Hybrid' || tpl.hero_font || state.selectedHeroFont) {
-    if (tpl.id === 'creator_hierarchy') {
-      return `
-        <div class="flex flex-col items-center justify-center space-y-0.5 pointer-events-none leading-none">
-          <span class="text-[8px] uppercase tracking-widest font-semibold" style="font-family: '${bodyFont}', sans-serif; color: ${primaryHex}; opacity: 0.85;">WATCH THIS</span>
-          <span class="text-[13px] uppercase font-black tracking-wide" style="font-family: '${heroFont}', sans-serif; color: ${highlightHex}; ${state.enableShine ? `filter: drop-shadow(0 0 8px ${highlightHex});` : ''}">GAME CHANGER</span>
-          <span class="text-[8px] uppercase tracking-wider font-semibold" style="font-family: '${bodyFont}', sans-serif; color: ${primaryHex}; opacity: 0.85;">TODAY</span>
-        </div>
-      `;
-    }
-
-    if (tpl.id === 'devin_jatho_fx') {
-      return `
-        <div class="flex flex-col items-center justify-center pointer-events-none leading-tight">
-          <span class="text-[9px] uppercase tracking-widest font-semibold" style="font-family: '${bodyFont}', sans-serif; color: ${primaryHex};">DEVIN JATHO</span>
-          <span class="text-[12px] uppercase font-black" style="font-family: '${heroFont}', sans-serif; color: ${highlightHex}; ${heroTextShadow}">TEXT EFFECT</span>
-        </div>
-      `;
-    }
-
-    // Two-tone / multi-font word pair (e.g. Smooth Cross, Serif Punch, MrBeast Duo, Apple Clean Duo)
     const words = previewText.split(' ');
     const firstWord = words[0] || 'SMOOTH';
     const secondWord = words.slice(1).join(' ') || 'CROSS';
@@ -409,9 +518,7 @@ function getTemplatePreviewHtml(tpl) {
         <span class="text-[11px] font-bold" style="font-family: '${bodyFont}', sans-serif; color: ${primaryHex};">
           ${firstWord}
         </span>
-        <span class="text-[13px] ${isItalic ? 'italic' : ''} font-black" style="font-family: '${heroFont}', cursive, sans-serif; color: ${highlightHex}; ${heroShineFilter}">
-          ${secondWord}
-        </span>
+        ${formatHeroWord(secondWord, heroFont, highlightHex, activeMarker, activeMarkerColor, isItalic, `font-size: 13px; ${heroShineFilter}`)}
       </div>
     `;
   }
@@ -420,11 +527,12 @@ function getTemplatePreviewHtml(tpl) {
   let formattedHtml = '';
   if (previewText.includes(highlightWord)) {
     const parts = previewText.split(highlightWord);
+    const heroWordFormatted = formatHeroWord(highlightWord, heroFont, highlightHex, activeMarker, activeMarkerColor, isItalic, `font-size: 11px; ${heroShineFilter}`);
     formattedHtml = `
-      <span style="font-family: '${bodyFont}', sans-serif; color: ${primaryHex};">${parts[0]}</span><span style="font-family: '${heroFont}', sans-serif; color: ${highlightHex}; ${heroShineFilter} font-weight: 900;">${highlightWord}</span><span style="font-family: '${bodyFont}', sans-serif; color: ${primaryHex};">${parts.slice(1).join(highlightWord)}</span>
+      <span style="font-family: '${bodyFont}', sans-serif; color: ${primaryHex};">${parts[0]}</span>${heroWordFormatted}<span style="font-family: '${bodyFont}', sans-serif; color: ${primaryHex};">${parts.slice(1).join(highlightWord)}</span>
     `;
   } else {
-    formattedHtml = `<span style="font-family: '${heroFont}', sans-serif; color: ${highlightHex};">${previewText}</span>`;
+    formattedHtml = formatHeroWord(previewText, heroFont, highlightHex, activeMarker, activeMarkerColor, isItalic, `font-size: 11px; ${heroShineFilter}`);
   }
 
   return `
@@ -447,6 +555,117 @@ function updateShineButtonUI() {
     elements.shineStatusLabel.textContent = 'OFF';
     elements.shineStatusLabel.className = 'text-slate-400 font-bold';
   }
+}
+
+function updateWordZoomButtonUI() {
+  if (!elements.btnToggleWordZoom || !elements.zoomStatusLabel) return;
+  if (state.wordZoom) {
+    elements.btnToggleWordZoom.className = 'flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-purple-500/20 border border-purple-500/50 text-xs font-semibold text-purple-300 transition shadow-sm cursor-pointer select-none ring-1 ring-purple-500/40';
+    if (elements.zoomIcon) elements.zoomIcon.className = 'w-3.5 h-3.5 text-purple-400 animate-pulse';
+    elements.zoomStatusLabel.textContent = 'ON 🔍';
+    elements.zoomStatusLabel.className = 'text-purple-300 font-bold';
+  } else {
+    elements.btnToggleWordZoom.className = 'flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-surface-850 border border-slate-700 hover:border-slate-500 text-xs font-semibold text-slate-300 transition shadow-sm cursor-pointer select-none';
+    if (elements.zoomIcon) elements.zoomIcon.className = 'w-3.5 h-3.5 text-slate-400';
+    elements.zoomStatusLabel.textContent = 'OFF';
+    elements.zoomStatusLabel.className = 'text-slate-400 font-bold';
+  }
+}
+
+function updateVideoFocusButtonUI() {
+  if (!elements.btnToggleVideoFocus || !elements.focusStatusLabel) return;
+  if (state.videoFocus) {
+    elements.btnToggleVideoFocus.className = 'flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-amber-500/20 border border-amber-500/50 text-xs font-semibold text-amber-300 transition shadow-sm cursor-pointer select-none ring-1 ring-amber-500/40';
+    if (elements.focusIcon) elements.focusIcon.className = 'w-3.5 h-3.5 text-amber-400 animate-pulse';
+    elements.focusStatusLabel.textContent = 'ON 🎯';
+    elements.focusStatusLabel.className = 'text-amber-300 font-bold';
+  } else {
+    elements.btnToggleVideoFocus.className = 'flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-surface-850 border border-slate-700 hover:border-slate-500 text-xs font-semibold text-slate-300 transition shadow-sm cursor-pointer select-none';
+    if (elements.focusIcon) elements.focusIcon.className = 'w-3.5 h-3.5 text-slate-400';
+    elements.focusStatusLabel.textContent = 'OFF';
+    elements.focusStatusLabel.className = 'text-slate-400 font-bold';
+  }
+}
+
+function loadGoogleFont(fontName) {
+  const cleaned = fontName.trim();
+  if (!cleaned) return;
+  const linkId = `gfont-${cleaned.replace(/\s+/g, '-').toLowerCase()}`;
+  if (!document.getElementById(linkId)) {
+    const link = document.createElement('link');
+    link.id = linkId;
+    link.rel = 'stylesheet';
+    link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(cleaned)}:wght@400;700;800;900&display=swap`;
+    document.head.appendChild(link);
+  }
+  state.customFont = cleaned;
+  state.selectedFontFamily = cleaned;
+  state.selectedHeroFont = cleaned;
+  [elements.selectFontFamily, elements.selectHeroFont].forEach(sel => {
+    if (sel && !Array.from(sel.options).some(o => o.value === cleaned)) {
+      const opt = document.createElement('option');
+      opt.value = cleaned;
+      opt.textContent = `${cleaned} (Custom)`;
+      opt.selected = true;
+      sel.prepend(opt);
+    } else if (sel) {
+      sel.value = cleaned;
+    }
+  });
+  renderCaptionTemplates();
+  updateLiveKaraokeCaption(elements.htmlAudio.currentTime || 0);
+}
+
+async function handlePipUpload(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+  try {
+    const resp = await fetch('/api/upload-pip-image', {
+      method: 'POST',
+      body: formData
+    });
+    if (!resp.ok) {
+      const err = await resp.json();
+      throw new Error(err.detail || 'Failed to upload PiP image');
+    }
+    const data = await resp.json();
+    state.pipImage = data;
+    if (elements.pipUploadBtnLabel) elements.pipUploadBtnLabel.textContent = file.name;
+    if (elements.btnRemovePip) elements.btnRemovePip.classList.remove('hidden');
+    if (elements.pipControlsGroup) elements.pipControlsGroup.classList.remove('hidden');
+    updatePipPreviewUI();
+  } catch (err) {
+    alert('PiP Upload failed: ' + err.message);
+  }
+}
+
+function removePipImage() {
+  state.pipImage = null;
+  if (elements.pipFileInput) elements.pipFileInput.value = '';
+  if (elements.pipUploadBtnLabel) elements.pipUploadBtnLabel.textContent = 'Upload PiP Image';
+  if (elements.btnRemovePip) elements.btnRemovePip.classList.add('hidden');
+  if (elements.pipControlsGroup) elements.pipControlsGroup.classList.add('hidden');
+  if (elements.pipPreviewOverlay) elements.pipPreviewOverlay.classList.add('hidden');
+  if (elements.pipPreviewImg) elements.pipPreviewImg.src = '';
+}
+
+function updatePipPreviewUI() {
+  if (!elements.pipPreviewOverlay || !elements.pipPreviewImg) return;
+  if (!state.pipImage) {
+    elements.pipPreviewOverlay.classList.add('hidden');
+    return;
+  }
+  elements.pipPreviewImg.src = state.pipImage.url;
+  elements.pipPreviewOverlay.className = 'absolute pointer-events-none transition-all duration-300 z-10';
+  elements.pipPreviewOverlay.classList.remove('hidden');
+
+  const pos = state.pipPosition || 'top-right';
+  elements.pipPreviewOverlay.classList.remove('pip-top-right', 'pip-top-left', 'pip-center-card', 'pip-center');
+  elements.pipPreviewOverlay.classList.add(`pip-${pos}`);
+
+  const sz = state.pipSize || 'medium';
+  elements.pipPreviewOverlay.classList.remove('pip-size-small', 'pip-size-medium', 'pip-size-large');
+  elements.pipPreviewOverlay.classList.add(`pip-size-${sz}`);
 }
 
 function setupEventListeners() {
@@ -516,6 +735,71 @@ function setupEventListeners() {
       updateShineButtonUI();
       renderCaptionTemplates();
       updateLiveKaraokeCaption(elements.htmlAudio.currentTime || 0);
+    });
+  }
+
+  // Marker Style Selector (Circle, Box, Underline, None)
+  if (elements.selectMarkerStyle) {
+    elements.selectMarkerStyle.addEventListener('change', (e) => {
+      state.markerStyle = e.target.value;
+      renderCaptionTemplates();
+      updateLiveKaraokeCaption(elements.htmlAudio.currentTime || 0);
+    });
+  }
+
+  // Word Zoom & Progressive Reveal Toggle
+  if (elements.btnToggleWordZoom) {
+    elements.btnToggleWordZoom.addEventListener('click', () => {
+      state.wordZoom = !state.wordZoom;
+      updateWordZoomButtonUI();
+      updateLiveKaraokeCaption(elements.htmlAudio.currentTime || 0);
+    });
+  }
+
+  // Video Focus Spotlight Toggle
+  if (elements.btnToggleVideoFocus) {
+    elements.btnToggleVideoFocus.addEventListener('click', () => {
+      state.videoFocus = !state.videoFocus;
+      updateVideoFocusButtonUI();
+      updateLiveKaraokeCaption(elements.htmlAudio.currentTime || 0);
+    });
+  }
+
+  // Custom Font input & load button
+  if (elements.btnApplyCustomFont && elements.inputCustomFont) {
+    elements.btnApplyCustomFont.addEventListener('click', () => {
+      const font = elements.inputCustomFont.value.trim();
+      if (font) loadGoogleFont(font);
+    });
+    elements.inputCustomFont.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const font = elements.inputCustomFont.value.trim();
+        if (font) loadGoogleFont(font);
+      }
+    });
+  }
+
+  // Picture-in-Picture (PiP) Image Controls
+  if (elements.pipFileInput) {
+    elements.pipFileInput.addEventListener('change', async (e) => {
+      if (e.target.files.length) {
+        await handlePipUpload(e.target.files[0]);
+      }
+    });
+  }
+  if (elements.btnRemovePip) {
+    elements.btnRemovePip.addEventListener('click', removePipImage);
+  }
+  if (elements.selectPipPosition) {
+    elements.selectPipPosition.addEventListener('change', (e) => {
+      state.pipPosition = e.target.value;
+      updatePipPreviewUI();
+    });
+  }
+  if (elements.selectPipSize) {
+    elements.selectPipSize.addEventListener('change', (e) => {
+      state.pipSize = e.target.value;
+      updatePipPreviewUI();
     });
   }
 
@@ -673,14 +957,7 @@ function setupEventListeners() {
     if (e.key === 'Enter') executeSwapSearch();
   });
 
-  // Creator Font Style Selector
-  if (elements.selectFontFamily) {
-    elements.selectFontFamily.addEventListener('change', (e) => {
-      state.selectedFontFamily = e.target.value;
-      renderCaptionTemplates();
-      updateLiveKaraokeCaption(elements.htmlAudio.currentTime || 0);
-    });
-  }
+
 
   // Template Search Bar
   if (elements.captionTemplateSearch) {
@@ -1128,8 +1405,17 @@ async function handleDirectSyncCaptions() {
   }
 }
 
-// Real-time CapCut word-by-word highlight in player with Multi-Font and Dual-Colors
+// Real-time CapCut word-by-word highlight in player with Multi-Font, Dual-Colors, Markers & Word Zoom
 function updateLiveKaraokeCaption(currentTime) {
+  // Video Focus Spotlight Overlay
+  if (elements.videoFocusOverlay) {
+    if (state.videoFocus) {
+      elements.videoFocusOverlay.classList.remove('hidden');
+    } else {
+      elements.videoFocusOverlay.classList.add('hidden');
+    }
+  }
+
   if (state.selectedTemplate === 'none' || !state.captionCards.length) {
     elements.liveCaptionOverlay.innerHTML = '';
     return;
@@ -1167,11 +1453,38 @@ function updateLiveKaraokeCaption(currentTime) {
     ? `text-shadow: 0 0 16px ${highlightHex}, 0 2px 6px #000;`
     : `text-shadow: 0 2px 4px rgba(0,0,0,0.95);`;
 
-  const wordsHtml = activeCard.words.map(w => {
-    const isSpoken = currentTime >= w.start && currentTime <= w.end;
+  // Determine currently spoken word index
+  let spokenIdx = activeCard.words.findIndex(w => currentTime >= w.start && currentTime <= w.end);
+  if (spokenIdx === -1) {
+    for (let i = activeCard.words.length - 1; i >= 0; i--) {
+      if (currentTime >= activeCard.words[i].start) {
+        spokenIdx = i;
+        break;
+      }
+    }
+  }
+
+  // Progressive Reveal: If wordZoom is enabled, only reveal words up to the currently spoken index
+  let wordsToDisplay = activeCard.words;
+  if (state.wordZoom) {
+    const maxIdx = spokenIdx >= 0 ? spokenIdx : 0;
+    wordsToDisplay = activeCard.words.slice(0, maxIdx + 1);
+  }
+
+  const activeMarker = state.markerStyle !== 'none' ? state.markerStyle : (tpl.marker_style || 'none');
+  const activeMarkerColor = state.markerColor || tpl.marker_color || '#4ade80';
+
+  const wordsHtml = wordsToDisplay.map((w, idx) => {
+    const isSpoken = (spokenIdx === idx) || (currentTime >= w.start && currentTime <= w.end);
+    const wordAnimClass = (state.wordZoom || anim === 'word_zoom') && isSpoken ? 'anim-word-zoom' : animClass;
+
     if (isSpoken) {
+      if (activeMarker !== 'none') {
+        const formatted = formatHeroWord(w.word, heroFont, highlightHex, activeMarker, activeMarkerColor, Boolean(tpl.italic || tpl.hero_italic), activeShadow);
+        return `<span class="karaoke-word ${isBold} active-word ${wordAnimClass} inline-block">${formatted}</span>`;
+      }
       return `
-        <span class="karaoke-word ${isBold} ${isItalic} active-word ${animClass}" style="font-family: '${heroFont}', cursive, sans-serif; color: ${highlightHex}; ${activeShadow} transform: scale(1.18);">
+        <span class="karaoke-word ${isBold} ${isItalic} active-word ${wordAnimClass}" style="font-family: '${heroFont}', cursive, sans-serif; color: ${highlightHex}; ${activeShadow} transform: scale(1.18);">
           ${w.word}
         </span>
       `;
@@ -1770,6 +2083,14 @@ async function handleRenderVideo() {
           font_family: state.selectedFontFamily || null,
           hero_font: state.selectedHeroFont || null,
           enable_shine: Boolean(state.enableShine),
+          progressive_reveal: Boolean(state.wordZoom),
+          word_zoom: Boolean(state.wordZoom),
+          marker_style: state.markerStyle,
+          marker_color: state.markerColor,
+          video_focus: Boolean(state.videoFocus),
+          pip_image_path: state.pipImage ? state.pipImage.path : null,
+          pip_position: state.pipPosition,
+          pip_size: state.pipSize,
           caption_cards: state.captionCards,
           aspect_ratio: isVertical ? '9:16' : '16:9'
         })
@@ -1819,6 +2140,14 @@ async function handleRenderVideo() {
         font_family: state.selectedFontFamily || null,
         hero_font: state.selectedHeroFont || null,
         enable_shine: Boolean(state.enableShine),
+        progressive_reveal: Boolean(state.wordZoom),
+        word_zoom: Boolean(state.wordZoom),
+        marker_style: state.markerStyle,
+        marker_color: state.markerColor,
+        video_focus: Boolean(state.videoFocus),
+        pip_image_path: state.pipImage ? state.pipImage.path : null,
+        pip_position: state.pipPosition,
+        pip_size: state.pipSize,
         caption_cards: state.captionCards
       })
     });

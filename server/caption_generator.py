@@ -218,11 +218,16 @@ def generate_ass_subtitles(
     height: int = 1080,
     font_family_override: Optional[str] = None,
     hero_font_override: Optional[str] = None,
-    enable_shine: bool = False
+    enable_shine: bool = False,
+    progressive_reveal: bool = False,
+    word_zoom: bool = False,
+    marker_style: str = "none",
+    marker_color: str = "#4ade80"
 ) -> str:
     """
     Generates Advanced SubStation Alpha (.ass) subtitle file with word-by-word
-    karaoke highlighting, dual-color styling, and multi-font graphic rendering.
+    karaoke highlighting, dual-color styling, multi-font graphic rendering,
+    progressive word reveals, word zoom, and marker decorations.
     """
     tpl = caption_templates.get_template(template_id)
     if tpl["id"] == "none":
@@ -236,6 +241,15 @@ def generate_ass_subtitles(
     hero_font = hero_font_override or tpl.get("hero_font") or body_font
     hero_italic = tpl.get("hero_italic", 0)
     hero_scale = tpl.get("hero_scale", 118)
+
+    # Word zoom effect override
+    if word_zoom:
+        hero_scale = max(140, hero_scale + 20)
+
+    # Marker style resolution
+    effective_marker = marker_style if marker_style != "none" else tpl.get("marker_style", "none")
+    effective_marker_color = marker_color or tpl.get("marker_color", "#4ade80")
+    marker_ass = hex_to_ass_color(effective_marker_color)
 
     header = caption_templates.build_ass_header(template_id, width=width, height=height, font_override=body_font)
     
@@ -279,6 +293,10 @@ def generate_ass_subtitles(
 
             line_parts = []
             for idx, w in enumerate(words):
+                if progressive_reveal and idx > target_idx:
+                    # Hide unreached words in progressive reveal mode
+                    continue
+
                 word_text = w["word"]
                 if idx == target_idx:
                     extra_tags = ""
@@ -287,30 +305,40 @@ def generate_ass_subtitles(
                     if hero_italic:
                         extra_tags += "\\i1"
 
+                    # Marker decoration tags
+                    marker_tags = ""
+                    if effective_marker == "underline":
+                        marker_tags += "\\u1"
+                    elif effective_marker == "box":
+                        marker_tags += f"\\bord5\\3c{marker_ass}"
+                    elif effective_marker == "circle":
+                        marker_tags += f"\\bord4\\3c{marker_ass}"
+
                     shine_tag = "\\bord4\\blur3" if enable_shine else ""
+                    zoom_fx = f"\\t(0,140,\\fscx{hero_scale-12}\\fscy{hero_scale-12})" if word_zoom else ""
 
                     if anim in ("bounce", "spring", "elastic", "jelly"):
-                        line_parts.append(f"{{\\c{highlight_ass}{extra_tags}{shine_tag}\\fscx{hero_scale}\\fscy{hero_scale}}}{word_text}{{\\r}}")
+                        line_parts.append(f"{{\\c{highlight_ass}{extra_tags}{marker_tags}{shine_tag}\\fscx{hero_scale}\\fscy{hero_scale}{zoom_fx}}}{word_text}{{\\r}}")
                     elif anim in ("word_zoom", "mega_zoom", "stomp", "zoom"):
-                        line_parts.append(f"{{\\c{highlight_ass}{extra_tags}{shine_tag}\\fscx{max(124, hero_scale)}\\fscy{max(124, hero_scale)}}}{word_text}{{\\r}}")
+                        line_parts.append(f"{{\\c{highlight_ass}{extra_tags}{marker_tags}{shine_tag}\\fscx{max(128, hero_scale)}\\fscy{max(128, hero_scale)}{zoom_fx}}}{word_text}{{\\r}}")
                     elif anim in ("glow_pulse", "neon_glow", "aura", "laser", "glow"):
                         if enable_shine:
-                            line_parts.append(f"{{\\c{highlight_ass}{extra_tags}\\bord5\\blur4\\fscx{hero_scale}\\fscy{hero_scale}}}{word_text}{{\\r}}")
+                            line_parts.append(f"{{\\c{highlight_ass}{extra_tags}{marker_tags}\\bord5\\blur4\\fscx{hero_scale}\\fscy{hero_scale}{zoom_fx}}}{word_text}{{\\r}}")
                         else:
-                            line_parts.append(f"{{\\c{highlight_ass}{extra_tags}\\fscx{hero_scale}\\fscy{hero_scale}}}{word_text}{{\\r}}")
+                            line_parts.append(f"{{\\c{highlight_ass}{extra_tags}{marker_tags}\\fscx{hero_scale}\\fscy{hero_scale}{zoom_fx}}}{word_text}{{\\r}}")
                     elif anim in ("fire_pulse", "firestorm"):
                         if enable_shine:
-                            line_parts.append(f"{{\\c{highlight_ass}{extra_tags}\\bord6\\3c&H000000FF&\\fscx{hero_scale}\\fscy{hero_scale}}}{word_text}{{\\r}}")
+                            line_parts.append(f"{{\\c{highlight_ass}{extra_tags}{marker_tags}\\bord6\\3c&H000000FF&\\fscx{hero_scale}\\fscy{hero_scale}{zoom_fx}}}{word_text}{{\\r}}")
                         else:
-                            line_parts.append(f"{{\\c{highlight_ass}{extra_tags}\\fscx{hero_scale}\\fscy{hero_scale}}}{word_text}{{\\r}}")
+                            line_parts.append(f"{{\\c{highlight_ass}{extra_tags}{marker_tags}\\fscx{hero_scale}\\fscy{hero_scale}{zoom_fx}}}{word_text}{{\\r}}")
                     elif anim in ("comic_pop", "boom", "pop"):
-                        line_parts.append(f"{{\\c{highlight_ass}{extra_tags}{shine_tag}\\fscx{max(125, hero_scale)}\\fscy{max(125, hero_scale)}}}{word_text}{{\\r}}")
+                        line_parts.append(f"{{\\c{highlight_ass}{extra_tags}{marker_tags}{shine_tag}\\fscx{max(126, hero_scale)}\\fscy{max(126, hero_scale)}{zoom_fx}}}{word_text}{{\\r}}")
                     elif anim in ("slide_up", "drift_left", "diagonal", "elevator", "wave", "slide"):
-                        line_parts.append(f"{{\\c{highlight_ass}{extra_tags}{shine_tag}\\fscx{hero_scale}\\fscy{hero_scale}}}{word_text}{{\\r}}")
+                        line_parts.append(f"{{\\c{highlight_ass}{extra_tags}{marker_tags}{shine_tag}\\fscx{hero_scale}\\fscy{hero_scale}{zoom_fx}}}{word_text}{{\\r}}")
                     elif anim in ("glitch", "pixel", "retro_vhs", "matrix"):
-                        line_parts.append(f"{{\\c{highlight_ass}{extra_tags}{shine_tag}\\fscx{hero_scale}\\fscy{hero_scale}}}{word_text}{{\\r}}")
+                        line_parts.append(f"{{\\c{highlight_ass}{extra_tags}{marker_tags}{shine_tag}\\fscx{hero_scale}\\fscy{hero_scale}{zoom_fx}}}{word_text}{{\\r}}")
                     else:
-                        line_parts.append(f"{{\\c{highlight_ass}{extra_tags}{shine_tag}\\fscx{hero_scale}\\fscy{hero_scale}}}{word_text}{{\\r}}")
+                        line_parts.append(f"{{\\c{highlight_ass}{extra_tags}{marker_tags}{shine_tag}\\fscx{hero_scale}\\fscy{hero_scale}{zoom_fx}}}{word_text}{{\\r}}")
                 else:
                     if is_multi_font and hero_font != body_font:
                         line_parts.append(f"{{\\fn{body_font}\\c{primary_ass}}}{word_text}")

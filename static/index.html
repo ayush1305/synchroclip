@@ -419,6 +419,32 @@
             <i data-lucide="sparkles" class="w-3.5 h-3.5 text-slate-400" id="shineIcon"></i>
             <span>Shine Glow: <span id="shineStatusLabel" class="text-slate-400 font-bold">OFF</span></span>
           </button>
+
+          <!-- Important Word Marker Decoration Selector (Circle / Box / Underline) -->
+          <div class="flex items-center space-x-1.5 bg-surface-850 border border-slate-800 px-3 py-1.5 rounded-xl">
+            <span class="text-xs text-slate-400 font-medium whitespace-nowrap flex items-center space-x-1">
+              <i data-lucide="highlighter" class="w-3.5 h-3.5 text-lime-400"></i>
+              <span>Marker FX:</span>
+            </span>
+            <select id="selectMarkerStyle" class="bg-surface-900 border border-slate-700 text-xs text-slate-200 rounded-lg px-2 py-1 focus:outline-none focus:border-lime-500 font-medium cursor-pointer">
+              <option value="none">None (Clean Text)</option>
+              <option value="circle">🟢 Neon Circle / Oval</option>
+              <option value="box">🟨 Highlighter Pen Box</option>
+              <option value="underline">🔷 Accent Underline Bar</option>
+            </select>
+          </div>
+
+          <!-- Word Zoom & Progressive Reveal Effect Button -->
+          <button id="btnToggleWordZoom" type="button" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-surface-850 border border-slate-700 hover:border-slate-500 text-xs font-semibold text-slate-300 transition shadow-sm cursor-pointer select-none" title="Kinetic Zoom into each spoken word with progressive sentence reveal">
+            <i data-lucide="zoom-in" class="w-3.5 h-3.5 text-slate-400" id="zoomIcon"></i>
+            <span>Zoom & Reveal: <span id="zoomStatusLabel" class="text-slate-400 font-bold">OFF</span></span>
+          </button>
+
+          <!-- Video Focus Mode (Spotlight) Button -->
+          <button id="btnToggleVideoFocus" type="button" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-surface-850 border border-slate-700 hover:border-slate-500 text-xs font-semibold text-slate-300 transition shadow-sm cursor-pointer select-none" title="Subtly dims/vignettes background video during speech to spotlight the action and caption">
+            <i data-lucide="target" class="w-3.5 h-3.5 text-slate-400" id="focusIcon"></i>
+            <span>Video Focus: <span id="focusStatusLabel" class="text-slate-400 font-bold">OFF</span></span>
+          </button>
         </div>
       </div>
 
@@ -445,6 +471,17 @@
               <option value="Orbitron">Orbitron (Sci-Fi Cyber)</option>
               <option value="Inter">Inter (Minimalist Sans)</option>
               <option value="Pacifico">Pacifico (Creative Script)</option>
+              <option value="Caveat">Caveat (Handwriting)</option>
+              <option value="Dancing Script">Dancing Script (Fluid Cursive)</option>
+              <option value="Lobster">Lobster (Retro Script)</option>
+              <option value="Plus Jakarta Sans">Plus Jakarta Sans (Tech Modern)</option>
+              <option value="Outfit">Outfit (Geometric Clean)</option>
+              <option value="DM Sans">DM Sans (Clean Modern)</option>
+              <option value="Righteous">Righteous (Retro Punch)</option>
+              <option value="Abril Fatface">Abril Fatface (Fashion Headline)</option>
+              <option value="Cormorant Garamond">Cormorant Garamond (Classic Luxury)</option>
+              <option value="Space Grotesk">Space Grotesk (Cyber Brutalist)</option>
+              <option value="Chakra Petch">Chakra Petch (Gaming Tech)</option>
               <option value="Syne">Syne (Trend Avant-Garde)</option>
               <option value="Rubik">Rubik (Friendly Punch)</option>
             </select>
@@ -459,17 +496,37 @@
             <select id="selectHeroFont" class="bg-surface-900 border border-slate-700 text-xs text-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-brand-500 font-medium cursor-pointer">
               <option value="">Auto (Template Default)</option>
               <option value="Pacifico">Pacifico (Fluid Script / Cursive)</option>
+              <option value="Caveat">Caveat (Handwritten Script)</option>
+              <option value="Dancing Script">Dancing Script (Fluid Cursive)</option>
+              <option value="Lobster">Lobster (Retro Bold Script)</option>
               <option value="Bangers">Bangers (MrBeast Comic Punch)</option>
               <option value="Anton">Anton (Massive Bold Punch)</option>
               <option value="Bebas Neue">Bebas Neue (Tall Condensed)</option>
               <option value="Playfair Display">Playfair Display (Italic Luxury Serif)</option>
+              <option value="Abril Fatface">Abril Fatface (Fashion Headline Serif)</option>
+              <option value="Cormorant Garamond">Cormorant Garamond (Classic Luxury)</option>
               <option value="Montserrat">Montserrat (Ultra Black)</option>
               <option value="Cinzel">Cinzel (Cinematic Title Serif)</option>
               <option value="Orbitron">Orbitron (Futuristic Neon Cyber)</option>
+              <option value="Space Grotesk">Space Grotesk (Cyber Brutalist)</option>
+              <option value="Chakra Petch">Chakra Petch (Gaming Tech)</option>
+              <option value="Righteous">Righteous (Retro Punch)</option>
               <option value="Syne">Syne (Trend Avant-Garde)</option>
               <option value="Rubik">Rubik (Friendly Punch)</option>
               <option value="Inter">Inter (Clean Minimalist)</option>
             </select>
+          </div>
+
+          <!-- Custom Font Input -->
+          <div class="flex items-center space-x-1.5">
+            <span class="text-xs font-semibold text-slate-400 flex items-center space-x-1 whitespace-nowrap" title="Type any Google font name">
+              <i data-lucide="pen-tool" class="w-3.5 h-3.5 text-sky-400"></i>
+              <span>Custom:</span>
+            </span>
+            <div class="flex items-center space-x-1">
+              <input type="text" id="inputCustomFont" placeholder="e.g. Lobster, Caveat..." class="w-32 bg-surface-900 border border-slate-700 rounded-lg px-2 py-1 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500">
+              <button id="btnApplyCustomFont" type="button" class="px-2 py-1 bg-brand-600 hover:bg-brand-500 text-white rounded text-xs font-semibold transition cursor-pointer" title="Load Google Font live">Load</button>
+            </div>
           </div>
         </div>
 
@@ -549,12 +606,60 @@
           <span class="text-[11px] text-slate-400">Active template: <span id="activeTemplateBadge" class="text-brand-400 font-semibold font-mono">CapCut Classic</span></span>
         </div>
 
-        <div class="relative bg-black rounded-xl overflow-hidden aspect-video max-h-[380px] mx-auto flex items-center justify-center border border-slate-800 shadow-2xl group/preview">
+        <!-- Picture-in-Picture (PiP) Image & Sticker Control Bar -->
+        <div class="bg-surface-850 border border-slate-800 p-2.5 rounded-xl flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center space-x-2">
+            <i data-lucide="image" class="w-4 h-4 text-brand-400"></i>
+            <span class="text-xs font-semibold text-slate-200">Picture-in-Picture (PiP):</span>
+            <label for="pipFileInput" class="cursor-pointer px-2.5 py-1 bg-surface-900 hover:bg-slate-800 border border-slate-700 text-xs text-brand-400 hover:text-brand-300 font-medium rounded-lg flex items-center space-x-1.5 transition">
+              <i data-lucide="upload" class="w-3 h-3"></i>
+              <span id="pipUploadBtnLabel">Upload PiP Image</span>
+              <input type="file" id="pipFileInput" accept="image/*" class="hidden">
+            </label>
+            <button id="btnRemovePip" type="button" class="hidden text-xs text-rose-400 hover:text-rose-300 px-2 py-1 rounded bg-rose-500/10 hover:bg-rose-500/20 transition flex items-center space-x-1">
+              <i data-lucide="trash-2" class="w-3 h-3"></i>
+              <span>Remove</span>
+            </button>
+          </div>
+
+          <div id="pipControlsGroup" class="hidden flex flex-wrap items-center gap-3 text-xs">
+            <!-- Position -->
+            <div class="flex items-center space-x-1.5">
+              <span class="text-slate-400 font-medium">Position:</span>
+              <select id="selectPipPosition" class="bg-surface-900 border border-slate-700 text-xs text-slate-200 rounded-lg px-2 py-1 focus:outline-none focus:border-brand-500 cursor-pointer">
+                <option value="top-right">Top-Right</option>
+                <option value="top-left">Top-Left</option>
+                <option value="center-card">Center-Card (Rounded Frame)</option>
+                <option value="center">Center</option>
+              </select>
+            </div>
+
+            <!-- Size -->
+            <div class="flex items-center space-x-1.5">
+              <span class="text-slate-400 font-medium">Size:</span>
+              <select id="selectPipSize" class="bg-surface-900 border border-slate-700 text-xs text-slate-200 rounded-lg px-2 py-1 focus:outline-none focus:border-brand-500 cursor-pointer">
+                <option value="small">Small (25%)</option>
+                <option value="medium" selected>Medium (35%)</option>
+                <option value="large">Large (50%)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div id="livePreviewContainer" class="relative bg-black rounded-xl overflow-hidden aspect-video max-h-[380px] mx-auto flex items-center justify-center border border-slate-800 shadow-2xl group/preview">
           <!-- Active video element -->
           <video id="livePreviewVideo" muted loop class="w-full h-full object-contain"></video>
 
+          <!-- Picture-in-Picture (PiP) Overlay -->
+          <div id="pipPreviewOverlay" class="hidden absolute pointer-events-none transition-all duration-300 z-10 pip-top-right">
+            <img id="pipPreviewImg" src="" alt="PiP Overlay" class="rounded-xl border border-white/20 shadow-2xl object-cover max-h-48">
+          </div>
+
+          <!-- Video Focus Spotlight Overlay -->
+          <div id="videoFocusOverlay" class="hidden absolute inset-0 pointer-events-none transition-opacity duration-300 z-10 bg-black/40 backdrop-brightness-75" style="box-shadow: inset 0 0 80px rgba(0,0,0,0.8);"></div>
+
           <!-- Word-by-word Karaoke Caption Overlay -->
-          <div id="liveCaptionOverlay" class="absolute inset-x-4 bottom-8 flex items-center justify-center text-center pointer-events-none transition duration-150">
+          <div id="liveCaptionOverlay" class="absolute inset-x-4 bottom-8 flex items-center justify-center text-center pointer-events-none transition duration-150 z-20">
             <!-- Dynamic word elements with pop/scale effect injected here -->
           </div>
         </div>

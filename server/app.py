@@ -23,6 +23,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
 VIDEO_UPLOAD_DIR = os.path.join(UPLOAD_DIR, "videos")
 DIRECT_VIDEO_DIR = os.path.join(UPLOAD_DIR, "direct_videos")
+PIP_UPLOAD_DIR = os.path.join(UPLOAD_DIR, "pip")
 AUDIO_DIR = os.path.join(UPLOAD_DIR, "audio")
 OUTPUT_DIR = os.path.join(BASE_DIR, "output")
 CACHE_DIR = os.path.join(BASE_DIR, "cache")
@@ -31,6 +32,7 @@ STATIC_DIR = os.path.join(BASE_DIR, "static")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(VIDEO_UPLOAD_DIR, exist_ok=True)
 os.makedirs(DIRECT_VIDEO_DIR, exist_ok=True)
+os.makedirs(PIP_UPLOAD_DIR, exist_ok=True)
 os.makedirs(AUDIO_DIR, exist_ok=True)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 os.makedirs(CACHE_DIR, exist_ok=True)
@@ -95,6 +97,14 @@ class RenderRequest(BaseModel):
     is_direct_video: Optional[bool] = False
     direct_video_path: Optional[str] = None
     enable_shine: Optional[bool] = False
+    progressive_reveal: Optional[bool] = False
+    word_zoom: Optional[bool] = False
+    marker_style: Optional[str] = "none"
+    marker_color: Optional[str] = "#4ade80"
+    video_focus: Optional[bool] = False
+    pip_image_path: Optional[str] = None
+    pip_position: Optional[str] = "top-right"
+    pip_size: Optional[str] = "medium"
 
 def get_video_info_and_thumb(video_path: str, thumb_path: str) -> dict:
     duration = 0.0
@@ -310,16 +320,30 @@ async def render_video(req: RenderRequest):
             height=height,
             font_family_override=req.font_family,
             hero_font_override=req.hero_font,
-            enable_shine=bool(req.enable_shine)
+            enable_shine=bool(req.enable_shine),
+            progressive_reveal=bool(req.progressive_reveal),
+            word_zoom=bool(req.word_zoom),
+            marker_style=req.marker_style or "none",
+            marker_color=req.marker_color or "#4ade80"
         )
         caption_ass_path = sub_path
+
+    pip_info = None
+    if req.pip_image_path and os.path.exists(req.pip_image_path):
+        pip_info = {
+            "image_path": req.pip_image_path,
+            "position": req.pip_position or "top-right",
+            "size": req.pip_size or "medium"
+        }
 
     # Direct Video Mode (Bypass stock scenes and burn subtitles directly onto pre-existing video)
     if req.is_direct_video and req.direct_video_path and os.path.exists(req.direct_video_path):
         job_id = video_composer.start_direct_render_job(
             video_path=req.direct_video_path,
             caption_ass_path=caption_ass_path,
-            output_dir=OUTPUT_DIR
+            output_dir=OUTPUT_DIR,
+            video_focus=bool(req.video_focus),
+            pip_info=pip_info
         )
         return {
             "status": "started",
@@ -338,7 +362,9 @@ async def render_video(req: RenderRequest):
         aspect_ratio=req.aspect_ratio or "16:9",
         caption_ass_path=caption_ass_path,
         cache_dir=CACHE_DIR,
-        output_dir=OUTPUT_DIR
+        output_dir=OUTPUT_DIR,
+        video_focus=bool(req.video_focus),
+        pip_info=pip_info
     )
 
     return {
@@ -462,6 +488,39 @@ async def upload_video(file: UploadFile = File(...)):
         print(f"Error handling video upload: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to process video: {str(e)}")
 
+@app.post("/api/upload-pip-image")
+async def upload_pip_image(file: UploadFile = File(...)):
+    """
+    Uploads a picture-in-picture (PiP) overlay image (.png, .jpg, .jpeg, .webp, .svg).
+    """
+    try:
+        ext = os.path.splitext(file.filename)[1].lower() or ".png"
+        valid_exts = {".png", ".jpg", ".jpeg", ".webp", ".svg"}
+        if ext not in valid_exts:
+            raise HTTPException(status_code=400, detail=f"Unsupported image format '{ext}'. Allowed: PNG, JPG, JPEG, WEBP, SVG.")
+
+        img_id = uuid.uuid4().hex[:10]
+        safe_name = f"pip_{img_id}{ext}"
+        target_path = os.path.join(PIP_UPLOAD_DIR, safe_name)
+
+        with open(target_path, "wb") as buf:
+            shutil.copyfileobj(file.file, buf)
+
+        return {
+            "status": "success",
+            "pip_id": img_id,
+            "filename": file.filename,
+            "url": f"/uploads/pip/{safe_name}",
+            "pip_url": f"/uploads/pip/{safe_name}",
+            "path": target_path,
+            "local_path": target_path
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error handling PiP image upload: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to process PiP image: {str(e)}")
+
 @app.get("/api/render-status/{job_id}")
 async def get_render_status(job_id: str):
     """
@@ -555,7 +614,8 @@ async def get_caption_templates():
         "status": "success",
         "templates": list(caption_templates.TEMPLATES.values()),
         "colors": caption_templates.HIGHLIGHT_COLORS,
-        "famous_fonts": caption_templates.FAMOUS_FONTS
+        "famous_fonts": caption_templates.FAMOUS_FONTS,
+        "marker_styles": caption_templates.MARKER_STYLES
     }
 
 @app.post("/api/generate-captions")
