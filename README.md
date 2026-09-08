@@ -10,7 +10,19 @@
 
 ---
 
-## ✨ Features
+## 🚀 Direct App Download (Windows)
+
+No ZIP extraction or Python terminal commands needed! Download the pre-built desktop app directly:
+
+| Download Asset | Description | Direct Download |
+| :--- | :--- | :--- |
+| **`SynchroClip.exe`** | **Standalone Windows Desktop App** (Double-click to run, opens automatically in browser) | [**⬇️ Download SynchroClip.exe**](https://github.com/ayush1305/synchroclip/releases/download/v1.0.0/SynchroClip.exe) |
+| **`Install-Desktop-Shortcut.bat`** | Creates an official Windows Desktop icon shortcut | [**⬇️ Download Desktop Installer**](https://github.com/ayush1305/synchroclip/releases/download/v1.0.0/Install-Desktop-Shortcut.bat) |
+| **`SynchroClip-Launcher.bat`** | 1-Click launcher script | [**⬇️ Download Launcher**](https://github.com/ayush1305/synchroclip/releases/download/v1.0.0/SynchroClip-Launcher.bat) |
+
+👉 **[View All GitHub Releases](https://github.com/ayush1305/synchroclip/releases)**
+
+---
 
 ### 1. 🎵 Audio-Driven Smart Clip Sync
 - Upload any audio track (`.mp3`, `.wav`, `.m4a`, `.ogg`, `.flac`, `.aac`).
