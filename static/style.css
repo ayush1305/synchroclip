@@ -147,3 +147,27 @@
 .inspector-color-btn.active {
   border-color: #ffffff;
 }
+
+/* Timeline Horizontal Scrollbar */
+#timelineScrollArea::-webkit-scrollbar {
+  height: 7px;
+}
+#timelineScrollArea::-webkit-scrollbar-track {
+  background: #020617;
+}
+#timelineScrollArea::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 4px;
+}
+#timelineScrollArea::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+/* Small laptop screen fallback: allow page scrolling if screen height is under 680px */
+@media (max-height: 680px) {
+  body {
+    overflow-y: auto !important;
+    height: auto !important;
+    min-height: 100vh;
+  }
+}

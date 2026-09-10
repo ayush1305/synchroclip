@@ -118,6 +118,10 @@ const el = {
   btnZoomIn: document.getElementById('btnZoomIn'),
   timelineZoomSlider: document.getElementById('timelineZoomSlider'),
   timelineScrollArea: document.getElementById('timelineScrollArea'),
+  btnScrollTimelineLeft: document.getElementById('btnScrollTimelineLeft'),
+  btnScrollTimelineRight: document.getElementById('btnScrollTimelineRight'),
+  btnScrollToTimeline: document.getElementById('btnScrollToTimeline'),
+  bottomTimelineSection: document.getElementById('bottomTimelineSection'),
   timelineRuler: document.getElementById('timelineRuler'),
   timelineLanes: document.getElementById('timelineLanes'),
   playheadNeedle: document.getElementById('playheadNeedle'),
@@ -148,7 +152,7 @@ let currentAIAnalysis = null;
 function init() {
   ctx = el.programCanvas.getContext('2d');
   bindEvents();
-  setAspectRatio('9:16');
+  setAspectRatio('16:9');
   fetchCaptionPresets();
   fetchInitialStockVideos('technology');
   renderTimeline();
@@ -274,6 +278,30 @@ function bindEvents() {
     renderTimeline();
   });
 
+  // Timeline Horizontal Scroll Buttons & Shortcuts
+  if (el.btnScrollTimelineLeft) {
+    el.btnScrollTimelineLeft.addEventListener('click', () => {
+      if (el.timelineScrollArea) {
+        el.timelineScrollArea.scrollBy({ left: -260, behavior: 'smooth' });
+      }
+    });
+  }
+  if (el.btnScrollTimelineRight) {
+    el.btnScrollTimelineRight.addEventListener('click', () => {
+      if (el.timelineScrollArea) {
+        el.timelineScrollArea.scrollBy({ left: 260, behavior: 'smooth' });
+      }
+    });
+  }
+  if (el.btnScrollToTimeline) {
+    el.btnScrollToTimeline.addEventListener('click', () => {
+      const target = document.getElementById('bottomTimelineSection') || el.timelineScrollArea;
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      }
+    });
+  }
+
   // Timeline Ruler & Playhead Dragging
   bindPlayheadDragging();
 
@@ -384,22 +412,22 @@ function setAspectRatio(ratio) {
 
   // Viewport aspect ratio container
   if (ratio === '16:9') {
-    el.viewportContainer.className = 'relative bg-black rounded-lg overflow-hidden shadow-2xl border border-slate-800 aspect-[16/9] max-w-[90%] max-h-[85%] transition-all';
+    el.viewportContainer.className = 'relative bg-black rounded-lg overflow-hidden shadow-2xl border border-slate-800 aspect-[16/9] w-full max-w-[850px] max-h-full flex items-center justify-center transition-all';
     el.monitorResolutionBadge.textContent = '1920x1080 (16:9)';
     el.programCanvas.width = 1920;
     el.programCanvas.height = 1080;
   } else if (ratio === '9:16') {
-    el.viewportContainer.className = 'relative bg-black rounded-lg overflow-hidden shadow-2xl border border-slate-800 aspect-[9/16] max-h-[92%] transition-all';
+    el.viewportContainer.className = 'relative bg-black rounded-lg overflow-hidden shadow-2xl border border-slate-800 aspect-[9/16] h-[250px] max-h-[75%] flex items-center justify-center transition-all';
     el.monitorResolutionBadge.textContent = '1080x1920 (9:16)';
     el.programCanvas.width = 1080;
     el.programCanvas.height = 1920;
   } else if (ratio === '1:1') {
-    el.viewportContainer.className = 'relative bg-black rounded-lg overflow-hidden shadow-2xl border border-slate-800 aspect-square max-h-[88%] transition-all';
+    el.viewportContainer.className = 'relative bg-black rounded-lg overflow-hidden shadow-2xl border border-slate-800 aspect-square h-[250px] max-h-[75%] flex items-center justify-center transition-all';
     el.monitorResolutionBadge.textContent = '1080x1080 (1:1)';
     el.programCanvas.width = 1080;
     el.programCanvas.height = 1080;
   } else if (ratio === '4:5') {
-    el.viewportContainer.className = 'relative bg-black rounded-lg overflow-hidden shadow-2xl border border-slate-800 aspect-[4/5] max-h-[90%] transition-all';
+    el.viewportContainer.className = 'relative bg-black rounded-lg overflow-hidden shadow-2xl border border-slate-800 aspect-[4/5] h-[250px] max-h-[75%] flex items-center justify-center transition-all';
     el.monitorResolutionBadge.textContent = '1080x1350 (4:5)';
     el.programCanvas.width = 1080;
     el.programCanvas.height = 1350;

@@ -39,20 +39,14 @@
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="/style.css">
 </head>
-<body class="bg-surface-950 text-slate-100 min-h-screen flex flex-col font-sans antialiased overflow-hidden select-none">
+<body class="bg-surface-950 text-slate-100 h-screen max-h-screen flex flex-col font-sans antialiased overflow-hidden select-none">
 
   <!-- TOP NAVIGATION BAR -->
-  <header class="h-13 bg-surface-900 border-b border-slate-800 px-4 flex items-center justify-between z-30 shrink-0">
-    <!-- Brand & Project Info -->
-    <div class="flex items-center space-x-3">
-      <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-brand-600 via-indigo-600 to-purple-500 flex items-center justify-center shadow-md shadow-brand-600/30">
-        <i data-lucide="scissors" class="w-4 h-4 text-white"></i>
-      </div>
-      <div class="flex items-center space-x-2">
-        <span class="font-extrabold text-sm tracking-tight text-white">SynchroClip</span>
-      </div>
-      <div class="h-4 w-[1px] bg-slate-800 mx-1"></div>
-      <input type="text" id="projectTitleInput" value="Untitled Project" class="bg-transparent hover:bg-surface-800 focus:bg-surface-800 px-2 py-1 rounded text-xs font-semibold text-slate-200 border border-transparent focus:border-slate-700 outline-none transition w-36 focus:w-48 truncate">
+  <header class="h-12 bg-surface-900 border-b border-slate-800 px-4 flex items-center justify-between z-30 shrink-0">
+    <!-- Project Title Input (Logo & SynchroClip brand removed) -->
+    <div class="flex items-center space-x-2">
+      <i data-lucide="film" class="w-4 h-4 text-purple-400"></i>
+      <input type="text" id="projectTitleInput" value="Untitled Project" class="bg-surface-850 hover:bg-surface-800 focus:bg-surface-800 px-2.5 py-1 rounded-md text-xs font-semibold text-slate-200 border border-slate-800 focus:border-purple-500 outline-none transition w-44 focus:w-56 truncate" title="Project Name">
     </div>
 
     <!-- Center Shortcuts: Undo / Redo & Aspect Ratio -->
@@ -65,18 +59,18 @@
       </button>
       <div class="h-4 w-[1px] bg-slate-800 mx-1"></div>
 
-      <!-- Aspect Ratio Dropdown -->
+      <!-- Aspect Ratio Dropdown (16:9 fixed standard default) -->
       <div class="flex items-center bg-surface-850 p-0.5 rounded-lg border border-slate-800 text-xs">
-        <button id="btnRatio16x9" class="px-2.5 py-1 rounded-md font-semibold transition text-slate-400 hover:text-white" title="YouTube / Widescreen">
+        <button id="btnRatio16x9" class="px-2.5 py-1 rounded-md font-semibold transition bg-brand-600 text-white shadow" title="Widescreen (16:9 Fixed Video Frame)">
           16:9
         </button>
-        <button id="btnRatio9x16" class="px-2.5 py-1 rounded-md font-semibold transition bg-brand-600 text-white shadow" title="Shorts / Reels / TikTok">
+        <button id="btnRatio9x16" class="px-2.5 py-1 rounded-md font-semibold transition text-slate-400 hover:text-white" title="Shorts / Reels / TikTok (9:16 Compact)">
           9:16
         </button>
-        <button id="btnRatio1x1" class="px-2.5 py-1 rounded-md font-semibold transition text-slate-400 hover:text-white" title="Square Post">
+        <button id="btnRatio1x1" class="px-2.5 py-1 rounded-md font-semibold transition text-slate-400 hover:text-white" title="Square Post (1:1)">
           1:1
         </button>
-        <button id="btnRatio4x5" class="px-2.5 py-1 rounded-md font-semibold transition text-slate-400 hover:text-white" title="Instagram Portrait">
+        <button id="btnRatio4x5" class="px-2.5 py-1 rounded-md font-semibold transition text-slate-400 hover:text-white" title="Instagram Portrait (4:5)">
           4:5
         </button>
       </div>
@@ -378,15 +372,19 @@
     </div>
 
     <!-- CENTER PANEL: PROGRAM MONITOR / CANVAS -->
-    <div class="flex-1 bg-surface-950 flex flex-col relative overflow-hidden">
+    <div class="flex-1 bg-surface-950 flex flex-col relative overflow-hidden min-h-0">
       <!-- Monitor Header / Canvas Mode -->
-      <div class="h-9 border-b border-slate-800/80 px-4 flex items-center justify-between text-xs text-slate-400 shrink-0">
+      <div class="h-8 border-b border-slate-800/80 px-4 flex items-center justify-between text-xs text-slate-400 shrink-0">
         <div class="flex items-center space-x-2">
           <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
           <span class="font-medium text-slate-300">Program Monitor</span>
-          <span id="monitorResolutionBadge" class="text-[10px] font-mono text-slate-500">1080x1920</span>
+          <span id="monitorResolutionBadge" class="text-[10px] font-mono text-slate-400">1920x1080 (16:9)</span>
         </div>
-        <div class="flex items-center space-x-3">
+        <div class="flex items-center space-x-2.5">
+          <button id="btnScrollToTimeline" type="button" class="px-2 py-0.5 rounded bg-surface-850 hover:bg-surface-800 text-[10px] text-slate-300 hover:text-white border border-slate-700/80 flex items-center space-x-1 transition" title="Scroll to Timeline">
+            <i data-lucide="arrow-down" class="w-3 h-3 text-purple-400"></i>
+            <span>Timeline</span>
+          </button>
           <label class="flex items-center space-x-1.5 cursor-pointer text-[11px]">
             <input type="checkbox" id="toggleSafeGuides" checked class="rounded border-slate-700 text-brand-600 focus:ring-0">
             <span>Safe Guides</span>
@@ -395,10 +393,10 @@
       </div>
 
       <!-- Canvas Video Viewport -->
-      <div class="flex-1 flex items-center justify-center p-4 relative overflow-hidden bg-black/40">
-        <!-- Aspect Ratio Bounding Container -->
-        <div id="viewportContainer" class="relative bg-black rounded-lg overflow-hidden shadow-2xl border border-slate-800 aspect-[9/16] max-h-[92%] transition-all">
-          <canvas id="programCanvas" class="w-full h-full object-contain"></canvas>
+      <div class="flex-1 flex items-center justify-center p-2 sm:p-3 relative overflow-hidden bg-black/40 min-h-0">
+        <!-- Aspect Ratio Bounding Container (Fixed 16:9 Frame Default) -->
+        <div id="viewportContainer" class="relative bg-black rounded-lg overflow-hidden shadow-2xl border border-slate-800 aspect-[16/9] w-full max-w-[850px] max-h-full transition-all flex items-center justify-center">
+          <canvas id="programCanvas" class="max-h-full max-w-full object-contain block"></canvas>
 
           <!-- Empty Monitor Quick Action Overlay (visible when 0 clips on timeline) -->
           <div id="emptyMonitorPlaceholder" class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center z-10 pointer-events-auto bg-surface-950/80 backdrop-blur-[2px]">
@@ -483,33 +481,49 @@
   </div>
 
   <!-- BOTTOM PANEL: MULTI-TRACK PROFESSIONAL TIMELINE -->
-  <div class="h-64 bg-surface-950 border-t border-slate-800 flex flex-col shrink-0 z-30">
+  <div id="bottomTimelineSection" class="h-52 bg-surface-950 border-t border-slate-800 flex flex-col shrink-0 z-30">
     <!-- Timeline Toolbar -->
-    <div class="h-9 bg-surface-900 border-b border-slate-800/80 px-3 flex items-center justify-between shrink-0 text-xs">
+    <div class="h-8 bg-surface-900 border-b border-slate-800/80 px-3 flex items-center justify-between shrink-0 text-xs">
       <div class="flex items-center space-x-1.5">
-        <button id="btnTimelineSplit" type="button" class="px-2.5 py-1 rounded bg-surface-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center space-x-1 transition" title="Split Clip at Playhead (Ctrl+B)">
+        <button id="btnTimelineSplit" type="button" class="px-2 py-0.5 rounded bg-surface-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center space-x-1 transition text-xs" title="Split Clip at Playhead (Ctrl+B)">
           <i data-lucide="scissors" class="w-3.5 h-3.5"></i>
           <span>Split</span>
         </button>
-        <button id="btnTimelineDelete" type="button" class="px-2.5 py-1 rounded bg-surface-800 hover:bg-rose-900/40 text-slate-400 hover:text-rose-300 flex items-center space-x-1 transition" title="Delete Selected Clip (Del)">
+        <button id="btnTimelineDelete" type="button" class="px-2 py-0.5 rounded bg-surface-800 hover:bg-rose-900/40 text-slate-400 hover:text-rose-300 flex items-center space-x-1 transition text-xs" title="Delete Selected Clip (Del)">
           <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
           <span>Delete</span>
         </button>
-        <button id="btnTimelineDuplicate" type="button" class="px-2.5 py-1 rounded bg-surface-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center space-x-1 transition" title="Duplicate Clip (Ctrl+D)">
+        <button id="btnTimelineDuplicate" type="button" class="px-2 py-0.5 rounded bg-surface-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center space-x-1 transition text-xs" title="Duplicate Clip (Ctrl+D)">
           <i data-lucide="copy" class="w-3.5 h-3.5"></i>
         </button>
         <div class="h-4 w-[1px] bg-slate-800 mx-1"></div>
-        <button id="btnToggleSnap" type="button" class="px-2 py-1 rounded bg-brand-600/30 text-brand-300 border border-brand-500/30 flex items-center space-x-1 text-[11px]" title="Toggle Magnet Snap (S)">
+        <button id="btnToggleSnap" type="button" class="px-2 py-0.5 rounded bg-brand-600/30 text-brand-300 border border-brand-500/30 flex items-center space-x-1 text-[11px]" title="Toggle Magnet Snap (S)">
           <i data-lucide="magnet" class="w-3 h-3"></i>
           <span>Snap</span>
         </button>
       </div>
 
-      <!-- Zoom Slider -->
-      <div class="flex items-center space-x-2">
-        <i data-lucide="zoom-out" class="w-3.5 h-3.5 text-slate-400 cursor-pointer" id="btnZoomOut"></i>
-        <input type="range" id="timelineZoomSlider" min="20" max="150" value="60" class="w-24 accent-brand-500 h-1 bg-slate-800 rounded">
-        <i data-lucide="zoom-in" class="w-3.5 h-3.5 text-slate-400 cursor-pointer" id="btnZoomIn"></i>
+      <!-- Timeline Navigation, Scroll Buttons & Zoom -->
+      <div class="flex items-center space-x-2.5">
+        <!-- Dedicated Scroll Buttons (Requested by user) -->
+        <div class="flex items-center bg-surface-850 rounded-md p-0.5 border border-slate-700/80 text-xs">
+          <button id="btnScrollTimelineLeft" type="button" class="p-1 rounded text-slate-300 hover:text-white hover:bg-surface-700 transition" title="Scroll Timeline Left">
+            <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i>
+          </button>
+          <span class="text-[10px] text-slate-400 px-1 font-mono select-none">Scroll</span>
+          <button id="btnScrollTimelineRight" type="button" class="p-1 rounded text-slate-300 hover:text-white hover:bg-surface-700 transition" title="Scroll Timeline Right">
+            <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+
+        <div class="h-4 w-[1px] bg-slate-800"></div>
+
+        <!-- Zoom Slider -->
+        <div class="flex items-center space-x-1.5">
+          <i data-lucide="zoom-out" class="w-3.5 h-3.5 text-slate-400 cursor-pointer hover:text-white" id="btnZoomOut" title="Zoom Out"></i>
+          <input type="range" id="timelineZoomSlider" min="20" max="150" value="60" class="w-20 accent-brand-500 h-1 bg-slate-800 rounded cursor-pointer" title="Timeline Zoom">
+          <i data-lucide="zoom-in" class="w-3.5 h-3.5 text-slate-400 cursor-pointer hover:text-white" id="btnZoomIn" title="Zoom In"></i>
+        </div>
       </div>
     </div>
 
