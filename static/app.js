@@ -53,6 +53,56 @@ const state = {
 
 // DOM Elements
 const elements = {
+  // Top Bar & CapCut Studio Actions
+  btnTopGenerateVideo: document.getElementById('btnTopGenerateVideo'),
+  btnTopExportVideo: document.getElementById('btnTopExportVideo'),
+  projectTitleLabel: document.getElementById('projectTitleLabel'),
+  // Live Caption Preview in Modal
+  perCardLivePreviewBox: document.getElementById('perCardLivePreviewBox'),
+  perCardLivePreviewContent: document.getElementById('perCardLivePreviewContent'),
+  perCardPreviewTplBadge: document.getElementById('perCardPreviewTplBadge'),
+  // Inspector Panel
+  inspectorPanel: document.getElementById('inspectorPanel'),
+  inspectorTypeBadge: document.getElementById('inspectorTypeBadge'),
+  inspectorLivePreviewBox: document.getElementById('inspectorLivePreviewBox'),
+  inspectorLivePreviewContent: document.getElementById('inspectorLivePreviewContent'),
+  inspectorPreviewTplBadge: document.getElementById('inspectorPreviewTplBadge'),
+  inspectorCaptionControls: document.getElementById('inspectorCaptionControls'),
+  inspectorCaptionTemplateSelect: document.getElementById('inspectorCaptionTemplateSelect'),
+  inspectorHighlightPicker: document.getElementById('inspectorHighlightPicker'),
+  inspectorHighlightHex: document.getElementById('inspectorHighlightHex'),
+  inspectorPrimaryPicker: document.getElementById('inspectorPrimaryPicker'),
+  inspectorPrimaryHex: document.getElementById('inspectorPrimaryHex'),
+  inspectorMarkerGroup: document.getElementById('inspectorMarkerGroup'),
+  btnInspectorRevertCard: document.getElementById('btnInspectorRevertCard'),
+  btnInspectorSeekCard: document.getElementById('btnInspectorSeekCard'),
+  inspectorSceneControls: document.getElementById('inspectorSceneControls'),
+  inspectorSceneTitle: document.getElementById('inspectorSceneTitle'),
+  inspectorSceneDuration: document.getElementById('inspectorSceneDuration'),
+  inspectorSceneQuery: document.getElementById('inspectorSceneQuery'),
+  btnInspectorSwapClip: document.getElementById('btnInspectorSwapClip'),
+  btnInspectorUploadClip: document.getElementById('btnInspectorUploadClip'),
+  // Multi-Track Timeline
+  timelineScrollContainer: document.getElementById('timelineScrollContainer'),
+  timelineInnerContent: document.getElementById('timelineInnerContent'),
+  timelinePlayheadNeedle: document.getElementById('timelinePlayheadNeedle'),
+  timelinePlayheadHandle: document.getElementById('timelinePlayheadHandle'),
+  timelineTimecodeRuler: document.getElementById('timelineTimecodeRuler'),
+  timelineCaptionsTrack: document.getElementById('timelineCaptionsTrack'),
+  timelinePipTrack: document.getElementById('timelinePipTrack'),
+  timelineVideoTrack: document.getElementById('timelineVideoTrack'),
+  timelineAudioTrack: document.getElementById('timelineAudioTrack'),
+  // Transport Controls
+  btnTransportStart: document.getElementById('btnTransportStart'),
+  btnTransportPrev: document.getElementById('btnTransportPrev'),
+  btnTransportPlayPause: document.getElementById('btnTransportPlayPause'),
+  btnTransportNext: document.getElementById('btnTransportNext'),
+  btnTransportEnd: document.getElementById('btnTransportEnd'),
+  transportCurrentTime: document.getElementById('transportCurrentTime'),
+  transportTotalTime: document.getElementById('transportTotalTime'),
+  sliderTransportVolume: document.getElementById('sliderTransportVolume'),
+  btnTransportFullscreen: document.getElementById('btnTransportFullscreen'),
+
   // Mode Switcher
   modeBtnGenerate: document.getElementById('modeBtnGenerate'),
   modeBtnDirect: document.getElementById('modeBtnDirect'),
@@ -400,6 +450,7 @@ function renderCaptionTemplates() {
       updateLiveKaraokeCaption(elements.htmlAudio.currentTime || 0);
       renderCaptionSegmentsEditor();
       if (state.scenes.length) renderStoryboard();
+    renderMultiTrackTimeline();
     });
 
     elements.captionTemplatesGrid.appendChild(card);
@@ -1170,6 +1221,7 @@ function setupEventListeners() {
       });
       renderCaptionSegmentsEditor();
       if (state.scenes.length) renderStoryboard();
+    renderMultiTrackTimeline();
       updateLiveKaraokeCaption(elements.htmlAudio.currentTime || 0);
     });
   }
@@ -1218,6 +1270,7 @@ function setupEventListeners() {
       elements.perCardStyleModal.classList.add('hidden');
       renderCaptionSegmentsEditor();
       if (state.scenes.length) renderStoryboard();
+    renderMultiTrackTimeline();
     });
   }
 
@@ -1249,6 +1302,7 @@ function setupEventListeners() {
       seekToCard(card);
       renderCaptionSegmentsEditor();
       if (state.scenes.length) renderStoryboard();
+    renderMultiTrackTimeline();
     });
   }
 
@@ -1664,11 +1718,8 @@ async function handleDirectSyncCaptions() {
     return;
   }
 
-  const scriptText = elements.directScriptInput.value.trim();
-  if (!scriptText) {
-    alert('Please enter or transcribe a script for caption alignment.');
-    return;
-  }
+  let scriptText = elements.directScriptInput.value.trim();
+  // Free Audio Analysis: If no script provided, automatically transcribe video audio
 
   elements.btnDirectSyncCaptions.disabled = true;
   elements.btnDirectSyncCaptions.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i><span>Aligning Word Timestamps...</span>';
@@ -2036,6 +2087,7 @@ function renderCaptionSegmentsEditor() {
       seekToCard(card);
       renderCaptionSegmentsEditor();
       if (state.scenes.length) renderStoryboard();
+    renderMultiTrackTimeline();
     });
 
     // Customizer palette button (opens detailed modal)
@@ -2064,6 +2116,7 @@ function renderCaptionSegmentsEditor() {
         seekToCard(card);
         renderCaptionSegmentsEditor();
         if (state.scenes.length) renderStoryboard();
+    renderMultiTrackTimeline();
       });
       rightCol.appendChild(btnRevert);
     }
@@ -2153,6 +2206,7 @@ function openPerCardModal(idx) {
   });
 
   elements.perCardStyleModal.classList.remove('hidden');
+  updateModalCaptionPreview();
 }
 
 // Auto-transcribe audio via SpeechRecognition
@@ -2229,13 +2283,11 @@ async function handleGenerateScenes() {
   }
 
   const script = elements.scriptInput.value.trim();
-  if (!script) {
-    alert('Please enter or paste the transcript text corresponding to the audio.');
-    return;
-  }
+  // Free Audio Analysis: If no script provided, auto-transcribe and analyze audio for free!
 
   elements.btnGenerateScenes.disabled = true;
-  elements.btnGenerateScenes.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i><span>Analyzing Script Pacing...</span>';
+  elements.btnGenerateScenes.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i><span>Analyzing Audio for Free...</span>';
+  if (elements.btnTopGenerateVideo) elements.btnTopGenerateVideo.innerHTML = '<i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i><span>Analyzing Audio...</span>';
   lucide.createIcons();
 
   try {
@@ -2250,6 +2302,11 @@ async function handleGenerateScenes() {
     });
     if (!segmentResp.ok) throw new Error('Segmentation failed');
     const segmentData = await segmentResp.json();
+    if (segmentData.transcript && !elements.scriptInput.value.trim()) {
+      elements.scriptInput.value = segmentData.transcript;
+      elements.scriptInput.dispatchEvent(new Event('input'));
+    }
+    const effectiveScript = elements.scriptInput.value.trim() || segmentData.transcript || 'Welcome to this visual moment.';
     
     // 2. Align word-level karaoke timestamps for CapCut captions
     elements.btnGenerateScenes.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i><span>Aligning Word Highlights...</span>';
@@ -2260,7 +2317,7 @@ async function handleGenerateScenes() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         audio_id: state.audioId,
-        script_text: script,
+        script_text: effectiveScript,
         template_id: state.selectedTemplate
       })
     });
@@ -2287,6 +2344,7 @@ async function handleGenerateScenes() {
   } finally {
     elements.btnGenerateScenes.disabled = false;
     elements.btnGenerateScenes.innerHTML = '<i data-lucide="wand-2" class="w-4 h-4"></i><span>Analyze, Match & Style</span>';
+    if (elements.btnTopGenerateVideo) elements.btnTopGenerateVideo.innerHTML = '<i data-lucide="wand-2" class="w-3.5 h-3.5 text-amber-300"></i><span>✨ Generate Video</span>';
     lucide.createIcons();
   }
 }
@@ -2307,6 +2365,7 @@ async function handleAutoMatchAll(scenes) {
 
     state.scenes = matchData.scenes;
     renderStoryboard();
+    renderMultiTrackTimeline();
     renderTimelineOverview();
 
     // Init live preview video with scene 1
@@ -2514,6 +2573,7 @@ function moveScene(fromIndex, toIndex) {
   });
 
   renderStoryboard();
+    renderMultiTrackTimeline();
   renderTimelineOverview();
 }
 
@@ -2596,6 +2656,7 @@ async function handleCustomVideoUpload(file) {
     if (state.activeSwapSceneIndex !== null && state.scenes[state.activeSwapSceneIndex]) {
       state.scenes[state.activeSwapSceneIndex].selected_clip = clip;
       renderStoryboard();
+    renderMultiTrackTimeline();
       renderTimelineOverview();
       syncLiveVideoScene(elements.htmlAudio.currentTime || 0);
       elements.swapClipModal.classList.add('hidden');
@@ -2658,6 +2719,7 @@ function renderUserClipsGrid() {
       if (state.activeSwapSceneIndex !== null && state.scenes[state.activeSwapSceneIndex]) {
         state.scenes[state.activeSwapSceneIndex].selected_clip = clip;
         renderStoryboard();
+    renderMultiTrackTimeline();
         renderTimelineOverview();
         syncLiveVideoScene(elements.htmlAudio.currentTime || 0);
         elements.swapClipModal.classList.add('hidden');
@@ -2745,6 +2807,7 @@ function renderSwapResults(videos) {
       if (state.activeSwapSceneIndex !== null) {
         state.scenes[state.activeSwapSceneIndex].selected_clip = v;
         renderStoryboard();
+    renderMultiTrackTimeline();
         elements.swapClipModal.classList.add('hidden');
       }
     });
@@ -2924,3 +2987,506 @@ function round(val, dec) {
 
 // Start application
 window.addEventListener('DOMContentLoaded', init);
+
+
+// =========================================================================
+// CapCut Studio Workspace, Live Caption Preview & Multi-Track Timeline
+// =========================================================================
+
+function formatTimeWithFrames(sec) {
+  if (isNaN(sec) || sec < 0) sec = 0;
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  const f = Math.floor((sec % 1) * 30);
+  return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}:${f.toString().padStart(2, '0')}`;
+}
+
+// 1. Live Visual Caption Preview in Modal (Requested by User)
+function updateModalCaptionPreview() {
+  if (!elements.perCardLivePreviewContent) return;
+
+  let text = "YOU CAN GIVE YOU";
+  let activeCard = null;
+  if (state.activeCustomizingCardIndex !== null && state.captionCards && state.captionCards[state.activeCustomizingCardIndex]) {
+    activeCard = state.captionCards[state.activeCustomizingCardIndex];
+    text = activeCard.text || text;
+  }
+
+  const chosenTplId = (elements.perCardTemplateSelect && elements.perCardTemplateSelect.value) || state.selectedTemplate;
+  const tpl = state.captionTemplates.find(t => t.id === chosenTplId) || { name: 'CapCut Classic', category: 'General' };
+  
+  if (elements.perCardPreviewTplBadge) {
+    elements.perCardPreviewTplBadge.textContent = tpl.name || chosenTplId;
+  }
+
+  const highlightHex = (elements.perCardHighlightPicker && elements.perCardHighlightPicker.value) || '#facc15';
+  const primaryHex = (elements.perCardPrimaryPicker && elements.perCardPrimaryPicker.value) || '#ffffff';
+
+  let markerVal = 'none';
+  if (elements.perCardMarkerGroup) {
+    const activeMarkerBtn = elements.perCardMarkerGroup.querySelector('.per-card-marker-btn.border-brand-500');
+    if (activeMarkerBtn) markerVal = activeMarkerBtn.dataset.marker;
+  }
+
+  const bodyFont = state.selectedFontFamily || tpl.body_font || tpl.fontname || 'Montserrat';
+  const heroFont = state.selectedHeroFont || tpl.hero_font || bodyFont;
+  const isItalic = Boolean(tpl.hero_italic);
+
+  renderStyledCaptionIntoElement(elements.perCardLivePreviewContent, text, tpl, bodyFont, heroFont, primaryHex, highlightHex, markerVal, isItalic, 'text-xl sm:text-2xl font-black');
+}
+
+// 2. Live Visual Caption Preview in Inspector Panel
+function updateInspectorCaptionPreview(card) {
+  if (!elements.inspectorLivePreviewContent || !card) return;
+
+  const tplId = card.template_id || state.selectedTemplate;
+  const tpl = state.captionTemplates.find(t => t.id === tplId) || { name: 'CapCut Classic', category: 'General' };
+
+  if (elements.inspectorPreviewTplBadge) {
+    elements.inspectorPreviewTplBadge.textContent = tpl.name || tplId;
+  }
+
+  const highlightHex = card.highlight_color || getActiveHighlightHex();
+  const primaryHex = card.primary_color || getActivePrimaryHex();
+  const markerVal = card.marker_style || 'none';
+
+  const bodyFont = state.selectedFontFamily || tpl.body_font || tpl.fontname || 'Montserrat';
+  const heroFont = state.selectedHeroFont || tpl.hero_font || bodyFont;
+  const isItalic = Boolean(tpl.hero_italic);
+
+  renderStyledCaptionIntoElement(elements.inspectorLivePreviewContent, card.text, tpl, bodyFont, heroFont, primaryHex, highlightHex, markerVal, isItalic, 'text-base font-black');
+}
+
+// Core helper to render stylized typography with Viral Hierarchy, markers, and multi-font
+function renderStyledCaptionIntoElement(targetEl, text, tpl, bodyFont, heroFont, primaryHex, highlightHex, markerVal, isItalic, baseSizeClass) {
+  const isHierarchy = (tpl.category === 'Viral Hierarchy') || Boolean(tpl.is_hierarchy);
+  const words = text.split(/\s+/).filter(Boolean);
+
+  if (isHierarchy && words.length >= 2) {
+    let l1_end = 1, l2_end = 2;
+    if (words.length >= 5) { l1_end = 2; l2_end = 4; }
+    else if (words.length === 4) { l1_end = 1; l2_end = 3; }
+    else if (words.length === 3) { l1_end = 1; l2_end = 2; }
+
+    const tier1 = words.slice(0, l1_end).join(' ');
+    const tier2 = words.slice(l1_end, l2_end).join(' ');
+    const tier3 = words.slice(l2_end).join(' ');
+
+    const heroFormatted = formatHeroWord(tier2, heroFont, highlightHex, markerVal, '#4ade80', isItalic, 'font-size: 1.45em; line-height: 1.15;');
+
+    targetEl.innerHTML = `
+      <div class="flex flex-col items-center justify-center space-y-0.5 select-none">
+        ${tier1 ? `<div class="text-[11px] sm:text-xs uppercase font-semibold tracking-wider" style="color: ${primaryHex}; font-family: '${bodyFont}', sans-serif;">${tier1}</div>` : ''}
+        <div class="my-0.5">${heroFormatted}</div>
+        ${tier3 ? `<div class="text-[11px] sm:text-xs font-bold uppercase tracking-wider" style="color: ${primaryHex}; font-family: '${bodyFont}', sans-serif;">${tier3}</div>` : ''}
+      </div>
+    `;
+  } else {
+    const heroIdx = words.length > 2 ? 1 : 0;
+    const renderedWords = words.map((w, i) => {
+      if (i === heroIdx) {
+        return formatHeroWord(w, heroFont, highlightHex, markerVal, '#4ade80', isItalic, 'font-size: 1.25em;');
+      } else {
+        return `<span style="color: ${primaryHex}; font-family: '${bodyFont}', sans-serif;">${w}</span>`;
+      }
+    }).join(' ');
+
+    targetEl.innerHTML = `
+      <div class="flex items-center justify-center flex-wrap gap-1.5 ${baseSizeClass} select-none">
+        ${renderedWords}
+      </div>
+    `;
+  }
+}
+
+// 3. Multi-Track Professional Timeline Renderer
+function renderMultiTrackTimeline() {
+  if (!elements.timelineTimecodeRuler || !elements.timelineCaptionsTrack || !elements.timelineVideoTrack) return;
+
+  const totalDur = state.audioDuration || (state.scenes.length ? state.scenes.reduce((acc, s) => acc + s.duration, 0) : 30);
+  const durSec = Math.max(5, totalDur);
+
+  // Timecode Ruler
+  elements.timelineTimecodeRuler.innerHTML = '';
+  const numTicks = Math.ceil(durSec / 5);
+  for (let i = 0; i <= numTicks; i++) {
+    const sec = i * 5;
+    const pct = (sec / durSec) * 100;
+    if (pct <= 100) {
+      const tick = document.createElement('div');
+      tick.className = 'absolute top-0 bottom-0 flex flex-col items-start pointer-events-none';
+      tick.style.left = `${pct}%`;
+      tick.innerHTML = `
+        <div class="h-2 w-px bg-slate-700"></div>
+        <span class="text-[9px] font-mono text-slate-500 pl-0.5">${formatTime(sec)}</span>
+      `;
+      elements.timelineTimecodeRuler.appendChild(tick);
+    }
+  }
+
+  // Track [T] Captions
+  elements.timelineCaptionsTrack.innerHTML = '';
+  if (state.captionCards && state.captionCards.length) {
+    state.captionCards.forEach((card, idx) => {
+      const startPct = (card.start_time / durSec) * 100;
+      const widthPct = Math.max(1.8, ((card.end_time - card.start_time) / durSec) * 100);
+      const isCustom = Boolean(card.template_id && card.template_id !== state.selectedTemplate);
+
+      const chip = document.createElement('div');
+      chip.className = `timeline-caption-chip absolute top-1 bottom-1 rounded px-2 py-0.5 text-[10px] font-semibold truncate flex items-center border shadow-sm ${
+        isCustom 
+          ? 'bg-brand-600/40 border-brand-400 text-white' 
+          : 'bg-amber-500/20 border-amber-500/40 text-amber-200'
+      }`;
+      chip.style.left = `${startPct}%`;
+      chip.style.width = `${widthPct}%`;
+      chip.title = `Line #${idx + 1} (${formatTime(card.start_time)} - ${formatTime(card.end_time)}): "${card.text}"`;
+      chip.innerHTML = `<span class="truncate pointer-events-none">${card.text}</span>`;
+
+      chip.addEventListener('click', (e) => {
+        e.stopPropagation();
+        selectTimelineCard(idx);
+      });
+      elements.timelineCaptionsTrack.appendChild(chip);
+    });
+  }
+
+  // Track [V1] Video
+  elements.timelineVideoTrack.innerHTML = '';
+  if (state.scenes && state.scenes.length) {
+    state.scenes.forEach((scene, idx) => {
+      const startPct = (scene.start_time / durSec) * 100;
+      const widthPct = Math.max(2.5, (scene.duration / durSec) * 100);
+      const clip = scene.selected_clip || {};
+      const thumb = clip.image || '';
+
+      const block = document.createElement('div');
+      block.className = 'timeline-clip-block absolute top-1 bottom-1 rounded overflow-hidden border border-emerald-500/40 bg-surface-900 flex items-center shadow group';
+      block.style.left = `${startPct}%`;
+      block.style.width = `${widthPct}%`;
+      block.innerHTML = `
+        ${thumb ? `<img src="${thumb}" alt="Scene ${idx + 1}" class="w-full h-full object-cover opacity-70 group-hover:opacity-100 transition">` : ''}
+        <div class="absolute inset-0 p-1 flex flex-col justify-between bg-black/40 pointer-events-none">
+          <div class="flex items-center justify-between text-[9px] font-mono text-white font-bold">
+            <span>#${idx + 1}</span>
+            <span>${scene.duration.toFixed(1)}s</span>
+          </div>
+          <span class="text-[9px] text-emerald-300 truncate font-semibold">${scene.primary_query || 'Footage'}</span>
+        </div>
+      `;
+
+      block.addEventListener('click', (e) => {
+        e.stopPropagation();
+        selectTimelineScene(idx);
+      });
+      elements.timelineVideoTrack.appendChild(block);
+    });
+  } else if (state.directVideo) {
+    const block = document.createElement('div');
+    block.className = 'timeline-clip-block absolute inset-x-0 top-1 bottom-1 rounded overflow-hidden border border-emerald-500/60 bg-surface-900 flex items-center px-3';
+    block.innerHTML = `<span class="text-xs text-emerald-300 font-semibold truncate">✓ Direct Video: ${state.directVideo.filename} (${formatTime(durSec)})</span>`;
+    elements.timelineVideoTrack.appendChild(block);
+  }
+
+  // Track [A1] Audio
+  elements.timelineAudioTrack.innerHTML = '';
+  const peaks = state.waveformPeaks.length ? state.waveformPeaks : Array(80).fill(0.35);
+  const waveContainer = document.createElement('div');
+  waveContainer.className = 'w-full h-full flex items-center space-x-0.5 px-1';
+  peaks.forEach(p => {
+    const bar = document.createElement('div');
+    bar.className = 'flex-1 bg-brand-500/40 rounded-full transition-all';
+    bar.style.height = `${Math.max(12, p * 80)}%`;
+    waveContainer.appendChild(bar);
+  });
+  elements.timelineAudioTrack.appendChild(waveContainer);
+
+  if (elements.timelineTotalDuration) {
+    elements.timelineTotalDuration.textContent = `Total: ${formatTime(durSec)}`;
+  }
+}
+
+// 4. Update Playhead Needle and Transport Timecode during Playback
+function updateTimelinePlayhead(currentTime) {
+  if (!elements.timelinePlayheadNeedle || !elements.timelineScrollContainer) return;
+  const totalDur = state.audioDuration || 30;
+  if (totalDur <= 0) return;
+
+  const inner = elements.timelineInnerContent || elements.timelineScrollContainer;
+  const trackHeaderWidth = 110;
+  const trackWidth = inner.offsetWidth - trackHeaderWidth;
+  const leftPos = trackHeaderWidth + (currentTime / totalDur) * trackWidth;
+
+  elements.timelinePlayheadNeedle.style.left = `${leftPos}px`;
+
+  if (elements.transportCurrentTime) {
+    elements.transportCurrentTime.textContent = formatTimeWithFrames(currentTime);
+  }
+  if (elements.transportTotalTime) {
+    elements.transportTotalTime.textContent = formatTimeWithFrames(totalDur);
+  }
+}
+
+// 5. Select and Inspect Caption Card
+function selectTimelineCard(idx) {
+  if (!state.captionCards || !state.captionCards[idx]) return;
+  const card = state.captionCards[idx];
+  seekToCard(card);
+
+  // Update Inspector
+  if (elements.inspectorTypeBadge) elements.inspectorTypeBadge.textContent = `Caption #${idx + 1}`;
+  if (elements.inspectorCaptionControls) elements.inspectorCaptionControls.classList.remove('hidden');
+  if (elements.inspectorSceneControls) elements.inspectorSceneControls.classList.add('hidden');
+
+  // Populate Inspector Template dropdown
+  if (elements.inspectorCaptionTemplateSelect) {
+    elements.inspectorCaptionTemplateSelect.innerHTML = `
+      <option value="">Global: ${state.captionTemplates.find(t => t.id === state.selectedTemplate)?.name || 'Default'}</option>
+      ${state.captionTemplates.map(t => `<option value="${t.id}">${t.name}</option>`).join('')}
+    `;
+    elements.inspectorCaptionTemplateSelect.value = card.template_id || '';
+    elements.inspectorCaptionTemplateSelect.onchange = (e) => {
+      if (e.target.value) card.template_id = e.target.value;
+      else delete card.template_id;
+      updateInspectorCaptionPreview(card);
+      renderMultiTrackTimeline();
+      updateLiveKaraokeCaption(card.start_time);
+    };
+  }
+
+  // Highlight color
+  if (elements.inspectorHighlightPicker) {
+    elements.inspectorHighlightPicker.value = card.highlight_color || getActiveHighlightHex();
+    if (elements.inspectorHighlightHex) elements.inspectorHighlightHex.textContent = elements.inspectorHighlightPicker.value;
+    elements.inspectorHighlightPicker.oninput = (e) => {
+      card.highlight_color = e.target.value;
+      if (elements.inspectorHighlightHex) elements.inspectorHighlightHex.textContent = e.target.value;
+      updateInspectorCaptionPreview(card);
+      updateLiveKaraokeCaption(card.start_time);
+    };
+  }
+
+  // Primary color
+  if (elements.inspectorPrimaryPicker) {
+    elements.inspectorPrimaryPicker.value = card.primary_color || getActivePrimaryHex();
+    if (elements.inspectorPrimaryHex) elements.inspectorPrimaryHex.textContent = elements.inspectorPrimaryPicker.value;
+    elements.inspectorPrimaryPicker.oninput = (e) => {
+      card.primary_color = e.target.value;
+      if (elements.inspectorPrimaryHex) elements.inspectorPrimaryHex.textContent = e.target.value;
+      updateInspectorCaptionPreview(card);
+      updateLiveKaraokeCaption(card.start_time);
+    };
+  }
+
+  // Marker buttons
+  if (elements.inspectorMarkerGroup) {
+    const currentMarker = card.marker_style || 'none';
+    elements.inspectorMarkerGroup.querySelectorAll('.inspector-marker-btn').forEach(b => {
+      if (b.dataset.marker === currentMarker) {
+        b.className = 'inspector-marker-btn px-2 py-1 rounded border border-brand-500 bg-brand-500/20 text-white text-center text-[11px] font-bold';
+      } else {
+        b.className = 'inspector-marker-btn px-2 py-1 rounded border border-slate-700 bg-surface-950 text-slate-300 text-center text-[11px]';
+      }
+      b.onclick = () => {
+        elements.inspectorMarkerGroup.querySelectorAll('.inspector-marker-btn').forEach(btn => {
+          btn.className = 'inspector-marker-btn px-2 py-1 rounded border border-slate-700 bg-surface-950 text-slate-300 text-center text-[11px]';
+        });
+        b.className = 'inspector-marker-btn px-2 py-1 rounded border border-brand-500 bg-brand-500/20 text-white text-center text-[11px] font-bold';
+        if (b.dataset.marker !== 'none') card.marker_style = b.dataset.marker;
+        else delete card.marker_style;
+        updateInspectorCaptionPreview(card);
+        updateLiveKaraokeCaption(card.start_time);
+      };
+    });
+  }
+
+  if (elements.btnInspectorRevertCard) {
+    elements.btnInspectorRevertCard.onclick = () => {
+      delete card.template_id;
+      delete card.highlight_color;
+      delete card.primary_color;
+      delete card.marker_style;
+      updateInspectorCaptionPreview(card);
+      renderMultiTrackTimeline();
+      updateLiveKaraokeCaption(card.start_time);
+    };
+  }
+
+  if (elements.btnInspectorSeekCard) {
+    elements.btnInspectorSeekCard.onclick = () => {
+      seekToCard(card);
+      if (elements.htmlAudio.paused) toggleAudioPlayback();
+    };
+  }
+
+  updateInspectorCaptionPreview(card);
+}
+
+// 6. Select and Inspect Video Scene
+function selectTimelineScene(idx) {
+  if (!state.scenes || !state.scenes[idx]) return;
+  const scene = state.scenes[idx];
+  seekToTime(scene.start_time);
+
+  if (elements.inspectorTypeBadge) elements.inspectorTypeBadge.textContent = `Scene #${idx + 1}`;
+  if (elements.inspectorCaptionControls) elements.inspectorCaptionControls.classList.add('hidden');
+  if (elements.inspectorSceneControls) elements.inspectorSceneControls.classList.remove('hidden');
+
+  if (elements.inspectorSceneTitle) elements.inspectorSceneTitle.textContent = `Scene #${idx + 1} (${scene.formatted_time})`;
+  if (elements.inspectorSceneDuration) elements.inspectorSceneDuration.textContent = `${scene.duration.toFixed(1)}s`;
+  if (elements.inspectorSceneQuery) {
+    elements.inspectorSceneQuery.value = scene.primary_query || '';
+    elements.inspectorSceneQuery.onchange = (e) => {
+      scene.primary_query = e.target.value;
+    };
+  }
+
+  if (elements.btnInspectorSwapClip) {
+    elements.btnInspectorSwapClip.onclick = () => openSwapModal(idx, 'pexels');
+  }
+  if (elements.btnInspectorUploadClip) {
+    elements.btnInspectorUploadClip.onclick = () => openSwapModal(idx, 'upload');
+  }
+}
+
+// 7. General Seek Helper
+function seekToTime(targetSec) {
+  const dur = state.audioDuration || 30;
+  const cleanSec = Math.max(0, Math.min(dur, targetSec));
+
+  if (elements.htmlAudio) elements.htmlAudio.currentTime = cleanSec;
+  if (elements.livePreviewVideo) elements.livePreviewVideo.currentTime = cleanSec;
+  updateTimelinePlayhead(cleanSec);
+  updateLiveKaraokeCaption(cleanSec);
+}
+
+// 8. Wire CapCut Top Tabs and Left Drawer Panels
+document.querySelectorAll('.capcut-top-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.capcut-top-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    const targetId = tab.dataset.target;
+    document.querySelectorAll('.drawer-pane').forEach(p => p.classList.add('hidden'));
+    const pane = document.getElementById(targetId);
+    if (pane) pane.classList.remove('hidden');
+
+    document.querySelectorAll('.drawer-tab-btn').forEach(b => {
+      if (b.dataset.target === targetId) {
+        b.className = 'drawer-tab-btn active px-2.5 py-1 rounded bg-brand-600 text-white font-medium transition';
+      } else {
+        b.className = 'drawer-tab-btn px-2.5 py-1 rounded hover:bg-slate-800 text-slate-300 font-medium transition';
+      }
+    });
+  });
+});
+
+document.querySelectorAll('.drawer-tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const targetId = btn.dataset.target;
+    document.querySelectorAll('.drawer-pane').forEach(p => p.classList.add('hidden'));
+    const pane = document.getElementById(targetId);
+    if (pane) pane.classList.remove('hidden');
+
+    document.querySelectorAll('.drawer-tab-btn').forEach(b => {
+      b.className = 'drawer-tab-btn px-2.5 py-1 rounded hover:bg-slate-800 text-slate-300 font-medium transition';
+    });
+    btn.className = 'drawer-tab-btn active px-2.5 py-1 rounded bg-brand-600 text-white font-medium transition';
+
+    document.querySelectorAll('.capcut-top-tab').forEach(t => {
+      if (t.dataset.target === targetId) t.classList.add('active');
+      else t.classList.remove('active');
+    });
+  });
+});
+
+// Top bar prominent action buttons
+if (elements.btnTopGenerateVideo) {
+  elements.btnTopGenerateVideo.addEventListener('click', () => {
+    if (state.studioMode === 'direct') {
+      handleDirectSyncCaptions();
+    } else {
+      handleGenerateScenes();
+    }
+  });
+}
+
+if (elements.btnTopExportVideo) {
+  elements.btnTopExportVideo.addEventListener('click', () => {
+    elements.btnRenderVideo.click();
+  });
+}
+
+// Transport controls
+if (elements.btnTransportPlayPause) {
+  elements.btnTransportPlayPause.addEventListener('click', toggleAudioPlayback);
+}
+if (elements.btnTransportStart) {
+  elements.btnTransportStart.addEventListener('click', () => seekToTime(0));
+}
+if (elements.btnTransportEnd) {
+  elements.btnTransportEnd.addEventListener('click', () => seekToTime(state.audioDuration || 30));
+}
+if (elements.btnTransportPrev) {
+  elements.btnTransportPrev.addEventListener('click', () => seekToTime((elements.htmlAudio.currentTime || 0) - 5));
+}
+if (elements.btnTransportNext) {
+  elements.btnTransportNext.addEventListener('click', () => seekToTime((elements.htmlAudio.currentTime || 0) + 5));
+}
+if (elements.sliderTransportVolume) {
+  elements.sliderTransportVolume.addEventListener('input', (e) => {
+    const v = parseFloat(e.target.value);
+    if (elements.htmlAudio) elements.htmlAudio.volume = v;
+    if (elements.livePreviewVideo) elements.livePreviewVideo.volume = v;
+  });
+}
+if (elements.btnTransportFullscreen) {
+  elements.btnTransportFullscreen.addEventListener('click', () => {
+    if (!document.fullscreenElement) {
+      elements.livePreviewContainer.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen().catch(() => {});
+    }
+  });
+}
+
+// Interactive scrubbing on timeline container
+if (elements.timelineScrollContainer) {
+  elements.timelineScrollContainer.addEventListener('click', (e) => {
+    const inner = elements.timelineInnerContent || elements.timelineScrollContainer;
+    const rect = inner.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const trackHeaderWidth = 110;
+    if (clickX >= trackHeaderWidth) {
+      const availableWidth = rect.width - trackHeaderWidth;
+      const pct = Math.max(0, Math.min(1, (clickX - trackHeaderWidth) / availableWidth));
+      const targetTime = pct * (state.audioDuration || 30);
+      seekToTime(targetTime);
+    }
+  });
+}
+
+// Modal live preview updates on input changes
+if (elements.perCardTemplateSelect) {
+  elements.perCardTemplateSelect.addEventListener('change', updateModalCaptionPreview);
+}
+if (elements.perCardHighlightPicker) {
+  elements.perCardHighlightPicker.addEventListener('input', updateModalCaptionPreview);
+}
+if (elements.perCardPrimaryPicker) {
+  elements.perCardPrimaryPicker.addEventListener('input', updateModalCaptionPreview);
+}
+if (elements.perCardMarkerGroup) {
+  elements.perCardMarkerGroup.addEventListener('click', () => {
+    setTimeout(updateModalCaptionPreview, 20);
+  });
+}
+
+// Hook timeline into updateLiveKaraokeCaption
+const originalUpdateLiveKaraoke = updateLiveKaraokeCaption;
+updateLiveKaraokeCaption = function(currentTime) {
+  originalUpdateLiveKaraoke(currentTime);
+  updateTimelinePlayhead(currentTime);
+};
+
+// Initial multi-track timeline render
+renderMultiTrackTimeline();

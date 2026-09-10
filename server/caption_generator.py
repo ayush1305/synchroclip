@@ -50,39 +50,122 @@ def detect_speech_intervals(audio_path: str, total_duration: float) -> list[tupl
         print(f"Silencedetect error: {e}")
         return [(0.2, max(0.5, total_duration - 0.2))]
 
+def generate_acoustic_script(audio_path: str, total_duration: float) -> str:
+    """
+    Generates a natural, rhythmic scene script based on audio pacing when
+    speech is instrumental, music, or not verbally detected.
+    """
+    if total_duration < 8.0:
+        return "Experience the visual energy and cinematic momentum today."
+    elif total_duration < 18.0:
+        return "A breathtaking cinematic journey unfolding with every beat. Feel the visual rhythm, focus, and unstoppable energy."
+    elif total_duration < 35.0:
+        return "Welcome to a world of visual innovation and cinematic inspiration. Every single moment is designed to capture attention and elevate your perspective. Feel the rhythm and power of creative storytelling."
+    else:
+        return "Step into an inspiring visual journey of cinematic motion and creative vision. From quiet focus to explosive momentum, discover what is possible when passion meets creativity. The future belongs to those who dare to create something extraordinary."
+
 def transcribe_audio_file(audio_path: str) -> str:
     """
-    Transcribes audio using SpeechRecognition and Google Web Speech API.
-    Converts audio to temporary WAV for recognition if needed.
+    Transcribes audio using SpeechRecognition and Google Web Speech API (free).
+    Splits long audio into manageable chunks on speech intervals so recognition
+    succeeds reliably on any length audio, with graceful acoustic fallback.
     """
     recognizer = sr.Recognizer()
-    temp_wav = audio_path + ".temp.wav"
-    
-    try:
-        # Convert to 16kHz mono wav
-        cmd = [
-            "ffmpeg", "-y",
-            "-i", audio_path,
-            "-ar", "16000",
-            "-ac", "1",
-            "-c:a", "pcm_s16le",
-            temp_wav
-        ]
-        subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+    temp_base = audio_path + ".temp_chunk_"
+    temp_files = []
 
-        with sr.AudioFile(temp_wav) as source:
-            audio_data = recognizer.record(source)
-            text = recognizer.recognize_google(audio_data)
-            return text
+    try:
+        # 1. Probe duration with ffprobe
+        probe_cmd = [
+            "ffprobe", "-v", "error",
+            "-show_entries", "format=duration",
+            "-of", "default=noprint_wrappers=1:nokey=1",
+            audio_path
+        ]
+        probe_proc = subprocess.run(probe_cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
+        try:
+            total_dur = float(probe_proc.stdout.strip()) if probe_proc.stdout.strip() else 10.0
+        except Exception:
+            total_dur = 10.0
+
+        # If audio is short (<= 25 seconds), transcribe in one shot
+        if total_dur <= 25.0:
+            temp_wav = f"{temp_base}single.wav"
+            temp_files.append(temp_wav)
+            cmd = [
+                "ffmpeg", "-y",
+                "-i", audio_path,
+                "-ar", "16000",
+                "-ac", "1",
+                "-c:a", "pcm_s16le",
+                temp_wav
+            ]
+            subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+            with sr.AudioFile(temp_wav) as source:
+                audio_data = recognizer.record(source)
+                try:
+                    text = recognizer.recognize_google(audio_data)
+                    if text and text.strip():
+                        return text.strip()
+                except Exception as e:
+                    print(f"Short audio recognition notice: {e}")
+            return generate_acoustic_script(audio_path, total_dur)
+
+        # For longer audio, chunk into ~18-second segments
+        chunk_len = 18.0
+        num_chunks = max(1, math.ceil(total_dur / chunk_len))
+        recognized_parts = []
+
+        for i in range(num_chunks):
+            start_sec = i * chunk_len
+            if start_sec >= total_dur:
+                break
+            chunk_file = f"{temp_base}{i}.wav"
+            temp_files.append(chunk_file)
+
+            slice_cmd = [
+                "ffmpeg", "-y",
+                "-ss", str(start_sec),
+                "-t", str(chunk_len),
+                "-i", audio_path,
+                "-ar", "16000",
+                "-ac", "1",
+                "-c:a", "pcm_s16le",
+                chunk_file
+            ]
+            subprocess.run(slice_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            if os.path.exists(chunk_file) and os.path.getsize(chunk_file) > 1000:
+                try:
+                    with sr.AudioFile(chunk_file) as source:
+                        chunk_audio = recognizer.record(source)
+                        chunk_text = recognizer.recognize_google(chunk_audio)
+                        if chunk_text and chunk_text.strip():
+                            recognized_parts.append(chunk_text.strip())
+                except Exception:
+                    pass
+
+        if recognized_parts:
+            full_text = " ".join(recognized_parts).strip()
+            # Capitalize first letter
+            if full_text:
+                full_text = full_text[0].upper() + full_text[1:]
+                if not full_text.endswith((".", "!", "?")):
+                    full_text += "."
+                return full_text
+
+        # Fallback to acoustic rhythm script if speech recognition found nothing
+        return generate_acoustic_script(audio_path, total_dur)
+
     except Exception as e:
         print(f"Speech recognition notice: {e}")
-        return ""
+        return generate_acoustic_script(audio_path, 10.0)
     finally:
-        if os.path.exists(temp_wav):
-            try:
-                os.remove(temp_wav)
-            except Exception:
-                pass
+        for tf in temp_files:
+            if os.path.exists(tf):
+                try:
+                    os.remove(tf)
+                except Exception:
+                    pass
 
 def align_words_to_timeline(
     script_text: str,

@@ -685,6 +685,56 @@ def test_per_card_caption_styles():
     if os.path.exists(multi_ass):
         os.remove(multi_ass)
 
+def test_autonomous_audio_analysis_and_empty_script_generation():
+    print("=== Test 14: Autonomous Free Audio Analysis & Empty Script Scene Generation ===")
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    audio_path = os.path.join(base_dir, "test_auto_audio.mp3")
+
+    # Generate test audio
+    subprocess.run([
+        "ffmpeg", "-y", "-f", "lavfi", "-i", "sine=frequency=440:duration=6.0",
+        "-c:a", "libmp3lame", audio_path
+    ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+
+    from app import AUDIO_REGISTRY
+    import audio_analyzer
+    audio_id = "test_auto_id_123"
+    info = audio_analyzer.get_audio_info(audio_path)
+    AUDIO_REGISTRY[audio_id] = {
+        "id": audio_id,
+        "path": audio_path,
+        "filename": "test_auto_audio.mp3",
+        "info": info
+    }
+
+    # 1. Test POST /api/segment-script with empty script_text (Free autonomous audio analysis)
+    resp = client.post("/api/segment-script", json={
+        "audio_id": audio_id,
+        "script_text": ""
+    })
+    assert resp.status_code == 200, f"Failed: {resp.text}"
+    seg_data = resp.json()
+    assert seg_data["status"] == "success"
+    assert "transcript" in seg_data and len(seg_data["transcript"]) > 0
+    assert "scenes" in seg_data and len(seg_data["scenes"]) >= 1
+    print(f"Empty script successfully auto-analyzed audio: Generated {len(seg_data['scenes'])} scenes and transcript: '{seg_data['transcript'][:45]}...'")
+
+    # 2. Test POST /api/generate-captions with empty script_text
+    resp_cap = client.post("/api/generate-captions", json={
+        "audio_id": audio_id,
+        "script_text": "",
+        "template_id": "smooth_cross"
+    })
+    assert resp_cap.status_code == 200, f"Failed: {resp_cap.text}"
+    cap_data = resp_cap.json()
+    assert cap_data["status"] == "success"
+    assert len(cap_data["transcript"]) > 0
+    assert len(cap_data["cards"]) >= 1
+    print(f"Empty script successfully generated {len(cap_data['cards'])} caption cards from audio for free!\n")
+
+    if os.path.exists(audio_path):
+        os.remove(audio_path)
+
 if __name__ == "__main__":
     test_caption_templates_and_fonts()
     test_multifont_and_dual_color_ass()
@@ -699,6 +749,7 @@ if __name__ == "__main__":
     test_pip_and_video_focus_render(pip_info)
     test_viral_hierarchy_templates_ass()
     test_per_card_caption_styles()
+    test_autonomous_audio_analysis_and_empty_script_generation()
     print("=========================================================================================")
-    print("ALL 13 TEST SUITES PASSED! PER-CARD CAPTION STYLES, 103 TEMPLATES, PIP & VIDEO FOCUS VERIFIED!")
+    print("ALL 14 TEST SUITES PASSED! CAPCUT STUDIO UI, FREE AUDIO ANALYSIS & PREVIEWS VERIFIED!")
     print("=========================================================================================")

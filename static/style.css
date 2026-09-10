@@ -280,3 +280,109 @@
 .pip-size-large img {
   max-width: 270px;
 }
+
+/* =========================================================
+   CapCut Desktop Video Editor Studio UI & Timeline
+   ========================================================= */
+
+/* Safe Area Bounding Box in Player Monitor */
+.player-safe-box {
+  border: 1.5px dashed rgba(255, 255, 255, 0.4);
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.15);
+  pointer-events: none;
+}
+
+/* Active Top Tab Indicator (CapCut style) */
+.capcut-tab {
+  position: relative;
+  transition: all 0.15s ease;
+}
+.capcut-tab.active {
+  color: #ffffff !important;
+}
+.capcut-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 12px;
+  right: 12px;
+  height: 2px;
+  background-color: #00c288;
+  border-radius: 2px;
+}
+
+/* Multi-Track Timeline Styling */
+.timeline-track-header {
+  width: 110px;
+  min-width: 110px;
+  border-right: 1px solid #1e293b;
+  background-color: #080d19;
+}
+
+.timeline-track-lane {
+  position: relative;
+  min-height: 48px;
+  background-color: #0a0f1d;
+  background-image: linear-gradient(90deg, #111827 1px, transparent 1px);
+  background-size: 60px 100%;
+}
+
+/* Timeline Track Blocks */
+.timeline-clip-block {
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.1s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.timeline-clip-block:hover {
+  filter: brightness(1.12);
+}
+.timeline-clip-block.active-clip {
+  border-color: #00c288 !important;
+  box-shadow: 0 0 12px rgba(0, 194, 136, 0.45);
+}
+
+.timeline-caption-chip {
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.15s ease;
+}
+.timeline-caption-chip:hover {
+  filter: brightness(1.15);
+  transform: translateY(-1px);
+}
+.timeline-caption-chip.active-caption {
+  border-color: #facc15 !important;
+  box-shadow: 0 0 10px rgba(250, 204, 21, 0.4);
+}
+
+/* Red Playhead Needle across all tracks */
+.timeline-playhead-needle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background-color: #ef4444;
+  z-index: 30;
+  pointer-events: none;
+  transition: left 0.05s linear;
+}
+.timeline-playhead-handle {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 14px;
+  height: 16px;
+  background-color: #ef4444;
+  clip-path: polygon(0 0, 100% 0, 100% 65%, 50% 100%, 0 65%);
+  cursor: ew-resize;
+  pointer-events: auto;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.6);
+}
+
+/* Live Caption Preview Box inside Modal & Inspector */
+.live-caption-preview-canvas {
+  background: radial-gradient(circle at center, #1a2236 0%, #080c16 100%);
+  border: 1px solid rgba(99, 102, 241, 0.35);
+  box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.7);
+}

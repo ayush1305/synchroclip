@@ -228,15 +228,22 @@ async def get_audio_stream(audio_id: str):
 async def segment_script(req: SegmentRequest):
     """
     Breaks transcript into scene segments matching total audio duration.
+    If script_text is empty, automatically analyzes and transcribes audio for free!
     """
     if req.audio_id not in AUDIO_REGISTRY:
         raise HTTPException(status_code=404, detail="Audio ID not found. Please upload audio first.")
 
-    audio_info = AUDIO_REGISTRY[req.audio_id]["info"]
-    total_duration = audio_info["duration"]
+    audio_entry = AUDIO_REGISTRY[req.audio_id]
+    audio_path = audio_entry["path"]
+    total_duration = audio_entry["info"]["duration"]
+
+    text = req.script_text.strip() if req.script_text else ""
+    if not text:
+        # Auto-transcribe audio file for free
+        text = caption_generator.transcribe_audio_file(audio_path)
 
     scenes = text_segmenter.segment_script_and_allocate_time(
-        script_text=req.script_text,
+        script_text=text,
         total_duration=total_duration,
         min_segment_duration=req.min_segment_duration or 3.2,
         max_segment_duration=req.max_segment_duration or 8.0
@@ -244,6 +251,7 @@ async def segment_script(req: SegmentRequest):
 
     return {
         "status": "success",
+        "transcript": text,
         "total_duration": total_duration,
         "scenes": scenes
     }
