@@ -209,7 +209,9 @@ function bindEvents() {
       state.activeTab = tab;
 
       el.tabPanes.forEach(pane => pane.classList.add('hidden'));
-      const targetPane = document.getElementById(`tabContent${capitalize(tab)}`);
+      const targetPane = document.getElementById(`tabContent${capitalize(tab)}`) ||
+                         document.getElementById(`tabContent${tab}`) ||
+                         (tab === 'aigenerator' ? document.getElementById('tabContentAiGenerator') : null);
       if (targetPane) targetPane.classList.remove('hidden');
     });
   });
@@ -284,8 +286,36 @@ function bindEvents() {
     openAIAudioWizard();
   });
 
+  // AI Video Buttons (Header, Media, Monitor, Sidebar)
+  const btnHeaderGen = document.getElementById('btnHeaderGenerateVideo');
+  if (btnHeaderGen) btnHeaderGen.addEventListener('click', openAIAudioWizard);
+
+  const btnMediaGen = document.getElementById('btnMediaGenerateAiVideo');
+  if (btnMediaGen) btnMediaGen.addEventListener('click', openAIAudioWizard);
+
+  const btnMonitorGen = document.getElementById('btnMonitorGenerateVideo');
+  if (btnMonitorGen) btnMonitorGen.addEventListener('click', openAIAudioWizard);
+
+  const btnMonitorImport = document.getElementById('btnMonitorImportMedia');
+  if (btnMonitorImport) btnMonitorImport.addEventListener('click', () => el.mediaFileInput.click());
+
+  const btnSidebarOpen = document.getElementById('btnSidebarOpenAiWizard');
+  if (btnSidebarOpen) btnSidebarOpen.addEventListener('click', openAIAudioWizard);
+
+  const btnSidebarDemo = document.getElementById('btnSidebarLoadDemoAudio');
+  if (btnSidebarDemo) btnSidebarDemo.addEventListener('click', () => {
+    openAIAudioWizard();
+    handleLoadDemoAudioInModal();
+  });
+
+  const sidebarAudioDrop = document.getElementById('sidebarAudioDropzone');
+  if (sidebarAudioDrop) sidebarAudioDrop.addEventListener('click', () => {
+    openAIAudioWizard();
+    el.aiAudioFileInput.click();
+  });
+
   // AI Audio Modal
-  el.btnOpenAIAudioWizard.addEventListener('click', openAIAudioWizard);
+  if (el.btnOpenAIAudioWizard) el.btnOpenAIAudioWizard.addEventListener('click', openAIAudioWizard);
   el.btnCloseAIModal.addEventListener('click', () => el.aiAudioModal.classList.add('hidden'));
   el.aiAudioDropzone.addEventListener('click', () => el.aiAudioFileInput.click());
   el.aiAudioFileInput.addEventListener('change', (e) => {
@@ -625,6 +655,17 @@ function renderTimeline() {
 
   // 3. Playhead Position
   updatePlayheadPosition();
+
+  // 4. Update Empty Monitor Overlay
+  const totalClips = state.timeline.tracks.reduce((sum, tr) => sum + tr.clips.length, 0);
+  const emptyMonitor = document.getElementById('emptyMonitorPlaceholder');
+  if (emptyMonitor) {
+    if (totalClips === 0) {
+      emptyMonitor.classList.remove('hidden');
+    } else {
+      emptyMonitor.classList.add('hidden');
+    }
+  }
 }
 
 function selectClip(id) {
@@ -1346,15 +1387,34 @@ async function triggerAudioAnalysis(audioId, optionalScript = '') {
   }
 }
 
-// Option A: Automatically Generate Video Timeline
+// Option A: Automatically Generate Multi-Clip Video from Audio
 async function handleExecuteOptionAGenerate() {
   if (!currentAIAnalysis) {
-    alert('Please select or upload an audio file first.');
-    return;
+    el.btnOptionAGenerate.disabled = true;
+    el.btnOptionAGenerate.innerHTML = '<span class="flex items-center space-x-2"><i data-lucide="loader" class="w-4 h-4 animate-spin"></i><span>Loading demo audio & analyzing speech...</span></span>';
+    if (window.lucide) lucide.createIcons();
+    await handleLoadDemoAudioInModal();
+    if (!currentAIAnalysis) {
+      el.btnOptionAGenerate.disabled = false;
+      resetOptionAGenerateButton();
+      alert('Please select or upload an audio file first.');
+      return;
+    }
   }
 
+  const aspectSel = document.getElementById('aiAspectSelect');
+  const themeSel = document.getElementById('aiThemeSelect');
+  const pacingSel = document.getElementById('aiPacingSelect');
+  const captionSel = document.getElementById('aiCaptionTemplateSelect');
+
+  const aspect = aspectSel ? aspectSel.value : state.aspectRatio;
+  const visualTheme = themeSel ? themeSel.value : 'auto';
+  const pacing = pacingSel ? pacingSel.value : 'medium';
+  const templateId = captionSel ? captionSel.value : 'tiktok_bold';
+
   el.btnOptionAGenerate.disabled = true;
-  el.btnOptionAGenerate.innerHTML = '<span>Matching Pexels footage & assembling video...</span>';
+  el.btnOptionAGenerate.innerHTML = '<span class="flex items-center space-x-2"><i data-lucide="loader" class="w-4 h-4 animate-spin"></i><span>Analyzing rhythm, sourcing multiple clips & assembling video...</span></span>';
+  if (window.lucide) lucide.createIcons();
 
   try {
     const resp = await fetch('/api/ai-generate-timeline', {
@@ -1362,9 +1422,11 @@ async function handleExecuteOptionAGenerate() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         audio_id: currentAIAnalysis.audio_id,
-        aspect_ratio: state.aspectRatio,
+        aspect_ratio: aspect,
         script_text: currentAIAnalysis.transcript,
-        template_id: 'tiktok_bold'
+        template_id: templateId,
+        visual_theme: visualTheme,
+        pacing: pacing
       })
     });
     if (!resp.ok) throw new Error('AI Timeline generation failed');
@@ -1373,27 +1435,61 @@ async function handleExecuteOptionAGenerate() {
     saveState();
     state.timeline = data.timeline;
     state.duration = data.timeline.duration;
+    if (aspect !== state.aspectRatio) {
+      setAspectRatio(aspect);
+    }
 
     el.aiAudioModal.classList.add('hidden');
     renderTimeline();
     seekTo(0);
     renderCanvas();
+
+    const v1Track = data.timeline.tracks.find(t => t.id === 'V1');
+    const clipCount = v1Track ? v1Track.clips.length : 'multiple';
+    showToast(`✨ Generated video with ${clipCount} matching clips & subtitles!`);
   } catch (err) {
     alert('Failed to generate video: ' + err.message);
   } finally {
     el.btnOptionAGenerate.disabled = false;
-    el.btnOptionAGenerate.innerHTML = `
-      <div class="flex items-center justify-between">
-        <span class="font-bold text-sm text-white flex items-center space-x-2">
-          <i data-lucide="film" class="w-4 h-4 text-amber-300"></i>
-          <span>Option A — Generate Full Video</span>
-        </span>
-        <span class="px-2 py-0.5 rounded bg-white/20 text-[10px] font-bold text-white uppercase">Recommended</span>
-      </div>
-      <p class="text-xs text-slate-200 mt-1">Auto-searches Pexels footage matching speech keywords, arranges clips on Track V1, adds crossfades, and generates word-level subtitles.</p>
-    `;
-    if (window.lucide) lucide.createIcons();
+    resetOptionAGenerateButton();
   }
+}
+
+function resetOptionAGenerateButton() {
+  el.btnOptionAGenerate.innerHTML = `
+    <div class="flex items-center justify-between">
+      <span class="font-bold text-xs sm:text-sm text-white flex items-center space-x-2">
+        <i data-lucide="wand-2" class="w-4 h-4 text-amber-300"></i>
+        <span>Generate Multi-Clip Video from Audio</span>
+      </span>
+      <span class="px-2 py-0.5 rounded bg-white/20 text-[9px] font-bold text-white uppercase tracking-wider">AI Multi-Clip</span>
+    </div>
+    <p class="text-[11px] text-purple-100 mt-1 leading-snug">
+      Analyzes rhythm & pauses, auto-selects multiple matching HD clips for Track V1, adds crossfades, and generates word-timed animated captions on Track T1.
+    </p>
+  `;
+  if (window.lucide) lucide.createIcons();
+}
+
+function showToast(msg) {
+  let toast = document.getElementById('globalToast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'globalToast';
+    toast.className = 'fixed bottom-6 right-6 z-50 px-4 py-3 rounded-xl bg-surface-900 border border-purple-500/50 text-white text-xs font-semibold shadow-2xl backdrop-blur-md flex items-center space-x-2 transition-all duration-300 transform translate-y-12 opacity-0 pointer-events-none';
+    document.body.appendChild(toast);
+  }
+  toast.innerHTML = `<i data-lucide="check-circle" class="w-4 h-4 text-emerald-400 shrink-0"></i><span>${msg}</span>`;
+  if (window.lucide) lucide.createIcons();
+
+  toast.classList.remove('translate-y-12', 'opacity-0');
+  toast.classList.add('translate-y-0', 'opacity-100');
+
+  clearTimeout(toast._timeout);
+  toast._timeout = setTimeout(() => {
+    toast.classList.remove('translate-y-0', 'opacity-100');
+    toast.classList.add('translate-y-12', 'opacity-0');
+  }, 3500);
 }
 
 // Option B: Just Use Audio Only

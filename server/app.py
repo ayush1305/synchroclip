@@ -89,6 +89,8 @@ class AIGenerateTimelineReq(BaseModel):
     script_text: Optional[str] = ""
     template_id: Optional[str] = "tiktok_bold"
     highlight_color: Optional[str] = "#ffe600"
+    visual_theme: Optional[str] = "auto"
+    pacing: Optional[str] = "medium"
 
 class RenderTimelineReq(BaseModel):
     timeline: Dict[str, Any]
@@ -322,11 +324,13 @@ async def ai_generate_timeline_endpoint(req: AIGenerateTimelineReq):
             script_text = caption_generator.generate_acoustic_script(audio_path, total_dur)
 
     # 1. Segment scenes
+    min_dur = 2.0 if req.pacing == "fast" else (4.5 if req.pacing == "cinematic" else 2.5)
+    max_dur = 4.0 if req.pacing == "fast" else (8.0 if req.pacing == "cinematic" else 6.5)
     scenes = text_segmenter.segment_script_and_allocate_time(
         script_text=script_text,
         total_duration=total_dur,
-        min_segment_duration=2.5,
-        max_segment_duration=6.5
+        min_segment_duration=min_dur,
+        max_segment_duration=max_dur
     )
 
     # 2. Select distinct Pexels clips for each scene
@@ -334,8 +338,21 @@ async def ai_generate_timeline_endpoint(req: AIGenerateTimelineReq):
     v1_clips = []
     orientation = "portrait" if req.aspect_ratio == "9:16" else "landscape"
 
+    theme_suffix = ""
+    if req.visual_theme and req.visual_theme not in {"auto", "all"}:
+        theme_map = {
+            "tech": "technology cyber AI futuristic",
+            "nature": "nature cinematic aerial mountains ocean",
+            "urban": "city street lifestyle night lights",
+            "business": "modern office business entrepreneur corporate",
+            "fitness": "workout fitness gym athletics energy",
+            "dark": "dark aesthetic moody abstract neon"
+        }
+        theme_suffix = theme_map.get(req.visual_theme, req.visual_theme)
+
     for idx, s in enumerate(scenes):
-        query = s.get("primary_query") or "cinematic scenery"
+        base_query = s.get("primary_query") or "cinematic scenery"
+        query = f"{base_query} {theme_suffix}".strip() if theme_suffix else base_query
         clip = pexels_client.select_distinct_clip(
             query=query,
             scene_idx=idx,

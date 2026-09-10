@@ -50,10 +50,6 @@
       </div>
       <div class="flex items-center space-x-2">
         <span class="font-extrabold text-sm tracking-tight text-white">SynchroClip</span>
-        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center space-x-1">
-          <i data-lucide="check" class="w-2.5 h-2.5"></i>
-          <span>100% Free • No Watermark</span>
-        </span>
       </div>
       <div class="h-4 w-[1px] bg-slate-800 mx-1"></div>
       <input type="text" id="projectTitleInput" value="Untitled Project" class="bg-transparent hover:bg-surface-800 focus:bg-surface-800 px-2 py-1 rounded text-xs font-semibold text-slate-200 border border-transparent focus:border-slate-700 outline-none transition w-36 focus:w-48 truncate">
@@ -86,14 +82,19 @@
       </div>
     </div>
 
-    <!-- Right Actions: Demo Sample & Export -->
+    <!-- Right Actions: AI Video Generator, Demo Sample & Export -->
     <div class="flex items-center space-x-2.5">
-      <button id="btnTrySampleDemo" type="button" class="px-3 py-1.5 rounded-lg bg-surface-800 hover:bg-surface-700 text-xs font-semibold text-slate-200 border border-slate-700 flex items-center space-x-1.5 transition">
+      <button id="btnHeaderGenerateVideo" type="button" class="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-xs font-bold text-white shadow-lg shadow-purple-600/30 border border-purple-400/40 flex items-center space-x-2 transition transform active:scale-95 cursor-pointer">
+        <i data-lucide="wand-2" class="w-3.5 h-3.5 text-amber-300"></i>
+        <span>Generate Video from Audio</span>
+      </button>
+
+      <button id="btnTrySampleDemo" type="button" class="px-3 py-1.5 rounded-lg bg-surface-800 hover:bg-surface-700 text-xs font-semibold text-slate-200 border border-slate-700 flex items-center space-x-1.5 transition cursor-pointer">
         <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-400"></i>
         <span>Try Demo Sample</span>
       </button>
 
-      <button id="btnOpenExportModal" type="button" class="px-4 py-1.5 rounded-lg font-bold text-xs bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white shadow-md shadow-brand-500/25 flex items-center space-x-2 transition transform active:scale-95">
+      <button id="btnOpenExportModal" type="button" class="px-4 py-1.5 rounded-lg font-bold text-xs bg-brand-600 hover:bg-brand-500 text-white shadow-md shadow-brand-500/25 flex items-center space-x-2 transition transform active:scale-95 cursor-pointer">
         <i data-lucide="download" class="w-3.5 h-3.5"></i>
         <span>Export Video</span>
       </button>
@@ -110,6 +111,10 @@
         <button data-tab="media" class="asset-tab-btn active px-2.5 py-1.5 rounded-md font-medium text-slate-300 hover:text-white flex items-center space-x-1.5 transition">
           <i data-lucide="folder" class="w-3.5 h-3.5"></i>
           <span>Media</span>
+        </button>
+        <button data-tab="aigenerator" class="asset-tab-btn px-2.5 py-1.5 rounded-md font-semibold text-purple-300 hover:text-white flex items-center space-x-1.5 transition">
+          <i data-lucide="wand-2" class="w-3.5 h-3.5 text-amber-400"></i>
+          <span>AI Video</span>
         </button>
         <button data-tab="stock" class="asset-tab-btn px-2.5 py-1.5 rounded-md font-medium text-slate-400 hover:text-white flex items-center space-x-1.5 transition">
           <i data-lucide="video" class="w-3.5 h-3.5"></i>
@@ -142,6 +147,26 @@
 
         <!-- TAB 1: MEDIA (Upload personal video, image, audio) -->
         <div id="tabContentMedia" class="tab-pane space-y-3">
+          <!-- Featured AI Video Generator Card -->
+          <div class="p-3.5 rounded-xl bg-gradient-to-br from-violet-950/70 via-purple-900/30 to-surface-950 border border-purple-500/40 space-y-2">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-2">
+                <span class="w-6 h-6 rounded-lg bg-gradient-to-tr from-violet-600 to-purple-500 flex items-center justify-center text-white shadow-md shadow-violet-600/30">
+                  <i data-lucide="wand-2" class="w-3.5 h-3.5 text-amber-300"></i>
+                </span>
+                <span class="font-bold text-xs text-white">AI Video from Audio</span>
+              </div>
+              <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-violet-500/20 text-violet-300 border border-violet-500/30">Multi-Clip</span>
+            </div>
+            <p class="text-[11px] text-slate-300 leading-snug">
+              Turn any audio or voiceover into a complete video with multiple matching clips, transitions & synced captions.
+            </p>
+            <button id="btnMediaGenerateAiVideo" type="button" class="w-full py-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold text-xs rounded-lg transition shadow-md shadow-violet-600/25 flex items-center justify-center space-x-1.5 cursor-pointer">
+              <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-300"></i>
+              <span>Generate Video from Audio</span>
+            </button>
+          </div>
+
           <!-- Dropzone -->
           <div id="mediaDropzone" class="border-2 border-dashed border-slate-700 hover:border-brand-500 bg-surface-950/60 hover:bg-brand-500/5 rounded-xl p-4 text-center cursor-pointer transition flex flex-col items-center justify-center group">
             <input type="file" id="mediaFileInput" multiple accept="video/*,audio/*,image/*" class="hidden">
@@ -161,6 +186,41 @@
             <div id="mediaGrid" class="grid grid-cols-2 gap-2">
               <!-- Dynamically populated imported media cards -->
             </div>
+          </div>
+        </div>
+
+        <!-- TAB: AI VIDEO GENERATOR PANE -->
+        <div id="tabContentAiGenerator" class="tab-pane hidden space-y-3.5">
+          <div class="p-3.5 rounded-xl bg-gradient-to-br from-violet-950/80 via-purple-900/40 to-surface-950 border border-purple-500/50 space-y-2.5">
+            <div class="flex items-center space-x-2">
+              <span class="w-7 h-7 rounded-lg bg-gradient-to-tr from-violet-600 to-purple-500 flex items-center justify-center text-white shadow-md shadow-violet-600/30">
+                <i data-lucide="wand-2" class="w-4 h-4 text-amber-300"></i>
+              </span>
+              <div>
+                <h4 class="font-bold text-xs text-white">AI Video Generator</h4>
+                <p class="text-[10px] text-purple-300">Create multi-clip video from audio</p>
+              </div>
+            </div>
+            <p class="text-[11px] text-slate-300 leading-relaxed">
+              Upload your voiceover or audio. AI analyzes rhythm, pauses, and speech themes, automatically cuts multiple HD stock clips together, and creates word-level animated subtitles.
+            </p>
+            <button id="btnSidebarOpenAiWizard" type="button" class="w-full py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold text-xs rounded-lg transition shadow-lg shadow-purple-600/30 flex items-center justify-center space-x-2 cursor-pointer">
+              <i data-lucide="sparkles" class="w-4 h-4 text-amber-300"></i>
+              <span>Open Video Generator</span>
+            </button>
+          </div>
+
+          <div class="space-y-2">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">Quick Audio Drop</span>
+            <div id="sidebarAudioDropzone" class="border-2 border-dashed border-slate-700 hover:border-violet-500 bg-surface-950/60 p-4 rounded-xl text-center cursor-pointer transition">
+              <i data-lucide="mic" class="w-6 h-6 text-violet-400 mx-auto mb-1"></i>
+              <p class="text-xs font-semibold text-slate-200">Drop Audio File</p>
+              <p class="text-[10px] text-slate-400">MP3, WAV, M4A, AAC</p>
+            </div>
+            <button id="btnSidebarLoadDemoAudio" type="button" class="w-full py-2 rounded-lg bg-surface-950 hover:bg-surface-800 text-xs font-medium text-slate-300 border border-slate-800 flex items-center justify-center space-x-1.5 transition cursor-pointer">
+              <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-400"></i>
+              <span>Try Demo Speech Audio</span>
+            </button>
           </div>
         </div>
 
@@ -253,7 +313,7 @@
           <div class="p-3 rounded-xl bg-surface-950 border border-slate-800 space-y-2">
             <div class="flex items-center justify-between">
               <span class="font-bold text-xs text-white">Auto Subtitles</span>
-              <span class="text-[10px] text-emerald-400 font-semibold">100% Free</span>
+              <span class="text-[10px] text-purple-400 font-semibold">Word-by-Word</span>
             </div>
             <p class="text-[11px] text-slate-400">Generate word-synchronized subtitles directly from your audio track.</p>
             <button id="btnAutoGenerateCaptions" type="button" class="w-full py-1.5 bg-surface-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg transition flex items-center justify-center space-x-1.5">
@@ -339,6 +399,25 @@
         <!-- Aspect Ratio Bounding Container -->
         <div id="viewportContainer" class="relative bg-black rounded-lg overflow-hidden shadow-2xl border border-slate-800 aspect-[9/16] max-h-[92%] transition-all">
           <canvas id="programCanvas" class="w-full h-full object-contain"></canvas>
+
+          <!-- Empty Monitor Quick Action Overlay (visible when 0 clips on timeline) -->
+          <div id="emptyMonitorPlaceholder" class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center z-10 pointer-events-auto bg-surface-950/80 backdrop-blur-[2px]">
+            <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-violet-600 via-indigo-600 to-purple-500 flex items-center justify-center shadow-lg shadow-purple-500/30 mb-3 animate-pulse">
+              <i data-lucide="wand-2" class="w-6 h-6 text-amber-300"></i>
+            </div>
+            <h3 class="text-sm font-bold text-white mb-1">Generate Video from Audio</h3>
+            <p class="text-xs text-slate-300 max-w-xs mb-4">Upload or select any audio to automatically create a multi-clip video with transitions and animated captions.</p>
+            <div class="flex flex-col sm:flex-row items-center gap-2">
+              <button id="btnMonitorGenerateVideo" type="button" class="px-4 py-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold text-xs shadow-lg shadow-purple-600/30 flex items-center space-x-2 transition transform hover:scale-105 active:scale-95 cursor-pointer">
+                <i data-lucide="sparkles" class="w-4 h-4 text-amber-300"></i>
+                <span>Generate Video from Audio</span>
+              </button>
+              <button id="btnMonitorImportMedia" type="button" class="px-3.5 py-2 rounded-xl bg-surface-850 hover:bg-surface-800 text-slate-300 hover:text-white font-semibold text-xs border border-slate-700 flex items-center space-x-1.5 transition cursor-pointer">
+                <i data-lucide="upload" class="w-3.5 h-3.5 text-slate-400"></i>
+                <span>Import Files</span>
+              </button>
+            </div>
+          </div>
 
           <!-- Safe Guides Overlay -->
           <div id="safeGuidesOverlay" class="absolute inset-4 border border-dashed border-white/20 pointer-events-none flex flex-col justify-between">
@@ -495,94 +574,137 @@
 
   <!-- MODAL: AI CREATE VIDEO FROM AUDIO (OPTION A vs OPTION B) -->
   <div id="aiAudioModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
-    <div class="bg-surface-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-5">
+    <div class="bg-surface-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
       <div class="flex items-center justify-between">
         <div class="flex items-center space-x-2.5">
-          <div class="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center text-white">
-            <i data-lucide="sparkles" class="w-4 h-4 text-amber-300"></i>
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-violet-600 via-purple-600 to-indigo-500 flex items-center justify-center text-white shadow-md shadow-purple-600/30">
+            <i data-lucide="wand-2" class="w-4 h-4 text-amber-300"></i>
           </div>
           <div>
-            <h3 class="font-bold text-base text-white">Create Video From Audio</h3>
-            <p class="text-xs text-slate-400">Speech analysis, keyword matching & sequence creation</p>
+            <h3 class="font-bold text-sm sm:text-base text-white">Generate Video from Audio</h3>
+            <p class="text-[11px] text-slate-400">Creates a video made with multiple clips matched to your audio</p>
           </div>
         </div>
-        <button id="btnCloseAIModal" type="button" class="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition">
+        <button id="btnCloseAIModal" type="button" class="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition cursor-pointer">
           <i data-lucide="x" class="w-4 h-4"></i>
         </button>
       </div>
 
-      <!-- Step A: Audio Upload or Selection -->
-      <div class="space-y-3">
-        <label class="block text-xs font-semibold text-slate-300">1. Select Audio File</label>
-        <div id="aiAudioDropzone" class="border-2 border-dashed border-slate-700 hover:border-brand-500 bg-surface-950/60 p-4 rounded-xl text-center cursor-pointer transition">
-          <input type="file" id="aiAudioFileInput" accept="audio/*" class="hidden">
-          <i data-lucide="music" class="w-6 h-6 text-brand-400 mx-auto mb-1"></i>
-          <p class="text-xs font-semibold text-slate-200" id="aiAudioFileName">Click to select audio file or sample</p>
-          <p class="text-[10px] text-slate-400">Supports MP3, WAV, M4A, AAC</p>
+      <!-- Step 1: Audio Upload or Selection -->
+      <div class="space-y-2">
+        <div class="flex items-center justify-between">
+          <label class="text-xs font-semibold text-slate-300">1. Select Audio Track</label>
+          <button id="btnUseDemoAudioInModal" type="button" class="text-xs font-semibold text-purple-400 hover:text-purple-300 hover:underline flex items-center space-x-1 cursor-pointer">
+            <i data-lucide="sparkles" class="w-3 h-3 text-amber-400"></i>
+            <span>Try Sample Voiceover</span>
+          </button>
         </div>
-        <button id="btnUseDemoAudioInModal" type="button" class="text-xs text-brand-400 hover:underline flex items-center space-x-1">
-          <i data-lucide="sparkles" class="w-3 h-3"></i>
-          <span>Or load demo speech audio snippet</span>
-        </button>
+
+        <div id="aiAudioDropzone" class="border-2 border-dashed border-slate-700 hover:border-violet-500 bg-surface-950/60 p-4 rounded-xl text-center cursor-pointer transition">
+          <input type="file" id="aiAudioFileInput" accept="audio/*" class="hidden">
+          <i data-lucide="music" class="w-6 h-6 text-violet-400 mx-auto mb-1"></i>
+          <p class="text-xs font-semibold text-slate-200" id="aiAudioFileName">Click to select audio file or drop here</p>
+          <p class="text-[10px] text-slate-400">Supports MP3, WAV, M4A, AAC, FLAC</p>
+        </div>
       </div>
 
-      <!-- Step B: Analysis Summary (Keywords & Transcript) -->
-      <div id="aiAnalysisBox" class="p-3.5 rounded-xl bg-surface-950 border border-slate-800 space-y-2 hidden">
+      <!-- Step 2: Analysis Summary (Keywords & Transcript) -->
+      <div id="aiAnalysisBox" class="p-3 rounded-xl bg-surface-950 border border-slate-800 space-y-2 hidden">
         <div class="flex items-center justify-between">
-          <span class="text-[11px] font-bold text-slate-300">Detected Keywords:</span>
+          <span class="text-[11px] font-bold text-slate-300">Detected Speech Keywords:</span>
           <span id="aiDurationBadge" class="text-[10px] font-mono text-amber-400">00:15.0</span>
         </div>
         <div id="aiKeywordsContainer" class="flex flex-wrap gap-1"></div>
         <p id="aiTranscriptSnippet" class="text-[11px] text-slate-300 italic line-clamp-2 mt-1"></p>
       </div>
 
-      <!-- Step C: The TWO CLEAR CHOICES (Option A vs Option B) -->
-      <div class="space-y-2.5 pt-1">
-        <span class="text-xs font-bold text-slate-300 block">Choose how to proceed:</span>
+      <!-- Step 3: Video Generation Settings -->
+      <div class="grid grid-cols-2 gap-2 text-xs">
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-300 mb-1">Visual Theme</label>
+          <select id="aiThemeSelect" class="w-full bg-surface-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 outline-none focus:border-violet-500">
+            <option value="auto">Auto (Matches Speech)</option>
+            <option value="tech">Modern Tech & AI</option>
+            <option value="nature">Cinematic Scenery & Nature</option>
+            <option value="urban">Urban & Street Lifestyle</option>
+            <option value="business">Business & Entrepreneur</option>
+            <option value="fitness">Fitness & Energetic</option>
+            <option value="dark">Dark Aesthetic / Cyber</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-300 mb-1">Clip Pacing</label>
+          <select id="aiPacingSelect" class="w-full bg-surface-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 outline-none focus:border-violet-500">
+            <option value="medium" selected>Balanced (3–5s per clip)</option>
+            <option value="fast">Fast & Punchy (2–3s per clip)</option>
+            <option value="cinematic">Cinematic (5–7s per clip)</option>
+          </select>
+        </div>
+      </div>
 
-        <!-- Option A -->
-        <button id="btnOptionAGenerate" type="button" class="w-full p-3.5 rounded-xl bg-gradient-to-r from-brand-600 via-indigo-600 to-purple-600 hover:from-brand-500 hover:to-purple-500 text-left border border-brand-400/30 transition shadow-lg group">
+      <div class="grid grid-cols-2 gap-2 text-xs">
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-300 mb-1">Aspect Ratio</label>
+          <select id="aiAspectSelect" class="w-full bg-surface-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 outline-none focus:border-violet-500">
+            <option value="9:16" selected>9:16 Vertical (Shorts/TikTok/Reels)</option>
+            <option value="16:9">16:9 Widescreen (YouTube)</option>
+            <option value="1:1">1:1 Square (Feed)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-300 mb-1">Caption Style</label>
+          <select id="aiCaptionTemplateSelect" class="w-full bg-surface-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 outline-none focus:border-violet-500">
+            <option value="tiktok_bold" selected>TikTok Viral (Yellow Pop)</option>
+            <option value="hormozi_classic">Hormozi Classic (Green Bold)</option>
+            <option value="neon_glow">Cyber Neon (Cyan Glow)</option>
+            <option value="beast_mode">MrBeast Punch (Yellow Bounce)</option>
+            <option value="minimal_clean">Minimal Clean (White Crisp)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Step 4: Execution Buttons -->
+      <div class="space-y-2 pt-1">
+        <!-- Option A: Generate Multi-Clip Video -->
+        <button id="btnOptionAGenerate" type="button" class="w-full p-3.5 rounded-xl bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-left border border-purple-400/40 transition shadow-lg shadow-purple-600/30 group cursor-pointer">
           <div class="flex items-center justify-between">
-            <span class="font-bold text-sm text-white flex items-center space-x-2">
-              <i data-lucide="film" class="w-4 h-4 text-amber-300"></i>
-              <span>Option A — Generate Full Video</span>
+            <span class="font-bold text-xs sm:text-sm text-white flex items-center space-x-2">
+              <i data-lucide="wand-2" class="w-4 h-4 text-amber-300"></i>
+              <span>Generate Multi-Clip Video from Audio</span>
             </span>
-            <span class="px-2 py-0.5 rounded bg-white/20 text-[10px] font-bold text-white uppercase">Recommended</span>
+            <span class="px-2 py-0.5 rounded bg-white/20 text-[9px] font-bold text-white uppercase tracking-wider">AI Multi-Clip</span>
           </div>
-          <p class="text-xs text-slate-200 mt-1">
-            Auto-searches Pexels footage matching speech keywords, arranges clips on Track V1, adds crossfades, and generates word-level subtitles.
+          <p class="text-[11px] text-purple-100 mt-1 leading-snug">
+            Analyzes rhythm & pauses, auto-selects multiple matching HD clips for Track V1, adds crossfades, and generates word-timed animated captions on Track T1.
           </p>
         </button>
 
-        <!-- Option B -->
-        <button id="btnOptionBUseAudioOnly" type="button" class="w-full p-3 rounded-xl bg-surface-950 hover:bg-surface-800 text-left border border-slate-800 hover:border-slate-700 transition">
+        <!-- Option B: Audio Only -->
+        <button id="btnOptionBUseAudioOnly" type="button" class="w-full p-2.5 rounded-xl bg-surface-950 hover:bg-surface-800 text-left border border-slate-800 hover:border-slate-700 transition cursor-pointer">
           <div class="flex items-center justify-between">
-            <span class="font-bold text-xs text-slate-200 flex items-center space-x-2">
-              <i data-lucide="music" class="w-4 h-4 text-cyan-400"></i>
-              <span>Option B — Use Audio Only</span>
+            <span class="font-bold text-xs text-slate-300 flex items-center space-x-2">
+              <i data-lucide="music" class="w-3.5 h-3.5 text-cyan-400"></i>
+              <span>Add as Audio Only (Manual Video Editing)</span>
             </span>
-            <span class="text-[10px] text-slate-400 font-mono">No video generated</span>
+            <span class="text-[10px] text-slate-500 font-mono">Track A1</span>
           </div>
-          <p class="text-[11px] text-slate-400 mt-0.5">
-            Places audio onto timeline Track A1 without automatically generating any video clips. You maintain full manual control.
+          <p class="text-[10px] text-slate-400 mt-0.5">
+            Places audio onto timeline Track A1 without automatically generating video clips.
           </p>
         </button>
       </div>
     </div>
   </div>
 
-  <!-- MODAL: EXPORT VIDEO (NO WATERMARK) -->
+  <!-- MODAL: EXPORT VIDEO -->
   <div id="exportModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
     <div class="bg-surface-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
       <div class="flex items-center justify-between">
         <div>
           <h3 class="font-bold text-base text-white">Export Video</h3>
-          <p class="text-xs text-emerald-400 font-semibold flex items-center space-x-1 mt-0.5">
-            <i data-lucide="check" class="w-3 h-3"></i>
-            <span>100% Free • No Watermark • No Subscription</span>
-          </p>
+          <p class="text-xs text-slate-400 mt-0.5">Render high-definition MP4 with synchronized tracks</p>
         </div>
-        <button id="btnCloseExportModal" type="button" class="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition">
+        <button id="btnCloseExportModal" type="button" class="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition cursor-pointer">
           <i data-lucide="x" class="w-4 h-4"></i>
         </button>
       </div>
