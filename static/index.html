@@ -671,6 +671,42 @@
         </div>
       </div>
 
+      <!-- Step 4: Per-Text Caption Styles & Segments Inspector -->
+      <div id="captionSegmentsSection" class="bg-surface-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
+          <div class="flex items-center space-x-2.5">
+            <div class="h-8 w-8 rounded-lg bg-brand-500/10 border border-brand-500/30 flex items-center justify-center text-brand-400">
+              <i data-lucide="type" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <h3 class="text-sm font-bold text-white flex items-center space-x-2">
+                <span>Per-Text Caption Styles & Segments</span>
+                <span id="captionSegmentsCountBadge" class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-brand-500/20 text-brand-300 border border-brand-500/30">0 Lines</span>
+              </h3>
+              <p class="text-xs text-slate-400">Choose a different caption style, font, or colors for specific text lines in your video</p>
+            </div>
+          </div>
+
+          <div class="flex items-center space-x-2">
+            <div class="relative">
+              <input id="captionSegmentsSearchInput" type="text" placeholder="Search text lines..." class="bg-surface-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 w-44">
+            </div>
+            <button id="btnResetAllCardStyles" type="button" class="text-xs px-3 py-1.5 rounded-xl bg-surface-850 hover:bg-slate-800 text-slate-300 border border-slate-700 flex items-center space-x-1.5 transition active:scale-[0.98]" title="Reset all custom line styles back to global template">
+              <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 text-slate-400"></i>
+              <span>Reset All to Global</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Segments List Container -->
+        <div id="captionSegmentsList" class="space-y-2.5 max-h-[380px] overflow-y-auto pr-1 custom-scrollbar">
+          <div class="py-8 text-center text-slate-500 text-xs flex flex-col items-center justify-center space-y-2">
+            <i data-lucide="subtitles" class="w-6 h-6 text-slate-600"></i>
+            <span>Upload audio or video to generate and style individual caption lines</span>
+          </div>
+        </div>
+      </div>
+
       <!-- Storyboard Cards Grid -->
       <div id="storyboardGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         <!-- Scene cards dynamically injected -->
@@ -857,6 +893,70 @@
               <span>Source (.ZIP)</span>
             </a>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Per-Card Caption Style Customizer Modal -->
+    <div id="perCardStyleModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
+        <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+          <h3 class="text-base font-semibold text-white flex items-center space-x-2">
+            <i data-lucide="palette" class="w-4 h-4 text-brand-400"></i>
+            <span id="perCardModalTitle">Customize Caption Line #1</span>
+          </h3>
+          <button id="btnClosePerCardModal" class="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+
+        <div class="p-3 bg-surface-950 rounded-xl border border-slate-800 text-xs text-slate-200 italic" id="perCardModalQuote">
+          "Text goes here"
+        </div>
+
+        <!-- Template Selector -->
+        <div class="space-y-1.5">
+          <label class="text-xs font-semibold text-slate-300">Caption Style / Template for This Line</label>
+          <select id="perCardTemplateSelect" class="w-full bg-surface-950 border border-slate-700 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-brand-500">
+          </select>
+        </div>
+
+        <!-- Custom Colors for this Line -->
+        <div class="grid grid-cols-2 gap-3 pt-2">
+          <div class="space-y-1">
+            <label class="text-[11px] font-semibold text-slate-400">Hero Highlight Color</label>
+            <div class="flex items-center space-x-2">
+              <input type="color" id="perCardHighlightPicker" value="#ffe600" class="w-8 h-8 rounded border-0 bg-transparent cursor-pointer">
+              <span id="perCardHighlightHex" class="text-xs font-mono text-slate-300">#ffe600</span>
+            </div>
+          </div>
+          <div class="space-y-1">
+            <label class="text-[11px] font-semibold text-slate-400">Primary / Context Color</label>
+            <div class="flex items-center space-x-2">
+              <input type="color" id="perCardPrimaryPicker" value="#ffffff" class="w-8 h-8 rounded border-0 bg-transparent cursor-pointer">
+              <span id="perCardPrimaryHex" class="text-xs font-mono text-slate-300">#ffffff</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Marker Decoration for this Line -->
+        <div class="space-y-1.5 pt-2">
+          <label class="text-[11px] font-semibold text-slate-400">Word Marker Decoration</label>
+          <div class="grid grid-cols-4 gap-2 text-xs" id="perCardMarkerGroup">
+            <button type="button" class="per-card-marker-btn px-2.5 py-1.5 rounded-lg border border-brand-500 bg-brand-500/20 text-white text-center font-medium" data-marker="none">None</button>
+            <button type="button" class="per-card-marker-btn px-2.5 py-1.5 rounded-lg border border-slate-700 bg-surface-950 text-slate-300 text-center hover:bg-slate-800" data-marker="circle">Circle</button>
+            <button type="button" class="per-card-marker-btn px-2.5 py-1.5 rounded-lg border border-slate-700 bg-surface-950 text-slate-300 text-center hover:bg-slate-800" data-marker="box">Box</button>
+            <button type="button" class="per-card-marker-btn px-2.5 py-1.5 rounded-lg border border-slate-700 bg-surface-950 text-slate-300 text-center hover:bg-slate-800" data-marker="underline">Underline</button>
+          </div>
+        </div>
+
+        <div class="pt-3 border-t border-slate-800 flex items-center justify-between">
+          <button id="btnResetPerCardModal" type="button" class="px-3.5 py-2 rounded-xl bg-surface-850 hover:bg-slate-800 text-slate-300 text-xs font-semibold border border-slate-700 transition">
+            Revert to Global
+          </button>
+          <button id="btnSavePerCardModal" type="button" class="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold shadow transition">
+            Save & Preview
+          </button>
         </div>
       </div>
     </div>

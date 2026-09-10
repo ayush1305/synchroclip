@@ -2481,3 +2481,48 @@ Style: Default,{fontname},{tpl['fontsize']},{tpl['primary_color']},{tpl['seconda
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 """
     return header
+
+def build_multi_ass_header(template_ids: list[str], default_template_id: str = "hormozi_classic", width: int = 1920, height: int = 1080, font_override: str = None) -> str:
+    """
+    Builds ASS header with multiple style definitions so individual cards/lines
+    can reference their own distinct template style via Style_<template_id>.
+    """
+    default_tpl = get_template(default_template_id)
+    default_font = font_override if font_override else default_tpl.get('fontname', 'Montserrat')
+
+    styles_lines = [
+        f"Style: Default,{default_font},{default_tpl['fontsize']},{default_tpl['primary_color']},{default_tpl['secondary_color']},{default_tpl['outline_color']},{default_tpl['back_color']},{default_tpl['bold']},{default_tpl['italic']},0,0,100,100,0,0,1,{default_tpl['outline']},{default_tpl['shadow']},{default_tpl['alignment']},40,40,{default_tpl['margin_v']},1"
+    ]
+
+    seen = {default_template_id}
+    for tid in template_ids:
+        if not tid or tid == "none" or tid in seen:
+            continue
+        seen.add(tid)
+        t = get_template(tid)
+        fname = t.get('fontname', default_font)
+        style_name = f"Style_{tid}"
+        styles_lines.append(
+            f"Style: {style_name},{fname},{t['fontsize']},{t['primary_color']},{t['secondary_color']},{t['outline_color']},{t['back_color']},{t['bold']},{t['italic']},0,0,100,100,0,0,1,{t['outline']},{t['shadow']},{t['alignment']},40,40,{t['margin_v']},1"
+        )
+
+    all_styles = "\n".join(styles_lines)
+
+    header = f"""[Script Info]
+Title: SynchroClip Dynamic Subtitles
+ScriptType: v4.00+
+WrapStyle: 0
+ScaledBorderAndShadow: yes
+YCbCr Matrix: TV.709
+PlayResX: {width}
+PlayResY: {height}
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+{all_styles}
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+"""
+    return header
+

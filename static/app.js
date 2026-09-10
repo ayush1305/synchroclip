@@ -45,6 +45,8 @@ const state = {
   userClips: [],
   pexelsApiKey: localStorage.getItem('synchro_pexels_api_key') || '',
   activeSwapSceneIndex: null,
+  activeCustomizingCardIndex: null,
+  captionSegmentsSearchTerm: '',
   currentPlayingAudio: false,
   renderPollInterval: null
 };
@@ -145,6 +147,24 @@ const elements = {
   videoFocusOverlay: document.getElementById('videoFocusOverlay'),
   liveCaptionOverlay: document.getElementById('liveCaptionOverlay'),
   activeTemplateBadge: document.getElementById('activeTemplateBadge'),
+  // Per-Text Caption Styles
+  captionSegmentsSection: document.getElementById('captionSegmentsSection'),
+  captionSegmentsCountBadge: document.getElementById('captionSegmentsCountBadge'),
+  captionSegmentsSearchInput: document.getElementById('captionSegmentsSearchInput'),
+  captionSegmentsList: document.getElementById('captionSegmentsList'),
+  btnResetAllCardStyles: document.getElementById('btnResetAllCardStyles'),
+  perCardStyleModal: document.getElementById('perCardStyleModal'),
+  perCardModalTitle: document.getElementById('perCardModalTitle'),
+  perCardModalQuote: document.getElementById('perCardModalQuote'),
+  perCardTemplateSelect: document.getElementById('perCardTemplateSelect'),
+  perCardHighlightPicker: document.getElementById('perCardHighlightPicker'),
+  perCardHighlightHex: document.getElementById('perCardHighlightHex'),
+  perCardPrimaryPicker: document.getElementById('perCardPrimaryPicker'),
+  perCardPrimaryHex: document.getElementById('perCardPrimaryHex'),
+  perCardMarkerGroup: document.getElementById('perCardMarkerGroup'),
+  btnClosePerCardModal: document.getElementById('btnClosePerCardModal'),
+  btnResetPerCardModal: document.getElementById('btnResetPerCardModal'),
+  btnSavePerCardModal: document.getElementById('btnSavePerCardModal'),
   // GitHub & Download
   btnGitHub: document.getElementById('btnGitHub'),
   gitHubModal: document.getElementById('gitHubModal'),
@@ -242,6 +262,19 @@ function getActiveHighlightHex() {
     return state.selectedHighlightColor;
   }
   return state.highlightColors[state.selectedHighlightColor]?.hex || '#facc15';
+}
+
+function assColorToHex(assStr) {
+  if (!assStr || typeof assStr !== 'string') return null;
+  if (assStr.startsWith('#')) return assStr;
+  const clean = assStr.replace(/&H|&/g, '');
+  if (clean.length === 8) {
+    const b = clean.substring(2, 4);
+    const g = clean.substring(4, 6);
+    const r = clean.substring(6, 8);
+    return `#${r}${g}${b}`;
+  }
+  return null;
 }
 
 function renderColor1Pills() {
@@ -365,6 +398,8 @@ function renderCaptionTemplates() {
       if (elements.activeTemplateBadge) elements.activeTemplateBadge.textContent = tpl.name;
       renderCaptionTemplates();
       updateLiveKaraokeCaption(elements.htmlAudio.currentTime || 0);
+      renderCaptionSegmentsEditor();
+      if (state.scenes.length) renderStoryboard();
     });
 
     elements.captionTemplatesGrid.appendChild(card);
@@ -1115,6 +1150,108 @@ function setupEventListeners() {
     elements.apiKeyModal.classList.add('hidden');
   });
 
+  // Per-Card / Per-Text Caption Styles Event Listeners
+  if (elements.captionSegmentsSearchInput) {
+    elements.captionSegmentsSearchInput.addEventListener('input', (e) => {
+      state.captionSegmentsSearchTerm = e.target.value;
+      renderCaptionSegmentsEditor();
+    });
+  }
+
+  if (elements.btnResetAllCardStyles) {
+    elements.btnResetAllCardStyles.addEventListener('click', () => {
+      if (!state.captionCards || !state.captionCards.length) return;
+      state.captionCards.forEach(c => {
+        delete c.template_id;
+        delete c.highlight_color;
+        delete c.primary_color;
+        delete c.marker_style;
+        delete c.word_zoom;
+      });
+      renderCaptionSegmentsEditor();
+      if (state.scenes.length) renderStoryboard();
+      updateLiveKaraokeCaption(elements.htmlAudio.currentTime || 0);
+    });
+  }
+
+  if (elements.btnClosePerCardModal) {
+    elements.btnClosePerCardModal.addEventListener('click', () => {
+      elements.perCardStyleModal.classList.add('hidden');
+    });
+  }
+
+  if (elements.perCardHighlightPicker) {
+    elements.perCardHighlightPicker.addEventListener('input', (e) => {
+      if (elements.perCardHighlightHex) elements.perCardHighlightHex.textContent = e.target.value;
+    });
+  }
+
+  if (elements.perCardPrimaryPicker) {
+    elements.perCardPrimaryPicker.addEventListener('input', (e) => {
+      if (elements.perCardPrimaryHex) elements.perCardPrimaryHex.textContent = e.target.value;
+    });
+  }
+
+  if (elements.perCardMarkerGroup) {
+    elements.perCardMarkerGroup.addEventListener('click', (e) => {
+      const btn = e.target.closest('.per-card-marker-btn');
+      if (!btn) return;
+      document.querySelectorAll('.per-card-marker-btn').forEach(b => {
+        b.className = 'per-card-marker-btn px-2.5 py-1.5 rounded-lg border border-slate-700 bg-surface-950 text-slate-300 text-center hover:bg-slate-800';
+      });
+      btn.className = 'per-card-marker-btn px-2.5 py-1.5 rounded-lg border border-brand-500 bg-brand-500/20 text-white text-center font-medium';
+    });
+  }
+
+  if (elements.btnResetPerCardModal) {
+    elements.btnResetPerCardModal.addEventListener('click', () => {
+      if (state.activeCustomizingCardIndex === null) return;
+      const card = state.captionCards[state.activeCustomizingCardIndex];
+      if (card) {
+        delete card.template_id;
+        delete card.highlight_color;
+        delete card.primary_color;
+        delete card.marker_style;
+        delete card.word_zoom;
+        seekToCard(card);
+      }
+      elements.perCardStyleModal.classList.add('hidden');
+      renderCaptionSegmentsEditor();
+      if (state.scenes.length) renderStoryboard();
+    });
+  }
+
+  if (elements.btnSavePerCardModal) {
+    elements.btnSavePerCardModal.addEventListener('click', () => {
+      if (state.activeCustomizingCardIndex === null) return;
+      const card = state.captionCards[state.activeCustomizingCardIndex];
+      if (!card) return;
+
+      const chosenTpl = elements.perCardTemplateSelect.value;
+      if (chosenTpl) {
+        card.template_id = chosenTpl;
+      } else {
+        delete card.template_id;
+      }
+
+      card.highlight_color = elements.perCardHighlightPicker.value;
+      card.primary_color = elements.perCardPrimaryPicker.value;
+
+      const activeMarkerBtn = elements.perCardMarkerGroup.querySelector('.per-card-marker-btn.border-brand-500');
+      const markerVal = activeMarkerBtn ? activeMarkerBtn.dataset.marker : 'none';
+      if (markerVal !== 'none') {
+        card.marker_style = markerVal;
+      } else {
+        delete card.marker_style;
+      }
+
+      elements.perCardStyleModal.classList.add('hidden');
+      seekToCard(card);
+      renderCaptionSegmentsEditor();
+      if (state.scenes.length) renderStoryboard();
+    });
+  }
+
   // Swap Clip Modal
   elements.btnCloseSwapModal.addEventListener('click', () => {
     elements.swapClipModal.classList.add('hidden');
@@ -1510,6 +1647,7 @@ async function handleDirectAutoTranscribe() {
     state.captionCards = data.cards || [];
     state.timedWords = data.words || [];
     elements.directCaptionStatusIndicator.textContent = `Aligned ${state.timedWords.length} words`;
+    renderCaptionSegmentsEditor();
     updateLiveKaraokeCaption(elements.htmlAudio.currentTime || 0);
   } catch (err) {
     alert('Speech recognition error: ' + err.message);
@@ -1552,6 +1690,7 @@ async function handleDirectSyncCaptions() {
     state.captionCards = data.cards || [];
     state.timedWords = data.words || [];
     elements.directCaptionStatusIndicator.textContent = `Aligned ${state.timedWords.length} words`;
+    renderCaptionSegmentsEditor();
 
     // Ensure player is ready
     elements.storyboardSection.classList.remove('hidden');
@@ -1583,7 +1722,7 @@ function updateLiveKaraokeCaption(currentTime) {
     }
   }
 
-  if (state.selectedTemplate === 'none' || !state.captionCards.length) {
+  if (!state.captionCards || !state.captionCards.length) {
     elements.liveCaptionOverlay.innerHTML = '';
     return;
   }
@@ -1595,12 +1734,49 @@ function updateLiveKaraokeCaption(currentTime) {
     return;
   }
 
-  const tpl = state.captionTemplates.find(t => t.id === state.selectedTemplate) || {};
-  const primaryHex = getActivePrimaryHex();
-  const highlightHex = getActiveHighlightHex();
-  const bodyFont = state.selectedFontFamily || tpl.body_font || tpl.fontname || 'Montserrat';
-  const heroFont = state.selectedHeroFont || tpl.hero_font || bodyFont;
-  const anim = tpl.animation || 'bounce';
+  // Check card-specific template override or fall back to global
+  const cardTplId = activeCard.template_id || state.selectedTemplate;
+  if (cardTplId === 'none') {
+    elements.liveCaptionOverlay.innerHTML = '';
+    return;
+  }
+
+  const isCustomCard = Boolean(activeCard.template_id && activeCard.template_id !== state.selectedTemplate);
+  const tpl = state.captionTemplates.find(t => t.id === cardTplId) || state.captionTemplates.find(t => t.id === state.selectedTemplate) || {};
+
+  // Update active template badge in live player header
+  if (elements.activeTemplateBadge) {
+    elements.activeTemplateBadge.innerHTML = isCustomCard
+      ? `<span class="text-emerald-400 font-bold">Line #${activeCard.card_id || '?'}: ${tpl.name || cardTplId} (Custom)</span>`
+      : `<span class="text-brand-400 font-mono">${tpl.name || state.selectedTemplate}</span>`;
+  }
+
+  // Primary & highlight colors: check card overrides first, then template defaults if custom card, then global
+  let primaryHex = activeCard.primary_color;
+  if (!primaryHex) {
+    if (isCustomCard && tpl.colors && tpl.colors.length >= 3) {
+      primaryHex = tpl.colors[2];
+    } else if (isCustomCard && tpl.primary_color) {
+      primaryHex = assColorToHex(tpl.primary_color) || getActivePrimaryHex();
+    } else {
+      primaryHex = getActivePrimaryHex();
+    }
+  }
+
+  let highlightHex = activeCard.highlight_color;
+  if (!highlightHex) {
+    if (isCustomCard && tpl.colors && tpl.colors.length >= 1) {
+      highlightHex = tpl.colors[0];
+    } else if (isCustomCard && tpl.secondary_color) {
+      highlightHex = assColorToHex(tpl.secondary_color) || getActiveHighlightHex();
+    } else {
+      highlightHex = getActiveHighlightHex();
+    }
+  }
+
+  const bodyFont = activeCard.font_family || state.selectedFontFamily || tpl.body_font || tpl.fontname || 'Montserrat';
+  const heroFont = activeCard.hero_font || state.selectedHeroFont || tpl.hero_font || bodyFont;
+  const anim = activeCard.animation || tpl.animation || 'bounce';
 
   // Map anim name to CSS anim class (only use glow/fire animation if enableShine is true)
   let animClass = 'anim-bounce';
@@ -1638,8 +1814,8 @@ function updateLiveKaraokeCaption(currentTime) {
     wordsToDisplay = activeCard.words.slice(0, maxIdx + 1);
   }
 
-  const activeMarker = state.markerStyle !== 'none' ? state.markerStyle : (tpl.marker_style || 'none');
-  const activeMarkerColor = state.markerColor || tpl.marker_color || '#4ade80';
+  const activeMarker = (activeCard.marker_style && activeCard.marker_style !== 'none') ? activeCard.marker_style : (state.markerStyle !== 'none' ? state.markerStyle : (tpl.marker_style || 'none'));
+  const activeMarkerColor = activeCard.marker_color || state.markerColor || tpl.marker_color || '#4ade80';
   const isHierarchy = (tpl.category === 'Viral Hierarchy') || tpl.is_hierarchy;
 
   if (isHierarchy && activeCard.words.length >= 2) {
@@ -1736,6 +1912,249 @@ function updateLiveKaraokeCaption(currentTime) {
   elements.liveCaptionOverlay.innerHTML = wordsHtml;
 }
 
+// -------------------------------------------------------------
+// Per-Text Caption Styles & Segment Inspector
+// -------------------------------------------------------------
+function renderCaptionSegmentsEditor() {
+  if (!elements.captionSegmentsList) return;
+
+  if (!state.captionCards || !state.captionCards.length) {
+    elements.captionSegmentsList.innerHTML = `
+      <div class="py-8 text-center text-slate-500 text-xs flex flex-col items-center justify-center space-y-2">
+        <i data-lucide="subtitles" class="w-6 h-6 text-slate-600"></i>
+        <span>Upload audio or video to generate and style individual caption lines</span>
+      </div>
+    `;
+    if (elements.captionSegmentsCountBadge) elements.captionSegmentsCountBadge.textContent = '0 Lines';
+    lucide.createIcons();
+    return;
+  }
+
+  const globalTpl = state.captionTemplates.find(t => t.id === state.selectedTemplate) || { name: 'CapCut Classic' };
+  const filterTerm = (state.captionSegmentsSearchTerm || '').toLowerCase().trim();
+
+  let customCount = 0;
+  state.captionCards.forEach(c => {
+    if (c.template_id && c.template_id !== state.selectedTemplate) customCount++;
+  });
+
+  if (elements.captionSegmentsCountBadge) {
+    elements.captionSegmentsCountBadge.innerHTML = customCount > 0 
+      ? `${state.captionCards.length} Lines <span class="text-emerald-400 font-bold">(${customCount} Custom)</span>`
+      : `${state.captionCards.length} Lines`;
+  }
+
+  elements.captionSegmentsList.innerHTML = '';
+
+  state.captionCards.forEach((card, idx) => {
+    if (filterTerm && !card.text.toLowerCase().includes(filterTerm)) {
+      return;
+    }
+
+    const isCustom = Boolean(card.template_id && card.template_id !== state.selectedTemplate);
+    const cardTplId = card.template_id || state.selectedTemplate;
+    const cardTpl = state.captionTemplates.find(t => t.id === cardTplId) || {};
+
+    const duration = (card.end_time - card.start_time).toFixed(1);
+    const timeFormatted = `${formatTime(card.start_time)} - ${formatTime(card.end_time)}`;
+
+    const row = document.createElement('div');
+    row.className = `p-3 rounded-xl border transition-all duration-200 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 ${
+      isCustom 
+        ? 'bg-brand-500/10 border-brand-500/50 shadow-sm' 
+        : 'bg-surface-950 border-slate-800/80 hover:border-slate-700'
+    }`;
+
+    // Left info: Line #, Seek button, Text quote
+    const leftCol = document.createElement('div');
+    leftCol.className = 'flex items-start sm:items-center space-x-3 flex-1 min-w-0';
+    leftCol.innerHTML = `
+      <button type="button" class="btn-seek-line shrink-0 px-2.5 py-1 rounded-lg bg-surface-900 hover:bg-brand-600 text-slate-300 hover:text-white border border-slate-700 hover:border-brand-500 transition text-[11px] font-mono flex items-center space-x-1 shadow-sm" title="Jump video to this text line">
+        <i data-lucide="play" class="w-3 h-3 text-brand-400 fill-brand-400"></i>
+        <span>${timeFormatted}</span>
+      </button>
+
+      <div class="min-w-0 flex-1">
+        <div class="flex items-center space-x-2">
+          <span class="text-[10px] font-semibold uppercase text-slate-400">Line #${idx + 1} (${duration}s)</span>
+          ${isCustom 
+            ? `<span class="text-[9px] uppercase font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">✨ ${cardTpl.name || cardTplId}</span>` 
+            : `<span class="text-[9px] font-mono text-slate-500">Global (${globalTpl.name})</span>`}
+        </div>
+        <p class="text-xs text-slate-200 font-medium truncate select-text mt-0.5" title="${card.text}">
+          "${card.text}"
+        </p>
+      </div>
+    `;
+
+    // Right action controls: Style selector dropdown, Palette customizer, Revert button
+    const rightCol = document.createElement('div');
+    rightCol.className = 'flex items-center space-x-2 shrink-0 self-end md:self-auto w-full md:w-auto justify-end';
+
+    // Style dropdown
+    const select = document.createElement('select');
+    select.className = 'bg-surface-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-brand-500 max-w-[210px] truncate';
+    
+    // Default option (Inherit)
+    const optDefault = document.createElement('option');
+    optDefault.value = '';
+    optDefault.textContent = `Global: ${globalTpl.name}`;
+    select.appendChild(optDefault);
+
+    // Group categories
+    const categories = ['Viral Hierarchy', 'Trending', 'Neon Glow', 'Cinematic', 'Comic & Pop', 'Minimal', 'Multi-Font'];
+    categories.forEach(cat => {
+      const tplsInCat = state.captionTemplates.filter(t => t.category === cat);
+      if (tplsInCat.length) {
+        const group = document.createElement('optgroup');
+        group.label = cat === 'Viral Hierarchy' ? '✨ Viral Hierarchy (15)' : cat;
+        tplsInCat.forEach(t => {
+          const opt = document.createElement('option');
+          opt.value = t.id;
+          opt.textContent = t.name;
+          group.appendChild(opt);
+        });
+        select.appendChild(group);
+      }
+    });
+
+    const optNone = document.createElement('option');
+    optNone.value = 'none';
+    optNone.textContent = '🚫 No Caption (Hide Line)';
+    select.appendChild(optNone);
+
+    select.value = card.template_id || '';
+
+    select.addEventListener('change', (e) => {
+      const val = e.target.value;
+      if (val) {
+        card.template_id = val;
+      } else {
+        delete card.template_id;
+      }
+
+      seekToCard(card);
+      renderCaptionSegmentsEditor();
+      if (state.scenes.length) renderStoryboard();
+    });
+
+    // Customizer palette button (opens detailed modal)
+    const btnCustom = document.createElement('button');
+    btnCustom.type = 'button';
+    btnCustom.className = 'p-1.5 rounded-lg bg-surface-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700 transition flex items-center space-x-1 text-xs';
+    btnCustom.title = 'Customize colors and marker for this line';
+    btnCustom.innerHTML = `<i data-lucide="palette" class="w-3.5 h-3.5 text-brand-400"></i>`;
+    btnCustom.addEventListener('click', () => openPerCardModal(idx));
+
+    rightCol.appendChild(select);
+    rightCol.appendChild(btnCustom);
+
+    if (isCustom) {
+      const btnRevert = document.createElement('button');
+      btnRevert.type = 'button';
+      btnRevert.className = 'p-1.5 rounded-lg bg-surface-900 hover:bg-rose-900/40 text-slate-400 hover:text-rose-300 border border-slate-700 transition';
+      btnRevert.title = 'Reset this line to global style';
+      btnRevert.innerHTML = `<i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>`;
+      btnRevert.addEventListener('click', () => {
+        delete card.template_id;
+        delete card.highlight_color;
+        delete card.primary_color;
+        delete card.marker_style;
+        delete card.word_zoom;
+        seekToCard(card);
+        renderCaptionSegmentsEditor();
+        if (state.scenes.length) renderStoryboard();
+      });
+      rightCol.appendChild(btnRevert);
+    }
+
+    // Seek listener on play button
+    leftCol.querySelector('.btn-seek-line').addEventListener('click', () => {
+      seekToCard(card);
+      if (elements.htmlAudio.paused) toggleAudioPlayback();
+    });
+
+    row.appendChild(leftCol);
+    row.appendChild(rightCol);
+    elements.captionSegmentsList.appendChild(row);
+  });
+
+  lucide.createIcons();
+}
+
+function seekToCard(card) {
+  if (!card) return;
+  const targetTime = Math.max(0, card.start_time);
+  elements.htmlAudio.currentTime = targetTime;
+  if (elements.livePreviewVideo) {
+    elements.livePreviewVideo.currentTime = targetTime;
+  }
+  updateLiveKaraokeCaption(targetTime);
+}
+
+function openPerCardModal(idx) {
+  state.activeCustomizingCardIndex = idx;
+  const card = state.captionCards[idx];
+  if (!card) return;
+
+  const timeFormatted = `${formatTime(card.start_time)} - ${formatTime(card.end_time)}`;
+  elements.perCardModalTitle.textContent = `Customize Caption Line #${idx + 1} (${timeFormatted})`;
+  elements.perCardModalQuote.textContent = `"${card.text}"`;
+
+  // Populate perCardTemplateSelect with all templates
+  elements.perCardTemplateSelect.innerHTML = '';
+  const globalTpl = state.captionTemplates.find(t => t.id === state.selectedTemplate) || { name: 'CapCut Classic' };
+  
+  const optDefault = document.createElement('option');
+  optDefault.value = '';
+  optDefault.textContent = `Inherit Global Style (${globalTpl.name})`;
+  elements.perCardTemplateSelect.appendChild(optDefault);
+
+  const categories = ['Viral Hierarchy', 'Trending', 'Neon Glow', 'Cinematic', 'Comic & Pop', 'Minimal', 'Multi-Font'];
+  categories.forEach(cat => {
+    const tpls = state.captionTemplates.filter(t => t.category === cat);
+    if (tpls.length) {
+      const grp = document.createElement('optgroup');
+      grp.label = cat === 'Viral Hierarchy' ? '✨ Viral Hierarchy (15)' : cat;
+      tpls.forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t.id;
+        opt.textContent = t.name;
+        grp.appendChild(opt);
+      });
+      elements.perCardTemplateSelect.appendChild(grp);
+    }
+  });
+
+  const optNone = document.createElement('option');
+  optNone.value = 'none';
+  optNone.textContent = '🚫 No Caption (Hide Line)';
+  elements.perCardTemplateSelect.appendChild(optNone);
+
+  elements.perCardTemplateSelect.value = card.template_id || '';
+
+  // Colors
+  const currentHigh = card.highlight_color || getActiveHighlightHex();
+  elements.perCardHighlightPicker.value = currentHigh.startsWith('#') ? currentHigh : '#ffe600';
+  elements.perCardHighlightHex.textContent = elements.perCardHighlightPicker.value;
+
+  const currentPrim = card.primary_color || getActivePrimaryHex();
+  elements.perCardPrimaryPicker.value = currentPrim.startsWith('#') ? currentPrim : '#ffffff';
+  elements.perCardPrimaryHex.textContent = elements.perCardPrimaryPicker.value;
+
+  // Markers
+  const currentMarker = card.marker_style || 'none';
+  document.querySelectorAll('.per-card-marker-btn').forEach(btn => {
+    if (btn.dataset.marker === currentMarker) {
+      btn.className = 'per-card-marker-btn px-2.5 py-1.5 rounded-lg border border-brand-500 bg-brand-500/20 text-white text-center font-medium';
+    } else {
+      btn.className = 'per-card-marker-btn px-2.5 py-1.5 rounded-lg border border-slate-700 bg-surface-950 text-slate-300 text-center hover:bg-slate-800';
+    }
+  });
+
+  elements.perCardStyleModal.classList.remove('hidden');
+}
+
 // Auto-transcribe audio via SpeechRecognition
 async function handleAutoTranscribe() {
   if (!state.audioId) {
@@ -1768,6 +2187,7 @@ async function handleAutoTranscribe() {
     state.captionCards = data.cards || [];
     state.timedWords = data.words || [];
     elements.captionStatusIndicator.textContent = `Aligned ${state.timedWords.length} words`;
+    renderCaptionSegmentsEditor();
   } catch (err) {
     alert('Speech recognition error: ' + err.message);
   } finally {
@@ -1849,6 +2269,7 @@ async function handleGenerateScenes() {
       state.captionCards = captionData.cards || [];
       state.timedWords = captionData.words || [];
       elements.captionStatusIndicator.textContent = `Aligned ${state.timedWords.length} words`;
+      renderCaptionSegmentsEditor();
     }
 
     // 3. Auto-match clips for each scene
@@ -1941,6 +2362,29 @@ function renderStoryboard() {
           <p class="text-xs text-slate-200 line-clamp-3 leading-relaxed" title="${scene.text}">
             "${scene.text}"
           </p>
+
+          <!-- Scene Caption Style Quick Selector -->
+          <div class="pt-2 border-t border-slate-800 flex items-center justify-between gap-2">
+            <span class="text-[10px] uppercase font-bold tracking-wider text-slate-400 flex items-center gap-1 shrink-0">
+              <i data-lucide="type" class="w-3 h-3 text-brand-400"></i> Caption:
+            </span>
+            <select class="scene-caption-style-select text-[11px] bg-surface-950 text-slate-200 border border-slate-700 hover:border-brand-500 rounded-lg px-2 py-1 focus:outline-none focus:border-brand-500 flex-1 min-w-0 truncate">
+              <option value="">Global Style</option>
+              <option value="none">🚫 Hidden (No Subtitle)</option>
+              <optgroup label="✨ Viral Hierarchy">
+                ${(state.captionTemplates || []).filter(t => t.category === 'Viral Hierarchy').map(t => `<option value="${t.id}">${t.name}</option>`).join('')}
+              </optgroup>
+              <optgroup label="🔥 Trending">
+                ${(state.captionTemplates || []).filter(t => t.category === 'Trending').map(t => `<option value="${t.id}">${t.name}</option>`).join('')}
+              </optgroup>
+              <optgroup label="🌟 Neon Glow">
+                ${(state.captionTemplates || []).filter(t => t.category === 'Neon Glow').map(t => `<option value="${t.id}">${t.name}</option>`).join('')}
+              </optgroup>
+              <optgroup label="🎨 All Other Styles">
+                ${(state.captionTemplates || []).filter(t => !['Viral Hierarchy', 'Trending', 'Neon Glow'].includes(t.category)).map(t => `<option value="${t.id}">${t.name}</option>`).join('')}
+              </optgroup>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -1988,6 +2432,37 @@ function renderStoryboard() {
 
     // Swap clip handler (Pexels)
     card.querySelector('.btn-swap-clip').addEventListener('click', () => openSwapModal(index, 'pexels'));
+
+    // Caption Style Dropdown for this scene
+    const sceneStyleSelect = card.querySelector('.scene-caption-style-select');
+    if (sceneStyleSelect) {
+      const matchingCards = (state.captionCards || []).filter(c => 
+        (c.start_time >= scene.start_time - 0.05 && c.start_time < scene.end_time) ||
+        (c.end_time > scene.start_time && c.end_time <= scene.end_time + 0.05) ||
+        (c.start_time <= scene.start_time && c.end_time >= scene.end_time)
+      );
+      const currentVal = scene.caption_template_id || (matchingCards.length && matchingCards[0].template_id) || '';
+      sceneStyleSelect.value = currentVal;
+
+      sceneStyleSelect.addEventListener('change', (e) => {
+        const val = e.target.value;
+        scene.caption_template_id = val || undefined;
+        const currentMatchingCards = (state.captionCards || []).filter(c => 
+          (c.start_time >= scene.start_time - 0.05 && c.start_time < scene.end_time) ||
+          (c.end_time > scene.start_time && c.end_time <= scene.end_time + 0.05) ||
+          (c.start_time <= scene.start_time && c.end_time >= scene.end_time)
+        );
+        currentMatchingCards.forEach(mc => {
+          if (val) {
+            mc.template_id = val;
+          } else {
+            delete mc.template_id;
+          }
+        });
+        renderCaptionSegmentsEditor();
+        updateLiveKaraokeCaption(scene.start_time);
+      });
+    }
 
     elements.storyboardGrid.appendChild(card);
   });

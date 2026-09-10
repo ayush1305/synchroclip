@@ -229,69 +229,134 @@ def generate_ass_subtitles(
     karaoke highlighting, dual-color styling, multi-font graphic rendering,
     progressive word reveals, word zoom, and marker decorations.
     """
-    tpl = caption_templates.get_template(template_id)
-    if tpl["id"] == "none":
+    has_any_template = (template_id != "none") or any(
+        (c.get("template_id") or c.get("template")) not in (None, "", "none") for c in caption_cards
+    )
+    if not has_any_template:
         with open(output_path, "w", encoding="utf-8") as f:
             f.write("")
         return output_path
 
-    # Determine body and hero fonts
-    is_multi_font = tpl.get("is_multi_font", False) or bool(hero_font_override)
-    body_font = font_family_override or tpl.get("body_font") or tpl.get("fontname") or "Montserrat"
-    hero_font = hero_font_override or tpl.get("hero_font") or body_font
-    hero_italic = tpl.get("hero_italic", 0)
-    hero_scale = tpl.get("hero_scale", 118)
+    # Collect all template IDs used across cards
+    used_template_ids = []
+    if template_id != "none":
+        used_template_ids.append(template_id)
+    for c in caption_cards:
+        ctid = c.get("template_id") or c.get("template")
+        if ctid and ctid != "none" and ctid not in used_template_ids:
+            used_template_ids.append(ctid)
 
-    # Word zoom effect override
-    if word_zoom:
-        hero_scale = max(140, hero_scale + 20)
+    default_for_header = template_id if template_id != "none" else (used_template_ids[0] if used_template_ids else "hormozi_classic")
+    header = caption_templates.build_multi_ass_header(
+        template_ids=used_template_ids,
+        default_template_id=default_for_header,
+        width=width,
+        height=height,
+        font_override=font_family_override
+    )
 
-    # Marker style resolution
-    effective_marker = marker_style if marker_style != "none" else tpl.get("marker_style", "none")
-    effective_marker_color = marker_color or tpl.get("marker_color", "#4ade80")
-    marker_ass = hex_to_ass_color(effective_marker_color)
-
-    header = caption_templates.build_ass_header(template_id, width=width, height=height, font_override=body_font)
-    
-    # Highlight color (Color 2 - Active / Hero Word)
+    # Global fallback highlight color (Color 2 - Active / Hero Word)
     cleaned_high = highlight_color_key.strip().lstrip("#") if highlight_color_key else ""
     if len(cleaned_high) in (3, 6) and all(c in "0123456789abcdefABCDEF" for c in cleaned_high):
-        highlight_ass = hex_to_ass_color(highlight_color_key)
+        global_highlight_ass = hex_to_ass_color(highlight_color_key)
     elif highlight_color_key in caption_templates.HIGHLIGHT_COLORS:
         color_info = caption_templates.HIGHLIGHT_COLORS[highlight_color_key]
-        highlight_ass = color_info["ass"] if color_info["ass"].endswith("&") else f"{color_info['ass']}&"
+        global_highlight_ass = color_info["ass"] if color_info["ass"].endswith("&") else f"{color_info['ass']}&"
     else:
-        highlight_ass = "&H0000FFFF&"
+        global_highlight_ass = "&H0000FFFF&"
 
-    # Primary color (Color 1 - Base Words)
+    # Global fallback primary color (Color 1 - Base Words)
+    default_tpl = caption_templates.get_template(default_for_header)
     if primary_color_key:
         cleaned_prim = primary_color_key.strip().lstrip("#")
         if len(cleaned_prim) in (3, 6) and all(c in "0123456789abcdefABCDEF" for c in cleaned_prim):
-            primary_ass = hex_to_ass_color(primary_color_key)
+            global_primary_ass = hex_to_ass_color(primary_color_key)
         elif primary_color_key in caption_templates.HIGHLIGHT_COLORS:
             color_info = caption_templates.HIGHLIGHT_COLORS[primary_color_key]
-            primary_ass = color_info["ass"] if color_info["ass"].endswith("&") else f"{color_info['ass']}&"
+            global_primary_ass = color_info["ass"] if color_info["ass"].endswith("&") else f"{color_info['ass']}&"
         else:
-            primary_ass = tpl["primary_color"]
+            global_primary_ass = default_tpl.get("primary_color", "&H00FFFFFF&")
     else:
-        primary_ass = tpl["primary_color"]
+        global_primary_ass = default_tpl.get("primary_color", "&H00FFFFFF&")
 
-    if not primary_ass.endswith("&"):
-        primary_ass = f"{primary_ass}&"
+    if not global_primary_ass.endswith("&"):
+        global_primary_ass = f"{global_primary_ass}&"
 
     events = []
 
     for card in caption_cards:
-        words = card["words"]
+        words = card.get("words", [])
         if not words:
             continue
 
-        anim = tpl.get("animation", "bounce")
+        card_tpl_id = card.get("template_id") or card.get("template") or template_id
+        if card_tpl_id == "none":
+            # Explicitly hidden for this card
+            continue
+
+        card_tpl = caption_templates.get_template(card_tpl_id)
+        style_name = f"Style_{card_tpl_id}" if card_tpl_id != default_for_header and card_tpl_id in used_template_ids else "Default"
+
+        # Determine fonts for this card
+        card_body_font = card.get("font_family") or font_family_override or card_tpl.get("body_font") or card_tpl.get("fontname") or "Montserrat"
+        card_hero_font = card.get("hero_font") or hero_font_override or card_tpl.get("hero_font") or card_body_font
+        card_hero_italic = card_tpl.get("hero_italic", 0)
+        card_hero_scale = card_tpl.get("hero_scale", 118)
+        card_is_multi_font = card_tpl.get("is_multi_font", False) or bool(card_hero_font != card_body_font)
+
+        # Word zoom override for this card
+        card_word_zoom = card.get("word_zoom") if card.get("word_zoom") is not None else word_zoom
+        if card_word_zoom:
+            card_hero_scale = max(140, card_hero_scale + 20)
+
+        # Progressive reveal override for this card
+        card_progressive = card.get("progressive_reveal") if card.get("progressive_reveal") is not None else progressive_reveal
+
+        # Marker style for this card
+        card_marker = card.get("marker_style") if card.get("marker_style") and card.get("marker_style") != "none" else (
+            marker_style if marker_style != "none" else card_tpl.get("marker_style", "none")
+        )
+        card_marker_color = card.get("marker_color") or marker_color or card_tpl.get("marker_color", "#4ade80")
+        card_marker_ass = hex_to_ass_color(card_marker_color)
+
+        # Highlight color for this card
+        if card.get("highlight_color"):
+            c_high = card["highlight_color"].strip().lstrip("#")
+            if len(c_high) in (3, 6) and all(c in "0123456789abcdefABCDEF" for c in c_high):
+                card_highlight_ass = hex_to_ass_color(card["highlight_color"])
+            elif card["highlight_color"] in caption_templates.HIGHLIGHT_COLORS:
+                card_highlight_ass = caption_templates.HIGHLIGHT_COLORS[card["highlight_color"]]["ass"]
+            else:
+                card_highlight_ass = global_highlight_ass
+        elif card.get("template_id") and card["template_id"] != template_id:
+            card_highlight_ass = card_tpl.get("secondary_color", global_highlight_ass)
+        else:
+            card_highlight_ass = global_highlight_ass
+        if not card_highlight_ass.endswith("&"):
+            card_highlight_ass = f"{card_highlight_ass}&"
+
+        # Primary color for this card
+        if card.get("primary_color"):
+            c_prim = card["primary_color"].strip().lstrip("#")
+            if len(c_prim) in (3, 6) and all(c in "0123456789abcdefABCDEF" for c in c_prim):
+                card_primary_ass = hex_to_ass_color(card["primary_color"])
+            elif card["primary_color"] in caption_templates.HIGHLIGHT_COLORS:
+                card_primary_ass = caption_templates.HIGHLIGHT_COLORS[card["primary_color"]]["ass"]
+            else:
+                card_primary_ass = global_primary_ass
+        elif card.get("template_id") and card["template_id"] != template_id:
+            card_primary_ass = card_tpl.get("primary_color", global_primary_ass)
+        else:
+            card_primary_ass = global_primary_ass
+        if not card_primary_ass.endswith("&"):
+            card_primary_ass = f"{card_primary_ass}&"
+
+        card_anim = card.get("animation") or card_tpl.get("animation", "bounce")
+        is_hierarchy = (card_tpl.get("category") == "Viral Hierarchy") or card_tpl.get("is_hierarchy", False)
+
         for target_idx, active_word in enumerate(words):
             slice_start = to_ass_time(active_word["start"])
             slice_end = to_ass_time(active_word["end"])
-
-            is_hierarchy = (tpl.get("category") == "Viral Hierarchy") or tpl.get("is_hierarchy", False)
 
             if is_hierarchy and len(words) >= 2:
                 total_w = len(words)
@@ -313,31 +378,31 @@ def generate_ass_subtitles(
                 line3_parts = []
 
                 for idx, w in enumerate(words):
-                    if progressive_reveal and idx > target_idx:
+                    if card_progressive and idx > target_idx:
                         continue
                     word_text = w["word"]
                     is_hero = (idx >= l1_end and idx < l2_end)
-                    word_font = hero_font if is_hero else body_font
+                    word_font = card_hero_font if is_hero else card_body_font
 
                     if idx == target_idx:
                         extra_tags = f"\\fn{word_font}"
-                        if hero_italic and is_hero:
+                        if card_hero_italic and is_hero:
                             extra_tags += "\\i1"
                         marker_tags = ""
-                        if effective_marker == "underline":
+                        if card_marker == "underline":
                             marker_tags += "\\u1"
-                        elif effective_marker == "box":
-                            marker_tags += f"\\bord5\\3c{marker_ass}"
-                        elif effective_marker == "circle":
-                            marker_tags += f"\\bord4\\3c{marker_ass}"
+                        elif card_marker == "box":
+                            marker_tags += f"\\bord5\\3c{card_marker_ass}"
+                        elif card_marker == "circle":
+                            marker_tags += f"\\bord4\\3c{card_marker_ass}"
 
                         shine_tag = "\\bord4\\blur3" if enable_shine else ""
-                        active_scale = hero_scale if is_hero else int(hero_scale * 0.9)
-                        zoom_fx = f"\\t(0,140,\\fscx{active_scale-12}\\fscy{active_scale-12})" if word_zoom else ""
-                        rendered_word = f"{{\\c{highlight_ass}{extra_tags}{marker_tags}{shine_tag}\\fscx{active_scale}\\fscy{active_scale}{zoom_fx}}}{word_text}{{\\r}}"
+                        active_scale = card_hero_scale if is_hero else int(card_hero_scale * 0.9)
+                        zoom_fx = f"\\t(0,140,\\fscx{active_scale-12}\\fscy{active_scale-12})" if card_word_zoom else ""
+                        rendered_word = f"{{\\c{card_highlight_ass}{extra_tags}{marker_tags}{shine_tag}\\fscx{active_scale}\\fscy{active_scale}{zoom_fx}}}{word_text}{{\\r}}"
                     else:
-                        base_c = highlight_ass if is_hero else primary_ass
-                        extra_f = f"\\fn{word_font}" if is_hero else f"\\fn{body_font}"
+                        base_c = card_highlight_ass if is_hero else card_primary_ass
+                        extra_f = f"\\fn{word_font}" if is_hero else f"\\fn{card_body_font}"
                         rendered_word = f"{{{extra_f}\\c{base_c}}}{word_text}"
 
                     if idx < l1_end:
@@ -359,60 +424,59 @@ def generate_ass_subtitles(
             else:
                 line_parts = []
                 for idx, w in enumerate(words):
-                    if progressive_reveal and idx > target_idx:
-                        # Hide unreached words in progressive reveal mode
+                    if card_progressive and idx > target_idx:
                         continue
 
                     word_text = w["word"]
                     if idx == target_idx:
                         extra_tags = ""
-                        if is_multi_font and hero_font != body_font:
-                            extra_tags += f"\\fn{hero_font}"
-                        if hero_italic:
+                        if card_is_multi_font and card_hero_font != card_body_font:
+                            extra_tags += f"\\fn{card_hero_font}"
+                        if card_hero_italic:
                             extra_tags += "\\i1"
 
                         # Marker decoration tags
                         marker_tags = ""
-                        if effective_marker == "underline":
+                        if card_marker == "underline":
                             marker_tags += "\\u1"
-                        elif effective_marker == "box":
-                            marker_tags += f"\\bord5\\3c{marker_ass}"
-                        elif effective_marker == "circle":
-                            marker_tags += f"\\bord4\\3c{marker_ass}"
+                        elif card_marker == "box":
+                            marker_tags += f"\\bord5\\3c{card_marker_ass}"
+                        elif card_marker == "circle":
+                            marker_tags += f"\\bord4\\3c{card_marker_ass}"
 
                         shine_tag = "\\bord4\\blur3" if enable_shine else ""
-                        zoom_fx = f"\\t(0,140,\\fscx{hero_scale-12}\\fscy{hero_scale-12})" if word_zoom else ""
+                        zoom_fx = f"\\t(0,140,\\fscx{card_hero_scale-12}\\fscy{card_hero_scale-12})" if card_word_zoom else ""
 
-                        if anim in ("bounce", "spring", "elastic", "jelly"):
-                            line_parts.append(f"{{\\c{highlight_ass}{extra_tags}{marker_tags}{shine_tag}\\fscx{hero_scale}\\fscy{hero_scale}{zoom_fx}}}{word_text}{{\\r}}")
-                        elif anim in ("word_zoom", "mega_zoom", "stomp", "zoom"):
-                            line_parts.append(f"{{\\c{highlight_ass}{extra_tags}{marker_tags}{shine_tag}\\fscx{max(128, hero_scale)}\\fscy{max(128, hero_scale)}{zoom_fx}}}{word_text}{{\\r}}")
-                        elif anim in ("glow_pulse", "neon_glow", "aura", "laser", "glow"):
+                        if card_anim in ("bounce", "spring", "elastic", "jelly"):
+                            line_parts.append(f"{{\\c{card_highlight_ass}{extra_tags}{marker_tags}{shine_tag}\\fscx{card_hero_scale}\\fscy{card_hero_scale}{zoom_fx}}}{word_text}{{\\r}}")
+                        elif card_anim in ("word_zoom", "mega_zoom", "stomp", "zoom"):
+                            line_parts.append(f"{{\\c{card_highlight_ass}{extra_tags}{marker_tags}{shine_tag}\\fscx{max(128, card_hero_scale)}\\fscy{max(128, card_hero_scale)}{zoom_fx}}}{word_text}{{\\r}}")
+                        elif card_anim in ("glow_pulse", "neon_glow", "aura", "laser", "glow"):
                             if enable_shine:
-                                line_parts.append(f"{{\\c{highlight_ass}{extra_tags}{marker_tags}\\bord5\\blur4\\fscx{hero_scale}\\fscy{hero_scale}{zoom_fx}}}{word_text}{{\\r}}")
+                                line_parts.append(f"{{\\c{card_highlight_ass}{extra_tags}{marker_tags}\\bord5\\blur4\\fscx{card_hero_scale}\\fscy{card_hero_scale}{zoom_fx}}}{word_text}{{\\r}}")
                             else:
-                                line_parts.append(f"{{\\c{highlight_ass}{extra_tags}{marker_tags}\\fscx{hero_scale}\\fscy{hero_scale}{zoom_fx}}}{word_text}{{\\r}}")
-                        elif anim in ("fire_pulse", "firestorm"):
+                                line_parts.append(f"{{\\c{card_highlight_ass}{extra_tags}{marker_tags}\\fscx{card_hero_scale}\\fscy{card_hero_scale}{zoom_fx}}}{word_text}{{\\r}}")
+                        elif card_anim in ("fire_pulse", "firestorm"):
                             if enable_shine:
-                                line_parts.append(f"{{\\c{highlight_ass}{extra_tags}{marker_tags}\\bord6\\3c&H000000FF&\\fscx{hero_scale}\\fscy{hero_scale}{zoom_fx}}}{word_text}{{\\r}}")
+                                line_parts.append(f"{{\\c{card_highlight_ass}{extra_tags}{marker_tags}\\bord6\\3c&H000000FF&\\fscx{card_hero_scale}\\fscy{card_hero_scale}{zoom_fx}}}{word_text}{{\\r}}")
                             else:
-                                line_parts.append(f"{{\\c{highlight_ass}{extra_tags}{marker_tags}\\fscx{hero_scale}\\fscy{hero_scale}{zoom_fx}}}{word_text}{{\\r}}")
-                        elif anim in ("comic_pop", "boom", "pop"):
-                            line_parts.append(f"{{\\c{highlight_ass}{extra_tags}{marker_tags}{shine_tag}\\fscx{max(126, hero_scale)}\\fscy{max(126, hero_scale)}{zoom_fx}}}{word_text}{{\\r}}")
-                        elif anim in ("slide_up", "drift_left", "diagonal", "elevator", "wave", "slide"):
-                            line_parts.append(f"{{\\c{highlight_ass}{extra_tags}{marker_tags}{shine_tag}\\fscx{hero_scale}\\fscy{hero_scale}{zoom_fx}}}{word_text}{{\\r}}")
-                        elif anim in ("glitch", "pixel", "retro_vhs", "matrix"):
-                            line_parts.append(f"{{\\c{highlight_ass}{extra_tags}{marker_tags}{shine_tag}\\fscx{hero_scale}\\fscy{hero_scale}{zoom_fx}}}{word_text}{{\\r}}")
+                                line_parts.append(f"{{\\c{card_highlight_ass}{extra_tags}{marker_tags}\\fscx{card_hero_scale}\\fscy{card_hero_scale}{zoom_fx}}}{word_text}{{\\r}}")
+                        elif card_anim in ("comic_pop", "boom", "pop"):
+                            line_parts.append(f"{{\\c{card_highlight_ass}{extra_tags}{marker_tags}{shine_tag}\\fscx{max(126, card_hero_scale)}\\fscy{max(126, card_hero_scale)}{zoom_fx}}}{word_text}{{\\r}}")
+                        elif card_anim in ("slide_up", "drift_left", "diagonal", "elevator", "wave", "slide"):
+                            line_parts.append(f"{{\\c{card_highlight_ass}{extra_tags}{marker_tags}{shine_tag}\\fscx{card_hero_scale}\\fscy{card_hero_scale}{zoom_fx}}}{word_text}{{\\r}}")
+                        elif card_anim in ("glitch", "pixel", "retro_vhs", "matrix"):
+                            line_parts.append(f"{{\\c{card_highlight_ass}{extra_tags}{marker_tags}{shine_tag}\\fscx{card_hero_scale}\\fscy{card_hero_scale}{zoom_fx}}}{word_text}{{\\r}}")
                         else:
-                            line_parts.append(f"{{\\c{highlight_ass}{extra_tags}{marker_tags}{shine_tag}\\fscx{hero_scale}\\fscy{hero_scale}{zoom_fx}}}{word_text}{{\\r}}")
+                            line_parts.append(f"{{\\c{card_highlight_ass}{extra_tags}{marker_tags}{shine_tag}\\fscx{card_hero_scale}\\fscy{card_hero_scale}{zoom_fx}}}{word_text}{{\\r}}")
                     else:
-                        if is_multi_font and hero_font != body_font:
-                            line_parts.append(f"{{\\fn{body_font}\\c{primary_ass}}}{word_text}")
+                        if card_is_multi_font and card_hero_font != card_body_font:
+                            line_parts.append(f"{{\\fn{card_body_font}\\c{card_primary_ass}}}{word_text}")
                         else:
-                            line_parts.append(f"{{\\c{primary_ass}}}{word_text}")
+                            line_parts.append(f"{{\\c{card_primary_ass}}}{word_text}")
 
                 line_text = " ".join(line_parts)
-            dialogue_line = f"Dialogue: 0,{slice_start},{slice_end},Default,,0,0,0,,{line_text}"
+            dialogue_line = f"Dialogue: 0,{slice_start},{slice_end},{style_name},,0,0,0,,{line_text}"
             events.append(dialogue_line)
 
     full_ass_content = header + "\n".join(events) + "\n"

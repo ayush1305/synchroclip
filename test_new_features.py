@@ -580,6 +580,111 @@ def test_viral_hierarchy_templates_ass():
     if os.path.exists(hier_ass):
         os.remove(hier_ass)
 
+def test_per_card_caption_styles():
+    print("=== Test 13: Per-Card / Per-Text Caption Styles & Template Overrides ASS ===")
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    multi_ass = os.path.join(base_dir, "test_per_card.ass")
+
+    # Card 1: Uses Viral Hierarchy template (hier_changes)
+    card1_words = [
+        {"word": "This", "start": 0.0, "end": 0.3, "duration": 0.3},
+        {"word": "will", "start": 0.3, "end": 0.6, "duration": 0.3},
+        {"word": "change", "start": 0.6, "end": 1.2, "duration": 0.6},
+        {"word": "everything", "start": 1.2, "end": 1.8, "duration": 0.6}
+    ]
+    # Card 2: Uses Neon Glow Cyan template (neon_glow_cyan)
+    card2_words = [
+        {"word": "Unleash", "start": 2.0, "end": 2.5, "duration": 0.5},
+        {"word": "your", "start": 2.5, "end": 2.8, "duration": 0.3},
+        {"word": "power", "start": 2.8, "end": 3.4, "duration": 0.6}
+    ]
+    # Card 3: Uses custom colors & box marker
+    card3_words = [
+        {"word": "Custom", "start": 3.5, "end": 4.0, "duration": 0.5},
+        {"word": "styling", "start": 4.0, "end": 4.5, "duration": 0.5}
+    ]
+    # Card 4: Hidden (template_id = "none")
+    card4_words = [
+        {"word": "Silent", "start": 4.6, "end": 5.0, "duration": 0.4},
+        {"word": "moment", "start": 5.0, "end": 5.5, "duration": 0.5}
+    ]
+
+    cards = [
+        {
+            "id": 0,
+            "text": "This will change everything",
+            "start_time": 0.0,
+            "end_time": 1.8,
+            "words": card1_words,
+            "template_id": "hier_changes"
+        },
+        {
+            "id": 1,
+            "text": "Unleash your power",
+            "start_time": 2.0,
+            "end_time": 3.4,
+            "words": card2_words,
+            "template_id": "neon_glow_cyan"
+        },
+        {
+            "id": 2,
+            "text": "Custom styling",
+            "start_time": 3.5,
+            "end_time": 4.5,
+            "words": card3_words,
+            "highlight_color": "#ec4899",
+            "primary_color": "#38bdf8",
+            "marker_style": "box"
+        },
+        {
+            "id": 3,
+            "text": "Silent moment",
+            "start_time": 4.6,
+            "end_time": 5.5,
+            "words": card4_words,
+            "template_id": "none"
+        }
+    ]
+
+    caption_generator.generate_ass_subtitles(
+        caption_cards=cards,
+        template_id="hormozi_classic",  # Global default
+        highlight_color_key="#facc15",
+        primary_color_key="#ffffff",
+        output_path=multi_ass,
+        width=1080,
+        height=1920
+    )
+
+    assert os.path.exists(multi_ass)
+    with open(multi_ass, "r", encoding="utf-8") as f:
+        content = f.read()
+
+    # 1. Header has distinct Style lines for used templates
+    assert "Style: Default" in content
+    assert "Style: Style_hier_changes" in content
+    assert "Style: Style_neon_glow_cyan" in content
+
+    # 2. Card 1 (hier_changes) includes multi-line stacked layout with \N
+    assert r"\N" in content, r"Viral hierarchy card must generate stacked \N linebreaks"
+
+    # 3. Card 2 (neon_glow_cyan) uses Style_neon_glow_cyan
+    assert "Style_neon_glow_cyan" in content, "Card 2 must be associated with Style_neon_glow_cyan"
+
+    # 4. Card 3 has custom hex colors in BGR format and box marker tags
+    # #ec4899 -> BGR: 9948ec -> &H009948EC&
+    assert "&H009948EC&" in content, "Card 3 custom highlight color must be rendered"
+    assert r"\bord5" in content, "Card 3 box marker must produce border styling"
+
+    # 5. Card 4 (template_id='none') MUST NOT appear in Dialogue events
+    assert "Silent" not in content, "Hidden card (template_id='none') must not appear in Dialogue events"
+    assert "moment" not in content, "Hidden card (template_id='none') must not appear in Dialogue events"
+
+    print("Per-card / per-text caption styles verified successfully: Multi-styles, linebreaks, custom colors & none exclusions passed!\n")
+
+    if os.path.exists(multi_ass):
+        os.remove(multi_ass)
+
 if __name__ == "__main__":
     test_caption_templates_and_fonts()
     test_multifont_and_dual_color_ass()
@@ -593,6 +698,7 @@ if __name__ == "__main__":
     test_marker_decorations_ass()
     test_pip_and_video_focus_render(pip_info)
     test_viral_hierarchy_templates_ass()
+    test_per_card_caption_styles()
     print("=========================================================================================")
-    print("ALL 12 TEST SUITES PASSED! 15 VIRAL HIERARCHY TEMPLATES, PIP & KINETIC CAPTIONS VERIFIED!")
+    print("ALL 13 TEST SUITES PASSED! PER-CARD CAPTION STYLES, 103 TEMPLATES, PIP & VIDEO FOCUS VERIFIED!")
     print("=========================================================================================")

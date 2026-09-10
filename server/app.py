@@ -311,16 +311,19 @@ async def render_video(req: RenderRequest):
     audio_path = audio_entry["path"]
     total_audio_duration = audio_entry["info"]["duration"]
 
-    # Generate ASS subtitles if a caption template is selected
+    # Generate ASS subtitles if a caption template or custom card template is selected
     caption_ass_path = None
-    if req.caption_template and req.caption_template != "none" and req.caption_cards:
+    has_active_captions = (req.caption_template and req.caption_template != "none") or any(
+        c.get("template_id") and c.get("template_id") != "none" for c in (req.caption_cards or [])
+    )
+    if has_active_captions and req.caption_cards:
         sub_filename = f"captions_{uuid.uuid4().hex[:8]}.ass"
         sub_path = os.path.join(OUTPUT_DIR, sub_filename)
         width = 1080 if req.aspect_ratio == "9:16" else 1920
         height = 1920 if req.aspect_ratio == "9:16" else 1080
         caption_generator.generate_ass_subtitles(
             caption_cards=req.caption_cards,
-            template_id=req.caption_template,
+            template_id=req.caption_template or "hormozi_classic",
             highlight_color_key=req.highlight_color or "yellow",
             primary_color_key=req.primary_color,
             output_path=sub_path,
