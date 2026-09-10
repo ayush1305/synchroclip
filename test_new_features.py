@@ -798,6 +798,105 @@ def test_unified_analyze_and_generate_multiclip():
         os.remove(audio_path)
     print("Multi-clip audio analysis, scene generation, and clip matching verified successfully!\n")
 
+
+def test_capcut_nle_api_suite():
+    print("=== Test 16: CapCut NLE API Suite (Pexels Proxy, AI Timeline, Projects, Presets) ===")
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    audio_path = os.path.join(base_dir, "test_nle_audio.mp3")
+
+    cmd = [
+        "ffmpeg", "-y",
+        "-f", "lavfi",
+        "-i", "sine=frequency=330:duration=10",
+        "-c:a", "libmp3lame",
+        audio_path
+    ]
+    subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+
+    from app import AUDIO_REGISTRY
+    import audio_analyzer
+    audio_id = "test_nle_audio_id"
+    info = audio_analyzer.get_audio_info(audio_path)
+    AUDIO_REGISTRY[audio_id] = {
+        "id": audio_id,
+        "path": audio_path,
+        "filename": "test_nle_audio.mp3",
+        "info": info
+    }
+
+    # 1. Test Pexels Search
+    p_resp = client.get("/api/search-pexels?query=technology&orientation=portrait&per_page=6")
+    assert p_resp.status_code == 200
+    p_data = p_resp.json()
+    assert len(p_data.get("videos", [])) >= 1
+    print(f"Pexels search proxy returned {len(p_data['videos'])} stock videos!")
+
+    # 2. Test Audio Analysis
+    a_resp = client.post("/api/analyze-audio", json={
+        "audio_id": audio_id,
+        "script_text": "Artificial intelligence is empowering creators around the world."
+    })
+    assert a_resp.status_code == 200
+    a_data = a_resp.json()
+    assert "transcript" in a_data and len(a_data["transcript"]) > 0
+    assert "keywords" in a_data and len(a_data["keywords"]) >= 1
+    print(f"Audio analysis returned keywords: {a_data['keywords']}")
+
+    # 3. Test AI Timeline Generation (Option A)
+    tl_resp = client.post("/api/ai-generate-timeline", json={
+        "audio_id": audio_id,
+        "aspect_ratio": "9:16",
+        "script_text": "Artificial intelligence is empowering creators around the world.",
+        "template_id": "tiktok_bold"
+    })
+    assert tl_resp.status_code == 200
+    tl_data = tl_resp.json()
+    assert "timeline" in tl_data
+    timeline = tl_data["timeline"]
+    assert len(timeline["tracks"]) >= 3
+    v1_track = next((t for t in timeline["tracks"] if t["id"] == "V1"), None)
+    t1_track = next((t for t in timeline["tracks"] if t["id"] == "T1"), None)
+    assert v1_track and len(v1_track["clips"]) >= 1
+    assert t1_track and len(t1_track["clips"]) >= 1
+    print(f"Option A AI Timeline generated {len(v1_track['clips'])} V1 clips and {len(t1_track['clips'])} T1 caption clips!")
+
+    # 4. Test Caption Presets
+    cp_resp = client.get("/api/caption-presets")
+    assert cp_resp.status_code == 200
+    cp_data = cp_resp.json()
+    assert len(cp_data["presets"]) >= 5
+    assert len(cp_data["fonts"]) >= 5
+    print(f"Caption presets returned {len(cp_data['presets'])} styles and {len(cp_data['fonts'])} fonts!")
+
+    # 5. Test Project Save & Load
+    proj_resp = client.post("/api/projects", json={
+        "name": "My CapCut Project",
+        "aspect_ratio": "9:16",
+        "timeline": timeline
+    })
+    assert proj_resp.status_code == 200
+    proj_id = proj_resp.json()["project_id"]
+
+    load_resp = client.get(f"/api/projects/{proj_id}")
+    assert load_resp.status_code == 200
+    assert load_resp.json()["project"]["name"] == "My CapCut Project"
+    print(f"Project save & load verified successfully! (ID: {proj_id})")
+
+    # 6. Test Render Timeline
+    r_resp = client.post("/api/render-timeline", json={
+        "timeline": timeline,
+        "aspect_ratio": "9:16",
+        "resolution": "720p",
+        "caption_template": "tiktok_bold"
+    })
+    assert r_resp.status_code == 200
+    job_id = r_resp.json()["job_id"]
+    print(f"Timeline render job started successfully with ID: {job_id}")
+
+    if os.path.exists(audio_path):
+        os.remove(audio_path)
+    print("CapCut NLE API Suite verified completely!\n")
+
 if __name__ == "__main__":
     test_caption_templates_and_fonts()
     test_multifont_and_dual_color_ass()
@@ -814,6 +913,7 @@ if __name__ == "__main__":
     test_per_card_caption_styles()
     test_autonomous_audio_analysis_and_empty_script_generation()
     test_unified_analyze_and_generate_multiclip()
+    test_capcut_nle_api_suite()
     print("=========================================================================================")
-    print("ALL 15 TEST SUITES PASSED! CAPCUT STUDIO UI, FREE AUDIO ANALYSIS & PREVIEWS VERIFIED!")
+    print("ALL 16 TEST SUITES PASSED! CAPCUT STUDIO UI, FREE AUDIO ANALYSIS & PREVIEWS VERIFIED!")
     print("=========================================================================================")

@@ -1,67 +1,12 @@
-/* Modern Clean Styling for SynchroClip AI Studio */
+/* CapCut Dark NLE Professional Styling */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Waveform Visualizer */
-.waveform-bar {
-  flex: 1;
-  min-width: 3px;
-  background-color: #334155;
-  border-radius: 9999px;
-  cursor: pointer;
-  transition: height 0.15s ease, background-color 0.15s ease;
-}
-.waveform-bar:hover {
-  background-color: #8b5cf6;
-}
-.waveform-bar.played {
-  background-color: #8b5cf6;
-}
-
-/* Scene Card in Storyboard */
-.scene-card {
-  background-color: #0f172a;
-  border: 1px solid #1e293b;
-  border-radius: 1rem;
-  overflow: hidden;
-  transition: all 0.2s ease;
-}
-.scene-card:hover {
-  border-color: #334155;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
-}
-.scene-card.active-scene {
-  border-color: #8b5cf6;
-  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.3);
-}
-
-/* Subtitle Overlays (Crisp & Matte by default) */
-.caption-word {
-  display: inline-block;
-  margin: 0 4px;
-  font-family: 'Montserrat', sans-serif;
-  font-weight: 800;
-  text-transform: uppercase;
-  color: #ffffff;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.95);
-  transition: transform 0.15s ease, color 0.15s ease;
-}
-
-.caption-word.active-word {
-  transform: scale(1.15);
-  color: var(--highlight-color, #ffe600);
-}
-
-/* Optional Shine Glow (Only when user toggles it ON) */
-.shine-glow-active .caption-word.active-word {
-  text-shadow: 0 0 14px var(--highlight-color, #ffe600), 0 2px 6px #000;
-}
-
 /* Custom Scrollbars */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 ::-webkit-scrollbar-track {
   background: #020617;
@@ -72,4 +17,133 @@
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #334155;
+}
+
+/* Asset Tabs */
+.asset-tab-btn {
+  white-space: nowrap;
+}
+.asset-tab-btn.active {
+  background-color: #1e293b;
+  color: #ffffff;
+}
+
+/* Stock Cards */
+.stock-card {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  background-color: #000;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  border: 1px solid #1e293b;
+  cursor: pointer;
+}
+.stock-card:hover {
+  border-color: #7c3aed;
+}
+
+/* Timeline Layout */
+.timeline-lane {
+  position: relative;
+  background-color: rgba(15, 23, 42, 0.4);
+  overflow: hidden;
+}
+.timeline-lane:nth-child(even) {
+  background-color: rgba(15, 23, 42, 0.6);
+}
+
+/* Timeline Clip Blocks */
+.timeline-clip {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  border-radius: 6px;
+  padding: 0 6px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: 600;
+  color: #f8fafc;
+  cursor: pointer;
+  user-select: none;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Clip Themes */
+.clip-video {
+  background: linear-gradient(135deg, #065f46 0%, #047857 100%);
+  border-left: 3px solid #10b981;
+}
+.clip-audio {
+  background: linear-gradient(135deg, #0e7490 0%, #0369a1 100%);
+  border-left: 3px solid #06b6d4;
+}
+.clip-caption, .clip-text {
+  background: linear-gradient(135deg, #854d0e 0%, #b45309 100%);
+  border-left: 3px solid #f59e0b;
+}
+
+/* Clip Selected State */
+.timeline-clip.selected {
+  outline: 2px solid #8b5cf6;
+  outline-offset: 1px;
+  box-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
+}
+
+/* Trim Handles */
+.trim-handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  background-color: rgba(255, 255, 255, 0.2);
+  cursor: ew-resize;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  z-index: 10;
+}
+.timeline-clip:hover .trim-handle,
+.timeline-clip.selected .trim-handle {
+  opacity: 1;
+}
+.trim-handle:hover {
+  background-color: #8b5cf6;
+}
+.trim-handle-left {
+  left: 0;
+  border-top-left-radius: 4px;
+  border-bottom-left-radius: 4px;
+}
+.trim-handle-right {
+  right: 0;
+  border-top-right-radius: 4px;
+  border-bottom-right-radius: 4px;
+}
+
+/* Playhead Scrubber */
+#playheadNeedle {
+  will-change: left;
+}
+#playheadHead:hover {
+  background-color: #f43f5e;
+}
+
+/* Color Swatches */
+.inspector-color-btn {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+.inspector-color-btn:hover {
+  transform: scale(1.15);
+}
+.inspector-color-btn.active {
+  border-color: #ffffff;
 }

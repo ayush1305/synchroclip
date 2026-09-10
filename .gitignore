@@ -41,6 +41,14 @@ cache/*
 *.tmp
 *.log
 
+# Secrets & Config
+.env
+.env.local
+
+# Projects
+projects/*
+!projects/.gitkeep
+
 # IDE & OS
 .DS_Store
 Thumbs.db
