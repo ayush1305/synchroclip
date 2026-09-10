@@ -3,11 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SynchroClip Studio — Professional AI Video Editor</title>
-  <!-- Tailwind CSS CDN -->
+  <title>SynchroClip — AI Audio to Multi-Clip Video Studio</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Lucide Icons -->
-  <script src="https://unpkg.com/lucide@latest"></script>
   <script>
     tailwind.config = {
       darkMode: 'class',
@@ -15,966 +12,378 @@
         extend: {
           colors: {
             brand: {
-              50: '#eef2ff',
-              100: '#e0e7ff',
-              400: '#818cf8',
-              500: '#6366f1',
-              600: '#4f46e5',
-              700: '#4338ca',
+              50: '#f5f3ff',
+              100: '#ede9fe',
+              500: '#8b5cf6',
+              600: '#7c3aed',
+              700: '#6d28d9',
             },
             surface: {
-              750: '#1c2438',
-              800: '#141a29',
-              850: '#0e1422',
-              900: '#090d18',
-              950: '#05070e'
-            },
-            capcut: {
-              green: '#00c288',
-              hover: '#05df9d',
-              dark: '#11151f',
-              border: '#1e2638'
+              800: '#1e293b',
+              900: '#0f172a',
+              950: '#020617'
             }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            display: ['Montserrat', 'Inter', 'sans-serif']
           }
         }
       }
     }
   </script>
-  <!-- Google Fonts: Viral Creator & Famous Typography -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Anton&family=Bangers&family=Bebas+Neue&family=Caveat:wght@700&family=Chakra+Petch:wght@700&family=Cinzel:wght@600;800&family=Cormorant+Garamond:ital,wght@1,700&family=DM+Sans:wght@700&family=Dancing+Script:wght@700&family=Inter:wght@400;600;800&family=Lobster&family=Montserrat:wght@700;900&family=Orbitron:wght@700;900&family=Oswald:wght@600;700&family=Outfit:wght@700&family=Pacifico&family=Playfair+Display:ital,wght@0,700;1,700&family=Plus+Jakarta+Sans:wght@700&family=Poppins:wght@700;900&family=Righteous&family=Rubik:wght@700;900&family=Space+Grotesk:wght@700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/style.css?v=4.0">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700;800;900&family=Montserrat:ital,wght@0,400;0,700;0,800;0,900;1,700&family=Oswald:wght@600;700&family=Poppins:wght@700;800;900&family=Rubik:wght@700;800&family=Anton&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="/style.css">
 </head>
-<body class="bg-surface-950 text-slate-100 min-h-screen flex flex-col font-sans antialiased selection:bg-brand-500 selection:text-white overflow-x-hidden">
+<body class="bg-surface-950 text-slate-100 min-h-screen flex flex-col font-sans antialiased selection:bg-brand-500 selection:text-white">
 
-  <!-- =========================================================
-       Top CapCut Navigation Bar (Matching Reference Screenshot)
-       ========================================================= -->
-  <header class="border-b border-capcut-border bg-surface-900 sticky top-0 z-40 px-4 py-2 flex items-center justify-between gap-3 select-none">
-    <!-- Left: Logo & Project Title -->
-    <div class="flex items-center space-x-3 shrink-0">
-      <div class="h-8 w-8 rounded-lg bg-gradient-to-tr from-brand-600 via-indigo-500 to-emerald-400 flex items-center justify-center shadow-md shadow-brand-500/20">
-        <i data-lucide="clapperboard" class="w-4 h-4 text-white"></i>
+  <!-- Top Header Bar -->
+  <header class="h-16 border-b border-slate-800/80 bg-surface-900/90 backdrop-blur px-6 flex items-center justify-between sticky top-0 z-40">
+    <div class="flex items-center space-x-3">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-500 flex items-center justify-center shadow-lg shadow-brand-500/20">
+        <i data-lucide="video" class="w-5 h-5 text-white"></i>
       </div>
       <div>
         <div class="flex items-center space-x-2">
-          <span class="font-bold text-sm tracking-tight text-white">Synchro<span class="text-brand-400">Clip</span></span>
-          <span class="text-[10px] text-slate-400 border border-slate-700/80 px-2 py-0.5 rounded font-mono truncate max-w-[140px]" id="projectTitleLabel">Untitled-Project</span>
+          <span class="font-extrabold text-lg tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent">SynchroClip</span>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-brand-500/20 text-brand-300 border border-brand-500/30">AI Audio Video Studio</span>
         </div>
+        <p class="text-[11px] text-slate-400">Generate multi-clip cinematic videos by analyzing audio</p>
       </div>
     </div>
 
-    <!-- Center: CapCut Tool Tabs -->
-    <nav class="hidden md:flex items-center space-x-1 overflow-x-auto custom-scrollbar text-xs font-medium text-slate-400">
-      <button type="button" class="capcut-top-tab active flex items-center space-x-1.5 px-3 py-1.5 rounded-lg hover:text-white transition" data-target="panelMedia">
-        <i data-lucide="folder" class="w-3.5 h-3.5 text-brand-400"></i>
-        <span>Media</span>
-      </button>
-      <button type="button" class="capcut-top-tab flex items-center space-x-1.5 px-3 py-1.5 rounded-lg hover:text-white transition" data-target="panelStock">
-        <i data-lucide="film" class="w-3.5 h-3.5 text-sky-400"></i>
-        <span>Stock Clips</span>
-      </button>
-      <button type="button" class="capcut-top-tab flex items-center space-x-1.5 px-3 py-1.5 rounded-lg hover:text-white transition" data-target="panelScript">
-        <i data-lucide="mic" class="w-3.5 h-3.5 text-emerald-400"></i>
-        <span>Speech & AI</span>
-      </button>
-      <button type="button" class="capcut-top-tab flex items-center space-x-1.5 px-3 py-1.5 rounded-lg hover:text-white transition" data-target="panelCaptions">
-        <i data-lucide="type" class="w-3.5 h-3.5 text-amber-400"></i>
-        <span>Titles & Captions (103)</span>
-      </button>
-      <button type="button" class="capcut-top-tab flex items-center space-x-1.5 px-3 py-1.5 rounded-lg hover:text-white transition" data-target="panelPip">
-        <i data-lucide="image" class="w-3.5 h-3.5 text-purple-400"></i>
-        <span>Overlays (PiP)</span>
-      </button>
-    </nav>
+    <div class="flex items-center space-x-3">
+      <!-- Aspect Ratio Switcher -->
+      <div class="flex items-center bg-surface-950 p-1 rounded-xl border border-slate-800">
+        <button id="btnAspectPortrait" type="button" class="px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition bg-brand-600 text-white shadow">
+          <i data-lucide="smartphone" class="w-3.5 h-3.5"></i>
+          <span>9:16 Shorts/Reels</span>
+        </button>
+        <button id="btnAspectLandscape" type="button" class="px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition text-slate-400 hover:text-white">
+          <i data-lucide="monitor" class="w-3.5 h-3.5"></i>
+          <span>16:9 YouTube</span>
+        </button>
+      </div>
 
-    <!-- Right: Quick Actions & Prominent Generate / Export Buttons -->
-    <div class="flex items-center space-x-2 shrink-0">
-      <!-- Try Demo Button -->
-      <button id="btnLoadDemo" type="button" class="text-xs flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg bg-surface-850 hover:bg-slate-800 text-slate-300 transition border border-slate-700/80">
+      <!-- Demo Samples Dropdown -->
+      <button id="btnQuickDemo" type="button" class="px-3 py-1.5 rounded-xl border border-slate-700 bg-surface-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 flex items-center space-x-1.5 transition">
         <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-400"></i>
-        <span class="hidden sm:inline">Try Demo</span>
+        <span>Try Demo Audio</span>
       </button>
 
-      <!-- PROMINENT GENERATE VIDEO BUTTON -->
-      <button id="btnTopGenerateVideo" type="button" class="text-xs flex items-center space-x-1.5 px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-brand-600 via-indigo-600 to-emerald-600 hover:from-brand-500 hover:to-emerald-500 text-white font-semibold transition shadow-md shadow-brand-500/25 active:scale-95 animate-pulse cursor-pointer" title="Auto-analyze audio for free, transcribe speech, match footage, and generate animated captions!">
-        <i data-lucide="wand-2" class="w-3.5 h-3.5 text-amber-300"></i>
-        <span>✨ Generate Video</span>
-      </button>
-
-      <!-- PROMINENT CAPCUT EXPORT BUTTON -->
-      <button id="btnTopExportVideo" type="button" class="text-xs flex items-center space-x-1.5 px-4 py-1.5 rounded-lg bg-capcut-green hover:bg-capcut-hover text-slate-950 font-bold transition shadow-lg shadow-emerald-500/20 active:scale-95 cursor-pointer" title="Burn styled captions and render final 1080p MP4 video">
-        <i data-lucide="download" class="w-3.5 h-3.5 text-slate-950"></i>
-        <span>Export</span>
-      </button>
-
-      <!-- Direct App (.EXE) Download -->
-      <a id="btnDownloadExe" href="/api/download-app-exe" download="SynchroClip.exe" class="hidden xl:flex text-xs items-center space-x-1 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-emerald-500/30 font-semibold" title="Direct standalone Windows App (.EXE)">
-        <i data-lucide="download-cloud" class="w-3.5 h-3.5 text-emerald-400"></i>
-        <span>.EXE</span>
-      </a>
-
-      <!-- Source Code (.ZIP) -->
-      <a id="btnDownloadZip" href="/api/download-project-zip" download="synchroclip-studio.zip" class="hidden xl:flex text-xs items-center space-x-1 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700" title="Download Source Code">
-        <i data-lucide="folder-archive" class="w-3.5 h-3.5 text-slate-400"></i>
-        <span>.ZIP</span>
-      </a>
-
-      <!-- GitHub Link -->
-      <a id="btnGitHub" href="https://github.com/ayush1305/synchroclip" target="_blank" rel="noopener noreferrer" class="hidden lg:flex text-xs items-center space-x-1 px-2.5 py-1.5 rounded-lg bg-surface-800 hover:bg-slate-700 text-slate-200 border border-slate-700" title="GitHub Repository">
-        <i data-lucide="github" class="w-3.5 h-3.5 text-white"></i>
-        <span>GitHub</span>
-      </a>
-
-      <!-- Pexels API Key Toggle -->
-      <button id="btnApiKeyToggle" type="button" class="text-xs flex items-center space-x-1 px-2 py-1.5 rounded-lg bg-surface-800 hover:bg-slate-700/60 text-slate-300 border border-slate-700" title="Configure Pexels API key">
-        <i data-lucide="key" class="w-3.5 h-3.5 text-brand-400"></i>
-        <span id="apiKeyLabel" class="hidden sm:inline">Pexels</span>
-        <span id="apiKeyStatusDot" class="w-2 h-2 rounded-full bg-amber-400"></span>
+      <!-- Primary Export Button -->
+      <button id="btnTopExport" type="button" class="px-4 py-2 rounded-xl font-bold text-xs bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white shadow-lg shadow-brand-500/25 flex items-center space-x-2 transition disabled:opacity-50 disabled:cursor-not-allowed">
+        <i data-lucide="film" class="w-4 h-4"></i>
+        <span>Export MP4 Video</span>
       </button>
     </div>
   </header>
 
-  <!-- =========================================================
-       CapCut Main Studio 3-Column Workspace (Top Section)
-       ========================================================= -->
-  <div class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-0 border-b border-capcut-border min-h-[520px]">
-    
-    <!-- LEFT PANEL: Media Bin & Asset Drawer (Col 1-4) -->
-    <aside class="lg:col-span-4 xl:col-span-4 bg-surface-900 border-r border-capcut-border flex flex-col justify-between overflow-hidden">
-      <!-- Sub-Navigation Sidebar / Tab Bar -->
-      <div class="flex items-center justify-between px-3 py-2 border-b border-capcut-border bg-surface-950/70">
-        <div class="flex items-center space-x-1 text-xs">
-          <button type="button" class="drawer-tab-btn active px-2.5 py-1 rounded bg-brand-600 text-white font-medium transition" data-target="panelMedia">Media</button>
-          <button type="button" class="drawer-tab-btn px-2.5 py-1 rounded hover:bg-slate-800 text-slate-300 font-medium transition" data-target="panelScript">Script / Speech</button>
-          <button type="button" class="drawer-tab-btn px-2.5 py-1 rounded hover:bg-slate-800 text-slate-300 font-medium transition" data-target="panelCaptions">Captions (103)</button>
-          <button type="button" class="drawer-tab-btn px-2.5 py-1 rounded hover:bg-slate-800 text-slate-300 font-medium transition" data-target="panelStock">Stock</button>
-          <button type="button" class="drawer-tab-btn px-2.5 py-1 rounded hover:bg-slate-800 text-slate-300 font-medium transition" data-target="panelPip">PiP</button>
-        </div>
-        <div class="flex items-center space-x-1">
-          <span class="text-[10px] text-slate-500 font-mono">DRAWER</span>
-        </div>
-      </div>
+  <!-- Main Content Stage -->
+  <main class="flex-1 max-w-[1700px] w-full mx-auto p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-      <!-- Drawer Content Panes (Scrollable Area) -->
-      <div class="flex-1 p-3 overflow-y-auto custom-scrollbar space-y-4">
-        
-        <!-- PANE 1: MEDIA (Audio & Direct Video Uploads) -->
-        <div id="panelMedia" class="drawer-pane space-y-4">
-          <!-- Workflow Mode Toggle -->
-          <div class="bg-surface-950 p-1.5 rounded-xl border border-slate-800 flex items-center justify-between gap-1 text-[11px]">
-            <button id="modeBtnGenerate" type="button" class="flex-1 py-1.5 px-2 rounded-lg font-semibold flex items-center justify-center space-x-1 transition bg-brand-600 text-white shadow">
-              <i data-lucide="layers" class="w-3.5 h-3.5"></i>
-              <span>Mode A: AI Stock Footage</span>
+    <!-- Left Column: Audio Hub & Multi-Clip Storyboard (Cols: 7) -->
+    <section class="lg:col-span-7 flex flex-col space-y-6">
+
+      <!-- Step 1: Audio Input Hub -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center space-x-2.5">
+            <span class="w-6 h-6 rounded-full bg-brand-600 text-white text-xs font-bold flex items-center justify-center">1</span>
+            <h2 class="font-bold text-base text-white">Audio Source</h2>
+            <span class="text-xs text-slate-400">(Voiceover, Music, Podcast, Speech)</span>
+          </div>
+          <span id="audioStatusBadge" class="hidden px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+            Audio Ready
+          </span>
+        </div>
+
+        <!-- Dropzone -->
+        <div id="audioDropzone" class="border-2 border-dashed border-slate-700 hover:border-brand-500 bg-surface-950/60 hover:bg-brand-500/5 rounded-xl p-6 text-center cursor-pointer transition flex flex-col items-center justify-center group">
+          <input type="file" id="audioFileInput" accept="audio/*" class="hidden">
+          <div class="w-12 h-12 rounded-full bg-slate-800 group-hover:bg-brand-600/20 group-hover:text-brand-400 text-slate-400 flex items-center justify-center mb-3 transition">
+            <i data-lucide="upload-cloud" class="w-6 h-6"></i>
+          </div>
+          <p class="font-semibold text-sm text-slate-200 group-hover:text-white">Click or drag & drop audio here</p>
+          <p class="text-xs text-slate-400 mt-1">Supports MP3, WAV, M4A, AAC, FLAC (any length)</p>
+          <div class="mt-4 flex flex-wrap gap-2 justify-center">
+            <span class="text-[11px] px-2.5 py-1 rounded-lg bg-surface-800 text-slate-300">Speech or Music</span>
+            <span class="text-[11px] px-2.5 py-1 rounded-lg bg-surface-800 text-slate-300">Auto Pause Detection</span>
+            <span class="text-[11px] px-2.5 py-1 rounded-lg bg-surface-800 text-slate-300">Free Speech Recognition</span>
+          </div>
+        </div>
+
+        <!-- Active Audio Player Card (Hidden initially) -->
+        <div id="audioPlayerCard" class="hidden space-y-4 pt-1">
+          <div class="flex items-center justify-between bg-surface-950 p-3.5 rounded-xl border border-slate-800">
+            <div class="flex items-center space-x-3 truncate">
+              <button id="btnAudioPlayPause" type="button" class="w-10 h-10 rounded-xl bg-brand-600 hover:bg-brand-500 text-white flex items-center justify-center shadow transition shrink-0">
+                <i data-lucide="play" class="w-5 h-5 ml-0.5"></i>
+              </button>
+              <div class="truncate">
+                <p id="audioFileName" class="text-sm font-semibold text-white truncate">audio_track.mp3</p>
+                <p class="text-xs text-slate-400 flex items-center space-x-2">
+                  <span id="audioCurrentTime">00:00</span>
+                  <span>/</span>
+                  <span id="audioTotalTime">00:18</span>
+                </p>
+              </div>
+            </div>
+            <button id="btnChangeAudio" type="button" class="px-2.5 py-1.5 text-xs text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition flex items-center space-x-1">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              <span>Replace</span>
             </button>
-            <button id="modeBtnDirect" type="button" class="flex-1 py-1.5 px-2 rounded-lg font-semibold flex items-center justify-center space-x-1 transition bg-transparent hover:bg-slate-800 text-slate-300">
-              <i data-lucide="file-video" class="w-3.5 h-3.5 text-emerald-400"></i>
-              <span>Mode B: Direct Video</span>
+          </div>
+
+          <!-- Waveform Visualizer -->
+          <div class="bg-surface-950/80 p-3 rounded-xl border border-slate-800/80">
+            <div id="waveformContainer" class="flex items-end space-x-1 h-12 w-full px-1">
+              <!-- Dynamically populated waveform bars -->
+            </div>
+          </div>
+
+          <!-- Audio Element -->
+          <audio id="htmlAudio" preload="auto" class="hidden"></audio>
+
+          <!-- Generate Action Button -->
+          <div class="pt-1">
+            <button id="btnAnalyzeAndGenerate" type="button" class="w-full py-3.5 rounded-xl font-bold text-sm bg-gradient-to-r from-brand-600 via-indigo-600 to-purple-600 hover:from-brand-500 hover:to-purple-500 text-white shadow-xl shadow-brand-500/25 flex items-center justify-center space-x-2 transition transform active:scale-[0.99]">
+              <i data-lucide="sparkles" class="w-4 h-4 text-amber-300"></i>
+              <span>✨ Analyze Audio & Generate Multi-Clip Video</span>
             </button>
-          </div>
-          <p id="modeDescriptionText" class="text-[11px] text-slate-400 italic">
-            Upload voiceover/music, auto-match scenes from Pexels, and burn kinetic animated captions.
-          </p>
-
-          <!-- Mode A Audio Dropzone & Player -->
-          <div id="sectionModeA" class="space-y-3">
-            <div class="flex items-center justify-between text-xs font-semibold text-slate-300">
-              <span class="flex items-center space-x-1.5">
-                <i data-lucide="music" class="w-3.5 h-3.5 text-brand-400"></i>
-                <span>Audio Track (Voiceover / Song)</span>
-              </span>
-              <span id="audioDurationBadge" class="hidden text-[10px] bg-brand-500/20 text-brand-300 border border-brand-500/40 px-2 py-0.5 rounded font-mono">00:00</span>
-            </div>
-
-            <!-- Audio Dropzone -->
-            <div id="audioDropzone" class="border-2 border-dashed border-slate-700 hover:border-brand-500/70 bg-surface-850 hover:bg-surface-800/60 transition rounded-xl p-5 text-center cursor-pointer relative group">
-              <input type="file" id="audioFileInput" accept="audio/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
-              <div class="flex flex-col items-center space-y-1.5 pointer-events-none">
-                <div class="w-10 h-10 rounded-full bg-slate-800 group-hover:bg-brand-500/20 group-hover:text-brand-400 text-slate-400 flex items-center justify-center transition">
-                  <i data-lucide="upload-cloud" class="w-5 h-5"></i>
-                </div>
-                <p class="text-xs font-medium text-slate-200">+ Import Audio File</p>
-                <p class="text-[10px] text-slate-400">MP3, WAV, M4A, AAC, FLAC (Zero script required!)</p>
-              </div>
-            </div>
-
-            <!-- Uploaded Audio Card -->
-            <div id="audioPlayerCard" class="hidden bg-surface-850 border border-slate-800 rounded-xl p-3 space-y-2.5">
-              <div class="flex items-center justify-between text-xs">
-                <div class="flex items-center space-x-2 truncate">
-                  <i data-lucide="file-audio" class="w-4 h-4 text-brand-400 shrink-0"></i>
-                  <span id="audioFileName" class="font-medium text-slate-200 truncate">audio_track.mp3</span>
-                </div>
-                <button id="btnRemoveAudio" type="button" class="text-slate-400 hover:text-rose-400 p-1 transition" title="Remove Audio">
-                  <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                </button>
-              </div>
-
-              <!-- Waveform Bars -->
-              <div class="relative h-11 bg-surface-900 rounded-lg p-1.5 overflow-hidden border border-slate-800 flex items-center justify-between">
-                <div id="waveformBars" class="w-full h-full flex items-center justify-between space-x-0.5"></div>
-                <div id="waveformPlayhead" class="absolute top-0 bottom-0 w-0.5 bg-brand-400 transition-all pointer-events-none" style="left: 0%;"></div>
-              </div>
-
-              <div class="flex items-center justify-between text-xs">
-                <div class="flex items-center space-x-2">
-                  <button id="btnAudioPlayPause" type="button" class="w-6 h-6 rounded-full bg-brand-600 hover:bg-brand-500 text-white flex items-center justify-center transition">
-                    <i data-lucide="play" class="w-3 h-3 fill-current"></i>
-                  </button>
-                  <span id="audioCurrentTime" class="font-mono text-slate-400 text-[11px]">00:00</span>
-                  <span class="text-slate-600">/</span>
-                  <span id="audioTotalTime" class="font-mono text-slate-400 text-[11px]">00:00</span>
-                </div>
-                <audio id="htmlAudioElement" class="hidden"></audio>
-              </div>
-            </div>
-          </div>
-
-          <!-- Mode B Direct Video Dropzone & Player -->
-          <div id="sectionModeB" class="hidden space-y-3">
-            <div class="flex items-center justify-between text-xs font-semibold text-slate-300">
-              <span class="flex items-center space-x-1.5">
-                <i data-lucide="video" class="w-3.5 h-3.5 text-emerald-400"></i>
-                <span>Direct Video File</span>
-              </span>
-              <span id="directVideoDurationBadge" class="hidden text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-2 py-0.5 rounded font-mono">00:00</span>
-            </div>
-
-            <div id="directVideoDropzone" class="border-2 border-dashed border-slate-700 hover:border-emerald-500/70 bg-surface-850 hover:bg-surface-800/60 transition rounded-xl p-5 text-center cursor-pointer relative group">
-              <input type="file" id="directVideoFileInput" accept="video/mp4,video/quicktime,video/webm,video/x-matroska,video/avi" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
-              <div class="flex flex-col items-center space-y-1.5 pointer-events-none">
-                <div class="w-10 h-10 rounded-full bg-slate-800 group-hover:bg-emerald-500/20 group-hover:text-emerald-400 text-slate-400 flex items-center justify-center transition">
-                  <i data-lucide="upload-cloud" class="w-5 h-5"></i>
-                </div>
-                <p class="text-xs font-medium text-slate-200">+ Import Finished Video</p>
-                <p class="text-[10px] text-slate-400">MP4, MOV, WebM, MKV • Auto-extracts audio & waveform</p>
-              </div>
-            </div>
-
-            <div id="directVideoUploading" class="hidden bg-surface-850 border border-slate-800 rounded-xl p-3 flex items-center space-x-2 text-xs">
-              <i data-lucide="loader-2" class="w-4 h-4 animate-spin text-emerald-400"></i>
-              <span class="text-slate-300">Extracting audio & waveform...</span>
-            </div>
-
-            <div id="directVideoPlayerCard" class="hidden bg-surface-850 border border-slate-800 rounded-xl p-3 space-y-2">
-              <div class="flex items-center justify-between text-xs">
-                <span id="directVideoFileName" class="font-medium text-slate-200 truncate">video.mp4</span>
-                <button id="btnRemoveDirectVideo" type="button" class="text-slate-400 hover:text-rose-400 transition">
-                  <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                </button>
-              </div>
-              <div class="flex items-center space-x-2 text-[10px]">
-                <span id="directVideoResBadge" class="bg-surface-900 border border-slate-700 px-1.5 py-0.5 rounded font-mono text-slate-300">1080x1920</span>
-                <span class="text-emerald-400">✓ Audio Track Extracted</span>
-              </div>
-              <div class="relative h-11 bg-surface-900 rounded-lg p-1.5 overflow-hidden border border-slate-800 flex items-center justify-between">
-                <div id="directWaveformBars" class="w-full h-full flex items-center justify-between space-x-0.5"></div>
-                <div id="directWaveformPlayhead" class="absolute top-0 bottom-0 w-0.5 bg-emerald-400 transition-all pointer-events-none" style="left: 0%;"></div>
-              </div>
-              <div class="flex items-center justify-between text-xs">
-                <div class="flex items-center space-x-2">
-                  <button id="btnDirectAudioPlayPause" type="button" class="w-6 h-6 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center transition">
-                    <i data-lucide="play" class="w-3 h-3 fill-current"></i>
-                  </button>
-                  <span id="directAudioCurrentTime" class="font-mono text-slate-400 text-[11px]">00:00</span>
-                  <span class="text-slate-600">/</span>
-                  <span id="directAudioTotalTime" class="font-mono text-slate-400 text-[11px]">00:00</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- PANE 2: SCRIPT & SPEECH ANALYSIS -->
-        <div id="panelScript" class="drawer-pane hidden space-y-3">
-          <!-- Free Audio Analyzer Status Callout -->
-          <div class="p-2.5 rounded-xl bg-gradient-to-r from-emerald-950/40 via-surface-950 to-brand-950/40 border border-emerald-500/30 text-xs space-y-1">
-            <div class="flex items-center space-x-1.5 text-emerald-400 font-semibold">
-              <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-400"></i>
-              <span>Free Speech Recognition Active</span>
-            </div>
-            <p class="text-[11px] text-slate-300 leading-relaxed">
-              If you leave this script blank, the AI will <strong>automatically transcribe your audio for free</strong> or analyze beats/rhythm to generate scenes without typing!
+            <p class="text-center text-[11px] text-slate-400 mt-2">
+              Automatically slices audio into scenes, matches cinematic HD video clips, and aligns subtitles.
             </p>
           </div>
-
-          <div class="space-y-1.5">
-            <div class="flex items-center justify-between text-xs">
-              <label class="font-semibold text-slate-300">Transcript Narration</label>
-              <span id="scriptWordCount" class="text-slate-500 text-[11px]">0 words</span>
-            </div>
-            <textarea id="scriptInput" rows="5" placeholder="Optional: Enter transcript, or leave completely blank to auto-transcribe audio for free..." class="w-full bg-surface-950 border border-slate-700 rounded-xl p-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-500 resize-none"></textarea>
-            <div class="flex items-center justify-between pt-1">
-              <button id="btnAutoTranscribe" type="button" class="text-[11px] px-2.5 py-1 rounded-lg bg-surface-850 hover:bg-slate-800 text-brand-400 border border-brand-500/30 flex items-center space-x-1 transition">
-                <i data-lucide="mic" class="w-3 h-3"></i>
-                <span>Auto-Transcribe Speech</span>
-              </button>
-              <span id="captionStatusIndicator" class="text-[10px] text-emerald-400">Ready</span>
-            </div>
-          </div>
-
-          <!-- Mode B Direct Script input -->
-          <div id="directScriptWrapper" class="hidden space-y-1.5 pt-2 border-t border-slate-800">
-            <div class="flex items-center justify-between text-xs">
-              <label class="font-semibold text-slate-300">Direct Video Script</label>
-              <span id="directScriptWordCount" class="text-slate-500 text-[11px]">0 words</span>
-            </div>
-            <textarea id="directScriptInput" rows="4" placeholder="Optional: Enter video transcript or leave blank to auto-transcribe video speech..." class="w-full bg-surface-950 border border-slate-700 rounded-xl p-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500 resize-none"></textarea>
-            <div class="flex items-center justify-between pt-1">
-              <button id="btnDirectAutoTranscribe" type="button" class="text-[11px] px-2.5 py-1 rounded-lg bg-surface-850 hover:bg-slate-800 text-emerald-400 border border-emerald-500/30 flex items-center space-x-1 transition">
-                <i data-lucide="mic" class="w-3 h-3"></i>
-                <span>Auto-Transcribe Video</span>
-              </button>
-              <span id="directCaptionStatusIndicator" class="text-[10px] text-emerald-400">Ready</span>
-            </div>
-          </div>
-
-          <!-- Transition duration slider -->
-          <div class="space-y-1 pt-2 border-t border-slate-800 text-xs">
-            <div class="flex items-center justify-between text-slate-400 text-[11px]">
-              <span>Transition Overlap:</span>
-              <span id="transitionDurLabel" class="font-mono text-brand-400">0.8s</span>
-            </div>
-            <input type="range" id="sliderTransitionDur" min="0.4" max="1.5" step="0.1" value="0.8" class="w-full accent-brand-500">
-          </div>
-
-          <!-- Generate Scenes Button -->
-          <div class="pt-2">
-            <button id="btnGenerateScenes" type="button" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-brand-600 via-indigo-600 to-emerald-600 hover:from-brand-500 hover:to-emerald-500 text-white font-semibold text-xs shadow-lg shadow-brand-500/25 flex items-center justify-center space-x-2 transition active:scale-98 cursor-pointer">
-              <i data-lucide="wand-2" class="w-4 h-4 text-amber-300"></i>
-              <span>✨ Generate Video & Scenes</span>
-            </button>
-            <button id="btnDirectSyncCaptions" type="button" class="hidden w-full mt-2 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold text-xs shadow-lg shadow-emerald-500/25 flex items-center justify-center space-x-2 transition active:scale-98 cursor-pointer">
-              <i data-lucide="subtitles" class="w-4 h-4"></i>
-              <span>Align Speech & Captions</span>
-            </button>
-          </div>
         </div>
 
-        <!-- PANE 3: CAPTIONS & TEMPLATES (103 STYLES) -->
-        <div id="panelCaptions" class="drawer-pane hidden space-y-3">
-          <!-- Dual Color Quick Pickers -->
-          <div class="p-2.5 bg-surface-950 rounded-xl border border-slate-800 space-y-2 text-xs">
-            <div class="flex items-center justify-between">
-              <span class="text-slate-400 font-medium">Color 1 (Base):</span>
-              <label for="customColor1Picker" class="flex items-center space-x-1.5 cursor-pointer">
-                <span id="customColor1Preview" class="w-4 h-4 rounded-full border border-black/50" style="background-color: #ffffff;"></span>
-                <span id="customColor1Hex" class="font-mono text-[11px] text-slate-300 font-semibold">#ffffff</span>
-                <input type="color" id="customColor1Picker" value="#ffffff" class="hidden">
-              </label>
-            </div>
-            <div id="color1Pills" class="flex items-center space-x-1 overflow-x-auto pb-1"></div>
-
-            <div class="border-t border-slate-800/80 pt-2 flex items-center justify-between">
-              <span class="text-slate-400 font-medium">Color 2 (Hero):</span>
-              <label for="customColor2Picker" class="flex items-center space-x-1.5 cursor-pointer">
-                <span id="customColor2Preview" class="w-4 h-4 rounded-full border border-black/50" style="background-color: #facc15;"></span>
-                <span id="customColor2Hex" class="font-mono text-[11px] text-slate-300 font-semibold">#facc15</span>
-                <input type="color" id="customColor2Picker" value="#facc15" class="hidden">
-              </label>
-            </div>
-            <div id="color2Pills" class="flex items-center space-x-1 overflow-x-auto pb-1"></div>
-          </div>
-
-          <!-- Marker & Effects Controls -->
-          <div class="grid grid-cols-2 gap-2 text-xs">
-            <div>
-              <label class="text-[10px] text-slate-400 uppercase font-bold">Marker FX</label>
-              <select id="selectMarkerStyle" class="w-full bg-surface-950 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white">
-                <option value="none">None</option>
-                <option value="circle">🟢 Neon Circle</option>
-                <option value="box">🟨 Highl. Box</option>
-                <option value="underline">🔷 Underline</option>
-              </select>
-            </div>
-            <div>
-              <label class="text-[10px] text-slate-400 uppercase font-bold">Shine Aura</label>
-              <button id="btnToggleShine" type="button" class="w-full py-1.5 px-2 rounded-lg bg-surface-950 border border-slate-700 hover:border-slate-500 text-xs text-slate-300 font-semibold flex items-center justify-center space-x-1">
-                <i data-lucide="sparkles" class="w-3 h-3 text-slate-400" id="shineIcon"></i>
-                <span id="shineStatusLabel">OFF</span>
-              </button>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-2 gap-2 text-xs">
-            <div>
-              <label class="text-[10px] text-slate-400 uppercase font-bold">Word Zoom</label>
-              <button id="btnToggleWordZoom" type="button" class="w-full py-1.5 px-2 rounded-lg bg-surface-950 border border-slate-700 hover:border-slate-500 text-xs text-slate-300 font-semibold flex items-center justify-center space-x-1">
-                <i data-lucide="zoom-in" class="w-3 h-3 text-slate-400" id="zoomIcon"></i>
-                <span id="zoomStatusLabel">OFF</span>
-              </button>
-            </div>
-            <div>
-              <label class="text-[10px] text-slate-400 uppercase font-bold">Video Focus</label>
-              <button id="btnToggleVideoFocus" type="button" class="w-full py-1.5 px-2 rounded-lg bg-surface-950 border border-slate-700 hover:border-slate-500 text-xs text-slate-300 font-semibold flex items-center justify-center space-x-1">
-                <i data-lucide="target" class="w-3 h-3 text-slate-400" id="focusIcon"></i>
-                <span id="focusStatusLabel">OFF</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- Font Selectors -->
-          <div class="space-y-2 text-xs pt-2 border-t border-slate-800">
-            <div>
-              <span class="text-[10px] uppercase font-bold text-slate-400">Base Font:</span>
-              <select id="selectFontFamily" class="w-full mt-0.5 bg-surface-950 border border-slate-700 rounded-lg px-2 py-1 text-xs text-white">
-                <option value="">Auto (Template Default)</option>
-                <option value="Montserrat">Montserrat</option>
-                <option value="Bebas Neue">Bebas Neue</option>
-                <option value="Anton">Anton</option>
-                <option value="Bangers">Bangers</option>
-                <option value="Poppins">Poppins</option>
-                <option value="Oswald">Oswald</option>
-                <option value="Cinzel">Cinzel</option>
-                <option value="Playfair Display">Playfair Display</option>
-                <option value="Pacifico">Pacifico</option>
-                <option value="Inter">Inter</option>
-              </select>
-            </div>
-            <div>
-              <span class="text-[10px] uppercase font-bold text-slate-400">Hero Font:</span>
-              <select id="selectHeroFont" class="w-full mt-0.5 bg-surface-950 border border-slate-700 rounded-lg px-2 py-1 text-xs text-white">
-                <option value="">Auto (Template Default)</option>
-                <option value="Pacifico">Pacifico</option>
-                <option value="Caveat">Caveat</option>
-                <option value="Dancing Script">Dancing Script</option>
-                <option value="Lobster">Lobster</option>
-                <option value="Bangers">Bangers</option>
-                <option value="Anton">Anton</option>
-                <option value="Bebas Neue">Bebas Neue</option>
-                <option value="Playfair Display">Playfair Display</option>
-                <option value="Montserrat">Montserrat</option>
-              </select>
-            </div>
-            <div class="hidden">
-              <input type="text" id="inputCustomFont">
-              <button id="btnApplyCustomFont" type="button"></button>
-            </div>
-          </div>
-
-          <!-- Search Templates -->
-          <div class="relative pt-2">
-            <input type="text" id="captionTemplateSearch" placeholder="Search 103 styles..." class="w-full bg-surface-950 border border-slate-700 rounded-lg pl-3 pr-8 py-1.5 text-xs text-white placeholder-slate-500">
-            <span id="templateCountBadge" class="absolute right-2 top-3.5 text-[10px] font-mono text-slate-500">103</span>
-          </div>
-
-          <!-- Category Pills -->
-          <div class="flex items-center space-x-1.5 overflow-x-auto pb-1 text-xs">
-            <button class="caption-cat-tab active px-2.5 py-1 rounded bg-brand-600 text-white font-medium whitespace-nowrap" data-cat="All">All</button>
-            <button class="caption-cat-tab px-2.5 py-1 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold whitespace-nowrap" data-cat="Viral Hierarchy">✨ Viral (15)</button>
-            <button class="caption-cat-tab px-2.5 py-1 rounded bg-purple-900/40 text-purple-300 font-medium whitespace-nowrap" data-cat="Hybrid">Hybrid</button>
-            <button class="caption-cat-tab px-2.5 py-1 rounded bg-surface-850 text-slate-300 font-medium whitespace-nowrap" data-cat="Creators">Creators</button>
-            <button class="caption-cat-tab px-2.5 py-1 rounded bg-surface-850 text-slate-300 font-medium whitespace-nowrap" data-cat="Glow">Glow</button>
-            <button class="caption-cat-tab px-2.5 py-1 rounded bg-surface-850 text-slate-300 font-medium whitespace-nowrap" data-cat="Bounce">Bounce</button>
-          </div>
-
-          <!-- Template Cards Grid -->
-          <div id="captionTemplatesSection">
-            <div id="captionTemplatesGrid" class="grid grid-cols-2 gap-2 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar"></div>
-          </div>
-        </div>
-
-        <!-- PANE 4: STOCK CLIPS -->
-        <div id="panelStock" class="drawer-pane hidden space-y-3">
-          <div class="flex items-center justify-between text-xs font-semibold text-slate-300">
-            <span>Pexels HD Stock Footage</span>
-            <button id="btnAutoMatchAllAgain" type="button" class="text-[11px] text-brand-400 hover:underline">Re-Match All</button>
-          </div>
-          <p class="text-xs text-slate-400">Footage is matched automatically to your audio script pacing.</p>
-        </div>
-
-        <!-- PANE 5: OVERLAYS (PiP) -->
-        <div id="panelPip" class="drawer-pane hidden space-y-3 text-xs">
-          <div class="font-semibold text-slate-300 flex items-center space-x-1.5">
-            <i data-lucide="image" class="w-4 h-4 text-purple-400"></i>
-            <span>Picture-in-Picture (PiP) Image</span>
-          </div>
-          <label for="pipFileInput" class="cursor-pointer block text-center p-4 border-2 border-dashed border-slate-700 hover:border-purple-500 rounded-xl bg-surface-950 transition">
-            <i data-lucide="upload" class="w-5 h-5 text-purple-400 mx-auto mb-1"></i>
-            <span id="pipUploadBtnLabel" class="text-xs font-medium text-slate-300">Upload PiP Image / Sticker</span>
-            <input type="file" id="pipFileInput" accept="image/*" class="hidden">
-          </label>
-          <button id="btnRemovePip" type="button" class="hidden w-full py-1 rounded bg-rose-500/10 text-rose-300 hover:bg-rose-500/20 text-xs">Remove PiP</button>
-
-          <div id="pipControlsGroup" class="hidden space-y-2 pt-2 border-t border-slate-800">
-            <div>
-              <label class="text-[10px] text-slate-400 uppercase font-bold">Position:</label>
-              <select id="selectPipPosition" class="w-full bg-surface-950 border border-slate-700 rounded px-2 py-1 text-xs text-white">
-                <option value="top-right">Top-Right</option>
-                <option value="top-left">Top-Left</option>
-                <option value="center-card">Center-Card</option>
-                <option value="center">Center</option>
-              </select>
-            </div>
-            <div>
-              <label class="text-[10px] text-slate-400 uppercase font-bold">Size:</label>
-              <select id="selectPipSize" class="w-full bg-surface-950 border border-slate-700 rounded px-2 py-1 text-xs text-white">
-                <option value="small">Small (25%)</option>
-                <option value="medium" selected>Medium (35%)</option>
-                <option value="large">Large (50%)</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-      </div>
-    </aside>
-
-    <!-- CENTER PANEL: Video Monitor Canvas & Transport Bar (Col 5-9) -->
-    <main class="lg:col-span-5 xl:col-span-5 bg-surface-950 flex flex-col justify-between overflow-hidden border-r border-capcut-border">
-      <!-- Monitor Header Bar -->
-      <div class="px-4 py-2 bg-surface-900 border-b border-capcut-border flex items-center justify-between text-xs select-none">
-        <div class="flex items-center space-x-2">
-          <span class="font-semibold text-slate-200">Player</span>
-          <span class="text-slate-600">|</span>
-          <select id="selectAspectRatio" class="bg-surface-950 border border-slate-700 text-xs rounded px-2 py-0.5 text-slate-200 focus:outline-none focus:border-brand-500">
-            <option value="16:9">16:9 (Landscape)</option>
-            <option value="9:16">9:16 (Shorts/Reels)</option>
-          </select>
-          <select id="selectTransition" class="hidden">
-            <option value="dissolve">Dissolve</option>
-            <option value="fade">Fade</option>
-            <option value="fadeblack">Fade Black</option>
-            <option value="fadewhite">Fade White</option>
-            <option value="wipeleft">Wipe</option>
-            <option value="circlecrop">Circle</option>
-          </select>
-        </div>
-        <div class="flex items-center space-x-2">
-          <span class="text-[11px] text-slate-400">Template: <strong id="activeTemplateBadge" class="text-brand-400">CapCut Classic</strong></span>
-        </div>
-      </div>
-
-      <!-- Video Display Canvas -->
-      <div class="flex-1 p-3 flex items-center justify-center relative overflow-hidden bg-black/80">
-        <div id="livePreviewContainer" class="relative bg-black rounded-lg overflow-hidden aspect-video w-full max-h-[360px] mx-auto flex items-center justify-center border border-slate-800 shadow-2xl group/preview">
-          <video id="livePreviewVideo" muted loop class="w-full h-full object-contain"></video>
-          <div class="absolute inset-4 rounded player-safe-box"></div>
-          <div id="pipPreviewOverlay" class="hidden absolute pointer-events-none transition-all duration-300 z-10 pip-top-right">
-            <img id="pipPreviewImg" src="" alt="PiP Overlay" class="rounded-xl border border-white/20 shadow-2xl object-cover max-h-40">
-          </div>
-          <div id="videoFocusOverlay" class="hidden absolute inset-0 pointer-events-none transition-opacity duration-300 z-10 bg-black/40 backdrop-brightness-75" style="box-shadow: inset 0 0 80px rgba(0,0,0,0.8);"></div>
-          <div id="liveCaptionOverlay" class="absolute inset-x-4 bottom-6 flex items-center justify-center text-center pointer-events-none transition duration-150 z-20"></div>
-        </div>
-      </div>
-
-      <!-- Monitor Bottom Transport Bar -->
-      <div class="px-4 py-2.5 bg-surface-900 border-t border-capcut-border flex items-center justify-between text-xs select-none">
-        <div class="flex items-center space-x-2">
-          <button id="btnTransportStart" type="button" class="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 transition" title="Seek to Start (|◀)">
-            <i data-lucide="skip-back" class="w-4 h-4"></i>
-          </button>
-          <button id="btnTransportPrev" type="button" class="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 transition" title="Step Back 5s">
-            <i data-lucide="rewind" class="w-4 h-4"></i>
-          </button>
-          <button id="btnTransportPlayPause" type="button" class="w-8 h-8 rounded-full bg-capcut-green hover:bg-capcut-hover text-slate-950 font-bold flex items-center justify-center shadow transition active:scale-95" title="Play / Pause">
-            <i data-lucide="play" class="w-4 h-4 fill-current"></i>
-          </button>
-          <button id="btnTransportNext" type="button" class="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 transition" title="Step Forward 5s">
-            <i data-lucide="fast-forward" class="w-4 h-4"></i>
-          </button>
-          <button id="btnTransportEnd" type="button" class="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 transition" title="Seek to End (▶|)">
-            <i data-lucide="skip-forward" class="w-4 h-4"></i>
-          </button>
-        </div>
-
-        <div class="flex items-center space-x-1 font-mono text-xs text-slate-300">
-          <span id="transportCurrentTime" class="text-white font-bold">00:00:00</span>
-          <span class="text-slate-600">/</span>
-          <span id="transportTotalTime" class="text-slate-400">00:00:00</span>
-        </div>
-
-        <div class="flex items-center space-x-3">
-          <div class="flex items-center space-x-1">
-            <i data-lucide="volume-2" class="w-4 h-4 text-slate-400"></i>
-            <input type="range" id="sliderTransportVolume" min="0" max="1" step="0.05" value="1" class="w-16 accent-brand-500">
-          </div>
-          <button id="btnTransportFullscreen" type="button" class="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 transition" title="Fullscreen">
-            <i data-lucide="maximize" class="w-4 h-4"></i>
-          </button>
-        </div>
-      </div>
-    </main>
-
-    <!-- RIGHT PANEL: Inspector & Properties (Col 10-12) -->
-    <aside id="inspectorPanel" class="lg:col-span-3 xl:col-span-3 bg-surface-900 flex flex-col justify-between overflow-hidden">
-      <div class="p-3 border-b border-capcut-border flex items-center justify-between text-xs bg-surface-950/70">
-        <span class="font-bold uppercase tracking-wider text-slate-300 flex items-center space-x-1.5">
-          <i data-lucide="sliders" class="w-3.5 h-3.5 text-brand-400"></i>
-          <span>Inspector / Properties</span>
-        </span>
-        <span id="inspectorTypeBadge" class="text-[10px] font-mono px-2 py-0.5 rounded bg-brand-500/20 text-brand-300 border border-brand-500/30">Caption Line</span>
-      </div>
-
-      <div class="flex-1 p-3 overflow-y-auto custom-scrollbar space-y-4 text-xs">
-        <!-- LIVE CAPTION PREVIEW BOX -->
-        <div class="space-y-1.5">
-          <div class="flex items-center justify-between text-[11px] font-semibold text-slate-400">
-            <span class="flex items-center space-x-1 text-brand-400">
-              <i data-lucide="eye" class="w-3.5 h-3.5"></i>
-              <span>Live Visual Caption Preview</span>
+        <!-- Optional Script Accordion -->
+        <div class="mt-4 pt-4 border-t border-slate-800">
+          <button id="btnToggleScriptAccordion" type="button" class="text-xs text-slate-400 hover:text-slate-200 flex items-center justify-between w-full">
+            <span class="flex items-center space-x-1.5">
+              <i data-lucide="file-text" class="w-3.5 h-3.5 text-brand-400"></i>
+              <span>Optional: Spoken Text Script (or leave blank to auto-transcribe)</span>
             </span>
-            <span id="inspectorPreviewTplBadge" class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-surface-950 text-slate-300 border border-slate-700">Global</span>
+            <i data-lucide="chevron-down" id="iconScriptChevron" class="w-3.5 h-3.5 transition-transform"></i>
+          </button>
+          <div id="scriptAccordionContent" class="hidden mt-3">
+            <textarea id="scriptInput" rows="3" class="w-full bg-surface-950 border border-slate-800 rounded-xl p-3 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500 resize-none font-sans" placeholder="Optional: Enter or paste your voiceover script. If left blank, the system automatically transcribes your audio for free."></textarea>
           </div>
+        </div>
+      </div>
 
-          <div id="inspectorLivePreviewBox" class="live-caption-preview-canvas rounded-xl p-3 min-h-[84px] flex items-center justify-center text-center overflow-hidden">
-            <div id="inspectorLivePreviewContent" class="text-base font-black tracking-wide leading-tight select-none">
-              "SELECT A CAPTION LINE"
+      <!-- Step 2: Multi-Clip Visual Storyboard -->
+      <div id="storyboardSection" class="bg-surface-900 border border-slate-800 rounded-2xl p-5 shadow-xl flex-1 flex flex-col">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center space-x-2.5">
+            <span class="w-6 h-6 rounded-full bg-indigo-600 text-white text-xs font-bold flex items-center justify-center">2</span>
+            <div>
+              <h2 class="font-bold text-base text-white">Multi-Clip Storyboard</h2>
+              <p class="text-xs text-slate-400">Each audio scene matched with a distinct video clip</p>
             </div>
           </div>
-        </div>
-
-        <!-- Selected Caption Controls -->
-        <div id="inspectorCaptionControls" class="space-y-3 pt-2 border-t border-slate-800">
-          <div class="space-y-1">
-            <label class="text-[10px] uppercase font-bold text-slate-400">Template for This Line</label>
-            <select id="inspectorCaptionTemplateSelect" class="w-full bg-surface-950 border border-slate-700 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-brand-500">
-              <option value="">Global Default</option>
-            </select>
-          </div>
-
-          <div class="grid grid-cols-2 gap-2">
-            <div class="space-y-1">
-              <label class="text-[10px] uppercase font-bold text-slate-400">Hero Highlight</label>
-              <div class="flex items-center space-x-2 bg-surface-950 p-1.5 rounded-lg border border-slate-800">
-                <input type="color" id="inspectorHighlightPicker" value="#ffe600" class="w-6 h-6 rounded border-0 bg-transparent cursor-pointer">
-                <span id="inspectorHighlightHex" class="font-mono text-[11px] text-slate-300 font-semibold">#ffe600</span>
-              </div>
-            </div>
-            <div class="space-y-1">
-              <label class="text-[10px] uppercase font-bold text-slate-400">Primary Color</label>
-              <div class="flex items-center space-x-2 bg-surface-950 p-1.5 rounded-lg border border-slate-800">
-                <input type="color" id="inspectorPrimaryPicker" value="#ffffff" class="w-6 h-6 rounded border-0 bg-transparent cursor-pointer">
-                <span id="inspectorPrimaryHex" class="font-mono text-[11px] text-slate-300 font-semibold">#ffffff</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="space-y-1">
-            <label class="text-[10px] uppercase font-bold text-slate-400">Word Marker Decoration</label>
-            <div class="grid grid-cols-4 gap-1" id="inspectorMarkerGroup">
-              <button type="button" class="inspector-marker-btn px-2 py-1 rounded border border-brand-500 bg-brand-500/20 text-white text-center text-[11px]" data-marker="none">None</button>
-              <button type="button" class="inspector-marker-btn px-2 py-1 rounded border border-slate-700 bg-surface-950 text-slate-300 text-center text-[11px]" data-marker="circle">Circle</button>
-              <button type="button" class="inspector-marker-btn px-2 py-1 rounded border border-slate-700 bg-surface-950 text-slate-300 text-center text-[11px]" data-marker="box">Box</button>
-              <button type="button" class="inspector-marker-btn px-2 py-1 rounded border border-slate-700 bg-surface-950 text-slate-300 text-center text-[11px]" data-marker="underline">Line</button>
-            </div>
-          </div>
-
-          <div class="pt-2 flex items-center justify-between">
-            <button id="btnInspectorRevertCard" type="button" class="px-2.5 py-1.5 rounded bg-surface-850 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-700 text-[11px] transition">
-              Revert to Global
-            </button>
-            <button id="btnInspectorSeekCard" type="button" class="px-3 py-1.5 rounded bg-brand-600 hover:bg-brand-500 text-white font-medium text-[11px] flex items-center space-x-1 transition">
-              <i data-lucide="play" class="w-3 h-3 fill-current"></i>
-              <span>Jump to Line</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- Selected Scene Controls -->
-        <div id="inspectorSceneControls" class="space-y-3 pt-2 border-t border-slate-800">
-          <div class="flex items-center justify-between text-[11px] text-slate-400">
-            <span id="inspectorSceneTitle">Scene #1</span>
-            <span id="inspectorSceneDuration" class="font-mono text-brand-400">4.5s</span>
-          </div>
-
-          <div class="space-y-1">
-            <label class="text-[10px] uppercase font-bold text-slate-400">Search Query</label>
-            <input type="text" id="inspectorSceneQuery" class="w-full bg-surface-950 border border-slate-700 rounded p-1.5 text-xs text-white">
-          </div>
-
-          <div class="flex items-center space-x-2">
-            <button id="btnInspectorSwapClip" type="button" class="flex-1 py-1.5 rounded bg-surface-850 hover:bg-slate-800 text-brand-400 border border-slate-700 text-[11px] flex items-center justify-center space-x-1">
-              <i data-lucide="refresh-ccw" class="w-3 h-3"></i>
-              <span>Swap Footage</span>
-            </button>
-            <button id="btnInspectorUploadClip" type="button" class="flex-1 py-1.5 rounded bg-surface-850 hover:bg-slate-800 text-slate-300 border border-slate-700 text-[11px] flex items-center justify-center space-x-1">
-              <i data-lucide="upload" class="w-3 h-3"></i>
-              <span>Upload Video</span>
-            </button>
-          </div>
-        </div>
-      </div>
-    </aside>
-  </div>
-
-  <!-- CapCut Bottom Multi-Track Timeline -->
-  <section class="bg-surface-950 border-t border-capcut-border flex flex-col justify-between select-none">
-    <!-- Timeline Toolbar -->
-    <div class="px-4 py-1.5 bg-surface-900 border-b border-capcut-border flex items-center justify-between text-xs">
-      <div class="flex items-center space-x-2">
-        <button type="button" class="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800" title="Split Clip (✁)">
-          <i data-lucide="scissors" class="w-3.5 h-3.5"></i>
-        </button>
-        <button type="button" class="p-1 rounded text-slate-400 hover:text-rose-400 hover:bg-slate-800" title="Delete">
-          <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-        </button>
-        <button type="button" class="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800" title="Add Marker">
-          <i data-lucide="bookmark" class="w-3.5 h-3.5"></i>
-        </button>
-        <div class="h-4 w-px bg-slate-800 mx-1"></div>
-        <span class="text-[11px] text-slate-400 font-mono">TIMELINE</span>
-      </div>
-
-      <div class="flex items-center space-x-3">
-        <button id="btnRenderVideo" type="button" class="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs flex items-center space-x-1.5 shadow-sm transition active:scale-95 cursor-pointer">
-          <i data-lucide="film" class="w-3.5 h-3.5"></i>
-          <span>Render Video</span>
-        </button>
-        <span id="timelineTotalDuration" class="font-mono text-slate-400 text-xs">Total: 00:00</span>
-      </div>
-    </div>
-
-    <!-- Timeline Workspace -->
-    <div class="relative overflow-x-auto custom-scrollbar" id="timelineScrollContainer" style="min-height: 220px;">
-      <div id="timelineInnerContent" class="relative" style="min-width: 960px;">
-        
-        <!-- Red Draggable Playhead Needle -->
-        <div id="timelinePlayheadNeedle" class="timeline-playhead-needle" style="left: 110px;">
-          <div id="timelinePlayheadHandle" class="timeline-playhead-handle" title="Drag to scrub timeline"></div>
-        </div>
-
-        <!-- 1. Timecode Ruler -->
-        <div class="flex items-center border-b border-capcut-border bg-surface-900 h-6 text-[10px] font-mono text-slate-400">
-          <div class="timeline-track-header px-2 py-1 text-slate-500 font-bold">RULER</div>
-          <div id="timelineTimecodeRuler" class="flex-1 flex items-center h-full relative"></div>
-        </div>
-
-        <!-- 2. Track [T]: Captions & Titles -->
-        <div class="flex items-stretch border-b border-capcut-border min-h-[44px]">
-          <div class="timeline-track-header px-2 py-2 flex items-center space-x-1.5 text-xs text-amber-400 font-bold">
-            <i data-lucide="type" class="w-3.5 h-3.5"></i>
-            <span>Captions [T]</span>
-          </div>
-          <div id="timelineCaptionsTrack" class="timeline-track-lane flex-1 flex items-center px-1 py-1 relative"></div>
-        </div>
-
-        <!-- 3. Track [V2]: Overlays & PiP -->
-        <div class="flex items-stretch border-b border-capcut-border min-h-[38px]">
-          <div class="timeline-track-header px-2 py-1.5 flex items-center space-x-1.5 text-xs text-purple-400 font-bold">
-            <i data-lucide="image" class="w-3.5 h-3.5"></i>
-            <span>PiP [V2]</span>
-          </div>
-          <div id="timelinePipTrack" class="timeline-track-lane flex-1 flex items-center px-1 py-1 relative">
-            <div class="text-[10px] text-slate-600 italic px-2">No active overlay</div>
-          </div>
-        </div>
-
-        <!-- 4. Track [V1]: Video Filmstrip -->
-        <div class="flex items-stretch border-b border-capcut-border min-h-[58px]">
-          <div class="timeline-track-header px-2 py-2 flex items-center space-x-1.5 text-xs text-emerald-400 font-bold">
-            <i data-lucide="video" class="w-3.5 h-3.5"></i>
-            <span>Video [V1]</span>
-          </div>
-          <div id="timelineVideoTrack" class="timeline-track-lane flex-1 flex items-center px-1 py-1 relative space-x-1"></div>
-        </div>
-
-        <!-- 5. Track [A1]: Audio Waveform -->
-        <div class="flex items-stretch min-h-[44px]">
-          <div class="timeline-track-header px-2 py-2 flex items-center space-x-1.5 text-xs text-brand-400 font-bold">
-            <i data-lucide="music" class="w-3.5 h-3.5"></i>
-            <span>Audio [A1]</span>
-          </div>
-          <div id="timelineAudioTrack" class="timeline-track-lane flex-1 flex items-center px-1 py-1 relative"></div>
-        </div>
-
-      </div>
-    </div>
-  </section>
-
-  <!-- Hidden Compatibility Containers -->
-  <div class="hidden">
-    <div id="storyboardSection"></div>
-    <div id="timelineSegmentsBar"></div>
-    <div id="storyboardGrid"></div>
-    <div id="captionSegmentsSection"></div>
-    <div id="captionSegmentsList"></div>
-    <span id="captionSegmentsCountBadge"></span>
-    <input id="captionSegmentsSearchInput" type="text">
-    <button id="btnResetAllCardStyles" type="button"></button>
-  </div>
-
-  <!-- Per-Card Caption Style Customizer Modal (WITH LIVE CAPTION PREVIEW BOX) -->
-  <div id="perCardStyleModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-surface-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
-      <div class="flex items-center justify-between pb-2 border-b border-slate-800">
-        <h3 class="text-base font-semibold text-white flex items-center space-x-2">
-          <i data-lucide="palette" class="w-4 h-4 text-brand-400"></i>
-          <span id="perCardModalTitle">Customize Caption Line #1</span>
-        </h3>
-        <button id="btnClosePerCardModal" class="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition">
-          <i data-lucide="x" class="w-5 h-5"></i>
-        </button>
-      </div>
-
-      <!-- LIVE VISUAL CAPTION PREVIEW BOX (Requested by User) -->
-      <div class="space-y-1.5">
-        <div class="flex items-center justify-between text-[11px] font-semibold text-slate-400">
-          <span class="flex items-center space-x-1 text-brand-400">
-            <i data-lucide="eye" class="w-3.5 h-3.5"></i>
-            <span>Live Caption Preview</span>
+          <span id="sceneCountBadge" class="text-xs px-2.5 py-1 rounded-full bg-surface-800 text-slate-300 border border-slate-700">
+            0 Scenes
           </span>
-          <span id="perCardPreviewTplBadge" class="text-[10px] font-mono px-2 py-0.5 rounded bg-brand-500/20 text-brand-300 border border-brand-500/30">Inherit Global</span>
         </div>
-        <div id="perCardLivePreviewBox" class="live-caption-preview-canvas rounded-xl p-4 min-h-[96px] flex items-center justify-center text-center overflow-hidden">
-          <div id="perCardLivePreviewContent" class="text-xl font-black tracking-wide leading-tight select-none">
-            "YOU CAN GIVE YOU"
+
+        <!-- Empty State Placeholder -->
+        <div id="storyboardEmptyState" class="border border-slate-800/80 bg-surface-950/40 rounded-xl p-10 text-center flex flex-col items-center justify-center my-auto">
+          <div class="w-12 h-12 rounded-2xl bg-surface-800 text-slate-500 flex items-center justify-center mb-3">
+            <i data-lucide="clapperboard" class="w-6 h-6"></i>
           </div>
+          <h3 class="font-semibold text-sm text-slate-300">No scenes generated yet</h3>
+          <p class="text-xs text-slate-400 mt-1 max-w-sm">
+            Upload or pick an audio file above, then click <strong>"✨ Analyze Audio & Generate Multi-Clip Video"</strong>.
+          </p>
+        </div>
+
+        <!-- Populated Scenes Grid -->
+        <div id="storyboardGrid" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-4 flex-1">
+          <!-- Dynamically populated scene cards -->
         </div>
       </div>
+    </section>
 
-      <div class="p-2.5 bg-surface-950 rounded-xl border border-slate-800 text-xs text-slate-300 italic truncate" id="perCardModalQuote">
-        "Text goes here"
-      </div>
+    <!-- Right Column: Program Monitor & Caption Customizer (Cols: 5) -->
+    <section class="lg:col-span-5 flex flex-col space-y-6">
 
-      <!-- Template Selector -->
-      <div class="space-y-1.5">
-        <label class="text-xs font-semibold text-slate-300">Caption Style / Template for This Line</label>
-        <select id="perCardTemplateSelect" class="w-full bg-surface-950 border border-slate-700 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-brand-500">
-        </select>
-      </div>
-
-      <!-- Custom Colors for this Line -->
-      <div class="grid grid-cols-2 gap-3 pt-1">
-        <div class="space-y-1">
-          <label class="text-[11px] font-semibold text-slate-400">Hero Highlight Color</label>
+      <!-- Program Monitor Live Player -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col items-center">
+        <div class="w-full flex items-center justify-between mb-3">
           <div class="flex items-center space-x-2">
-            <input type="color" id="perCardHighlightPicker" value="#ffe600" class="w-8 h-8 rounded border-0 bg-transparent cursor-pointer">
-            <span id="perCardHighlightHex" class="text-xs font-mono text-slate-300">#ffe600</span>
+            <div class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
+            <h2 class="font-bold text-sm text-white">Live Program Monitor</h2>
+          </div>
+          <span id="playerActiveClipBadge" class="text-[11px] font-mono text-slate-400">
+            Clip: Ready
+          </span>
+        </div>
+
+        <!-- Video Player Wrapper with Aspect Ratio Container -->
+        <div id="playerContainer" class="relative bg-black rounded-xl overflow-hidden border border-slate-800 shadow-2xl flex items-center justify-center w-full max-w-[340px] aspect-[9/16] transition-all">
+          <video id="liveVideoPlayer" preload="auto" playsinline muted loop class="w-full h-full object-cover"></video>
+          
+          <!-- Live Caption Overlay -->
+          <div id="liveCaptionOverlay" class="absolute inset-x-4 bottom-8 flex flex-wrap items-center justify-center text-center pointer-events-none select-none transition">
+            <!-- Dynamic styled subtitle text -->
+          </div>
+
+          <!-- Video Play Overlay Button -->
+          <div id="playerClickOverlay" class="absolute inset-0 flex items-center justify-center cursor-pointer bg-black/20 hover:bg-black/10 transition group">
+            <div class="w-14 h-14 rounded-full bg-brand-600/90 group-hover:bg-brand-500 text-white flex items-center justify-center shadow-lg transform group-hover:scale-110 transition">
+              <i data-lucide="play" id="iconMonitorCenterPlay" class="w-7 h-7 ml-1"></i>
+            </div>
           </div>
         </div>
-        <div class="space-y-1">
-          <label class="text-[11px] font-semibold text-slate-400">Primary / Context Color</label>
+
+        <!-- Transport Control Bar -->
+        <div class="w-full mt-4 bg-surface-950 p-3 rounded-xl border border-slate-800 flex items-center justify-between">
           <div class="flex items-center space-x-2">
-            <input type="color" id="perCardPrimaryPicker" value="#ffffff" class="w-8 h-8 rounded border-0 bg-transparent cursor-pointer">
-            <span id="perCardPrimaryHex" class="text-xs font-mono text-slate-300">#ffffff</span>
+            <button id="btnTransportPrev" type="button" class="p-2 rounded-lg bg-surface-800 hover:bg-slate-700 text-slate-300 transition" title="Previous Scene">
+              <i data-lucide="skip-back" class="w-4 h-4"></i>
+            </button>
+            <button id="btnTransportPlay" type="button" class="p-2.5 rounded-lg bg-brand-600 hover:bg-brand-500 text-white transition" title="Play/Pause">
+              <i data-lucide="play" id="iconTransportPlay" class="w-4 h-4"></i>
+            </button>
+            <button id="btnTransportNext" type="button" class="p-2 rounded-lg bg-surface-800 hover:bg-slate-700 text-slate-300 transition" title="Next Scene">
+              <i data-lucide="skip-forward" class="w-4 h-4"></i>
+            </button>
+          </div>
+
+          <!-- Timecode -->
+          <div class="text-xs font-mono text-slate-300">
+            <span id="monitorCurrentTime">00:00.0</span> / <span id="monitorTotalTime">00:00.0</span>
+          </div>
+
+          <!-- Fullscreen & Volume -->
+          <div class="flex items-center space-x-2">
+            <button id="btnMuteToggle" type="button" class="p-2 rounded-lg bg-surface-800 hover:bg-slate-700 text-slate-300 transition">
+              <i data-lucide="volume-2" id="iconVolume" class="w-4 h-4"></i>
+            </button>
           </div>
         </div>
       </div>
 
-      <!-- Marker Decoration for this Line -->
-      <div class="space-y-1.5 pt-1">
-        <label class="text-[11px] font-semibold text-slate-400">Word Marker Decoration</label>
-        <div class="grid grid-cols-4 gap-2 text-xs" id="perCardMarkerGroup">
-          <button type="button" class="per-card-marker-btn px-2.5 py-1.5 rounded-lg border border-brand-500 bg-brand-500/20 text-white text-center font-medium" data-marker="none">None</button>
-          <button type="button" class="per-card-marker-btn px-2.5 py-1.5 rounded-lg border border-slate-700 bg-surface-950 text-slate-300 text-center hover:bg-slate-800" data-marker="circle">Circle</button>
-          <button type="button" class="per-card-marker-btn px-2.5 py-1.5 rounded-lg border border-slate-700 bg-surface-950 text-slate-300 text-center hover:bg-slate-800" data-marker="box">Box</button>
-          <button type="button" class="per-card-marker-btn px-2.5 py-1.5 rounded-lg border border-slate-700 bg-surface-950 text-slate-300 text-center hover:bg-slate-800" data-marker="underline">Underline</button>
+      <!-- Caption & Style Customizer Panel -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
+        <div class="flex items-center justify-between">
+          <h3 class="font-bold text-sm text-white flex items-center space-x-2">
+            <i data-lucide="type" class="w-4 h-4 text-brand-400"></i>
+            <span>Caption Style & Highlights</span>
+          </h3>
+          <span class="text-xs text-slate-400">Matte & Clean</span>
         </div>
-      </div>
 
-      <div class="pt-3 border-t border-slate-800 flex items-center justify-between">
-        <button id="btnResetPerCardModal" type="button" class="px-3.5 py-2 rounded-xl bg-surface-850 hover:bg-slate-800 text-slate-300 text-xs font-semibold border border-slate-700 transition">
-          Revert to Global
-        </button>
-        <button id="btnSavePerCardModal" type="button" class="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold shadow transition">
-          Save & Preview
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Swap Clip Modal -->
-  <div id="swapClipModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-surface-900 border border-slate-800 rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-2xl max-h-[85vh] flex flex-col">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <!-- Template Selector -->
         <div>
-          <h3 id="swapModalTitle" class="text-base font-semibold text-white">Swap Footage for Scene #1</h3>
-          <p class="text-xs text-slate-400">Search Pexels stock clips or upload your own replacement video</p>
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5">Subtitle Style</label>
+          <select id="captionTemplateSelect" class="w-full bg-surface-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-brand-500">
+            <option value="hormozi_classic">Hormozi Classic (Yellow & White)</option>
+            <option value="minimal_clean">Modern Minimal (Clean Sans)</option>
+            <option value="beast_mode">Beast Mode (Heavy Impact)</option>
+            <option value="neon_glow">Neon Cyan (High Contrast)</option>
+            <option value="comic_pop">Comic Pop (Dynamic Playful)</option>
+            <option value="cinematic_gold">Cinematic Gold (Serif Elegant)</option>
+            <option value="none">🚫 No Captions</option>
+          </select>
         </div>
-        <button id="btnCloseSwapModal" class="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition">
-          <i data-lucide="x" class="w-5 h-5"></i>
+
+        <!-- Highlight Color Palette -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5">Spoken Word Highlight Color</label>
+          <div class="grid grid-cols-6 gap-2">
+            <button type="button" data-color="yellow" data-hex="#ffe600" class="color-swatch-btn h-8 rounded-lg border-2 border-white bg-[#ffe600] transition"></button>
+            <button type="button" data-color="cyan" data-hex="#06b6d4" class="color-swatch-btn h-8 rounded-lg border-2 border-transparent hover:border-slate-400 bg-[#06b6d4] transition"></button>
+            <button type="button" data-color="green" data-hex="#22c55e" class="color-swatch-btn h-8 rounded-lg border-2 border-transparent hover:border-slate-400 bg-[#22c55e] transition"></button>
+            <button type="button" data-color="red" data-hex="#ef4444" class="color-swatch-btn h-8 rounded-lg border-2 border-transparent hover:border-slate-400 bg-[#ef4444] transition"></button>
+            <button type="button" data-color="purple" data-hex="#a855f7" class="color-swatch-btn h-8 rounded-lg border-2 border-transparent hover:border-slate-400 bg-[#a855f7] transition"></button>
+            <button type="button" data-color="white" data-hex="#ffffff" class="color-swatch-btn h-8 rounded-lg border-2 border-transparent hover:border-slate-400 bg-white transition"></button>
+          </div>
+        </div>
+
+        <!-- Shine Glow Toggle -->
+        <div class="flex items-center justify-between p-3 rounded-xl bg-surface-950 border border-slate-800">
+          <div>
+            <p class="text-xs font-semibold text-slate-200">Shine & Glow Effect</p>
+            <p class="text-[11px] text-slate-400">Keep disabled for clean, non-shining matte text</p>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" id="toggleShineGlow" class="sr-only peer">
+            <div class="w-10 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand-600"></div>
+          </label>
+        </div>
+
+        <!-- Render Video Button in Right Panel -->
+        <div class="pt-2">
+          <button id="btnRenderVideo" type="button" class="w-full py-3 rounded-xl font-bold text-sm bg-brand-600 hover:bg-brand-500 text-white shadow-lg shadow-brand-500/25 flex items-center justify-center space-x-2 transition disabled:opacity-50 disabled:cursor-not-allowed">
+            <i data-lucide="download" class="w-4 h-4"></i>
+            <span>Render & Export MP4</span>
+          </button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Clip Swap Modal -->
+  <div id="swapClipModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="bg-surface-900 border border-slate-800 rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="font-bold text-base text-white">Swap Video Clip</h3>
+          <p id="swapModalSubtitle" class="text-xs text-slate-400">Scene #1: Choose a new visual</p>
+        </div>
+        <button id="btnCloseSwapModal" type="button" class="p-1.5 rounded-lg bg-surface-800 hover:bg-slate-700 text-slate-400 hover:text-white transition">
+          <i data-lucide="x" class="w-4 h-4"></i>
         </button>
       </div>
-      <div class="flex items-center space-x-2">
-        <div class="relative flex-1">
-          <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-3 pointer-events-none"></i>
-          <input type="text" id="swapSearchInput" placeholder="Search footage (e.g. city timelapse, ocean sunset)..." class="w-full bg-surface-950 border border-slate-700 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-500">
-        </div>
-        <button id="btnExecuteSearch" class="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold transition">Search</button>
+
+      <!-- Search Bar -->
+      <div class="flex space-x-2">
+        <input type="text" id="swapSearchInput" class="flex-1 bg-surface-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-brand-500" placeholder="Search visuals (e.g. cyber tech, mountains, city lights)...">
+        <button id="btnSwapSearch" type="button" class="px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold rounded-xl transition">
+          Search
+        </button>
       </div>
-      <div id="swapLoadingState" class="hidden py-8 text-center text-slate-400 text-xs flex flex-col items-center space-y-2">
-        <i data-lucide="loader-2" class="w-6 h-6 animate-spin text-brand-400"></i>
-        <span>Searching stock videos...</span>
-      </div>
-      <div id="swapSearchResultsGrid" class="flex-1 grid grid-cols-3 gap-3 overflow-y-auto custom-scrollbar p-1"></div>
-      <div id="swapUploadSection" class="hidden pt-3 border-t border-slate-800">
-        <label for="swapUploadInput" class="block border-2 border-dashed border-slate-700 hover:border-brand-500 rounded-xl p-5 text-center cursor-pointer bg-surface-950">
-          <i data-lucide="upload" class="w-6 h-6 text-brand-400 mx-auto mb-1"></i>
-          <p class="text-xs font-medium text-slate-200">Upload replacement clip for this scene</p>
-          <input type="file" id="swapUploadInput" accept="video/*" class="hidden">
-        </label>
+
+      <!-- Clips Grid -->
+      <div id="swapClipsGrid" class="grid grid-cols-3 gap-3 max-h-[380px] overflow-y-auto pr-1">
+        <!-- Dynamically populated clips -->
       </div>
     </div>
   </div>
 
   <!-- Render Progress Modal -->
-  <div id="renderProgressModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-surface-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 space-y-5 shadow-2xl">
-      <div class="flex items-center space-x-3">
-        <div class="w-10 h-10 rounded-xl bg-brand-500/20 border border-brand-500/30 flex items-center justify-center text-brand-400">
-          <i data-lucide="clapperboard" class="w-5 h-5 animate-pulse"></i>
-        </div>
-        <div>
-          <h3 class="text-base font-semibold text-white">Rendering Final Video</h3>
-          <p id="renderPhaseText" class="text-xs text-slate-400">Burning styled captions directly onto video with FFmpeg...</p>
-        </div>
+  <div id="renderProgressModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="bg-surface-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl text-center space-y-4">
+      <div class="w-12 h-12 rounded-full bg-brand-500/20 text-brand-400 flex items-center justify-center mx-auto">
+        <i data-lucide="loader-2" class="w-6 h-6 animate-spin"></i>
       </div>
-      <div class="space-y-2">
-        <div class="w-full bg-surface-950 rounded-full h-3 border border-slate-800 overflow-hidden">
-          <div id="renderProgressBar" class="bg-gradient-to-r from-brand-600 via-indigo-500 to-emerald-500 h-full rounded-full transition-all duration-300" style="width: 5%;"></div>
-        </div>
-        <div class="flex items-center justify-between text-xs font-mono text-slate-400">
-          <span id="renderPercentText">5%</span>
-          <span>1080p FFmpeg Engine</span>
-        </div>
+      <h3 class="font-bold text-base text-white">Rendering Multi-Clip Video</h3>
+      <p id="renderStatusMessage" class="text-xs text-slate-400">Cutting clips, applying crossfades, and muxing audio...</p>
+      
+      <!-- Progress bar -->
+      <div class="w-full bg-surface-950 rounded-full h-2.5 overflow-hidden border border-slate-800">
+        <div id="renderProgressBar" class="bg-gradient-to-r from-brand-600 to-indigo-500 h-2.5 rounded-full transition-all duration-300 w-5"></div>
       </div>
-      <div id="renderResultBox" class="hidden space-y-4 pt-2 border-t border-slate-800">
-        <div class="rounded-xl overflow-hidden border border-slate-700 bg-black aspect-video flex items-center justify-center">
-          <video id="renderedVideoPlayer" controls class="w-full h-full object-contain"></video>
-        </div>
-        <div class="flex items-center justify-between pt-2">
-          <button id="btnCloseRenderModal" class="px-4 py-2 rounded-lg bg-surface-850 hover:bg-slate-800 text-xs text-slate-300 border border-slate-700 transition">Close</button>
-          <a id="btnDownloadVideo" href="#" download="synchro_video.mp4" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold flex items-center space-x-2 shadow-lg shadow-emerald-600/25 transition">
-            <i data-lucide="download" class="w-4 h-4"></i>
-            <span>Download MP4</span>
-          </a>
-        </div>
-      </div>
-    </div>
-  </div>
+      <span id="renderProgressPercent" class="text-xs font-mono text-slate-400">10%</span>
 
-  <!-- Pexels API Key Modal -->
-  <div id="apiKeyModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-surface-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
-      <div class="flex items-center justify-between pb-2 border-b border-slate-800">
-        <h3 class="text-base font-semibold text-white flex items-center space-x-2">
-          <i data-lucide="key" class="w-4 h-4 text-brand-400"></i>
-          <span>Pexels API Configuration</span>
-        </h3>
-        <button id="btnCloseApiKeyModal" class="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition">
-          <i data-lucide="x" class="w-5 h-5"></i>
-        </button>
-      </div>
-      <p class="text-xs text-slate-300 leading-relaxed">
-        Provide your free Pexels API key to query millions of live HD stock videos. If empty, built-in curated clips will be used.
-      </p>
-      <div>
-        <label class="block text-xs font-medium text-slate-400 mb-1">Your Pexels API Key</label>
-        <input type="password" id="inputPexelsKey" placeholder="Paste Pexels API key here..." class="w-full bg-surface-850 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-500">
-        <p class="mt-1.5 text-[11px] text-slate-500">
-          Get a free key in 30 seconds at <a href="https://www.pexels.com/api/" target="_blank" class="text-brand-400 underline hover:text-brand-300">pexels.com/api</a>.
-        </p>
-      </div>
-      <div class="flex items-center justify-end space-x-2 pt-3 border-t border-slate-800">
-        <button id="btnSaveApiKey" class="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold shadow transition">
-          Save Key
+      <!-- Success download container (hidden during render) -->
+      <div id="renderSuccessContainer" class="hidden pt-3 space-y-3">
+        <a id="btnDownloadFinishedVideo" href="#" download class="w-full py-3 rounded-xl font-bold text-sm bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 flex items-center justify-center space-x-2 transition">
+          <i data-lucide="download" class="w-4 h-4"></i>
+          <span>Download Video (.MP4)</span>
+        </a>
+        <button id="btnCloseRenderModal" type="button" class="w-full py-2 rounded-xl text-xs text-slate-400 hover:text-white bg-surface-800 transition">
+          Done
         </button>
       </div>
     </div>
   </div>
 
-  <script src="/app.js?v=4.0"></script>
+  <script src="/app.js"></script>
 </body>
 </html>

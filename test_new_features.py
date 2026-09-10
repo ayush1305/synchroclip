@@ -735,6 +735,69 @@ def test_autonomous_audio_analysis_and_empty_script_generation():
     if os.path.exists(audio_path):
         os.remove(audio_path)
 
+
+def test_unified_analyze_and_generate_multiclip():
+    print("=== Test 15: Unified Audio Analysis & Multi-Clip Scene Generation ===")
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    audio_path = os.path.join(base_dir, "test_multiclip_audio.mp3")
+
+    cmd = [
+        "ffmpeg", "-y",
+        "-f", "lavfi",
+        "-i", "sine=frequency=440:duration=12",
+        "-c:a", "libmp3lame",
+        audio_path
+    ]
+    subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+
+    from app import AUDIO_REGISTRY
+    import audio_analyzer
+    audio_id = "test_multiclip_123"
+    info = audio_analyzer.get_audio_info(audio_path)
+    AUDIO_REGISTRY[audio_id] = {
+        "id": audio_id,
+        "path": audio_path,
+        "filename": "test_multiclip_audio.mp3",
+        "info": info
+    }
+
+    # Test POST /api/analyze-and-generate
+    resp = client.post("/api/analyze-and-generate", json={
+        "audio_id": audio_id,
+        "script_text": "Experience the energy of urban technology and discover the peace of mountains today.",
+        "aspect_ratio": "9:16"
+    })
+    assert resp.status_code == 200, f"Failed: {resp.text}"
+    data = resp.json()
+    assert data["status"] == "success"
+    assert len(data["scenes"]) >= 2, f"Expected at least 2 scenes, got {len(data['scenes'])}"
+    
+    # Assert each scene has a selected clip
+    used_ids = set()
+    for s in data["scenes"]:
+        assert "selected_clip" in s and s["selected_clip"] is not None
+        clip = s["selected_clip"]
+        assert "video_url" in clip or "preview_url" in clip
+        used_ids.add(clip["id"])
+    
+    print(f"Generated {len(data['scenes'])} scenes with {len(used_ids)} distinct video clips matched!")
+    assert len(data["caption_cards"]) >= 1, "Expected caption cards"
+    assert len(data["timed_words"]) >= 1, "Expected timed words"
+
+    # Test POST /api/swap-clip
+    swap_resp = client.post("/api/swap-clip", json={
+        "query": "ocean",
+        "aspect_ratio": "9:16"
+    })
+    assert swap_resp.status_code == 200
+    swap_data = swap_resp.json()
+    assert len(swap_data.get("videos", [])) >= 1
+    print(f"Clip swap search returned {len(swap_data['videos'])} candidate clips!")
+
+    if os.path.exists(audio_path):
+        os.remove(audio_path)
+    print("Multi-clip audio analysis, scene generation, and clip matching verified successfully!\n")
+
 if __name__ == "__main__":
     test_caption_templates_and_fonts()
     test_multifont_and_dual_color_ass()
@@ -750,6 +813,7 @@ if __name__ == "__main__":
     test_viral_hierarchy_templates_ass()
     test_per_card_caption_styles()
     test_autonomous_audio_analysis_and_empty_script_generation()
+    test_unified_analyze_and_generate_multiclip()
     print("=========================================================================================")
-    print("ALL 14 TEST SUITES PASSED! CAPCUT STUDIO UI, FREE AUDIO ANALYSIS & PREVIEWS VERIFIED!")
+    print("ALL 15 TEST SUITES PASSED! CAPCUT STUDIO UI, FREE AUDIO ANALYSIS & PREVIEWS VERIFIED!")
     print("=========================================================================================")

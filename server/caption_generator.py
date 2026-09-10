@@ -264,6 +264,14 @@ def chunk_words_into_cards(
 
     return cards
 
+def align_words_to_audio(audio_path: str, text: str, total_duration: float, max_words_per_card: int = 4) -> tuple[list[dict], list[dict]]:
+    """
+    Convenience function that aligns words to audio and chunks them into caption cards.
+    """
+    words = align_words_to_timeline(audio_path, text, total_duration)
+    cards = chunk_words_into_cards(words, max_words_per_card=max_words_per_card)
+    return cards, words
+
 def to_ass_time(seconds: float) -> str:
     """
     Converts seconds float to ASS timestamp: H:MM:SS.cs (centiseconds).

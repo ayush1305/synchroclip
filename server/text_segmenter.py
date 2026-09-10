@@ -128,18 +128,22 @@ def segment_script_and_allocate_time(
         else:
             refined_segments.append(sent)
 
-    # 4. Target number of segments based on total audio duration
-    ideal_scene_count = max(1, round(total_duration / 5.2))
+    # 4. Target number of segments based on total audio duration (aim for 3.5 - 5.0s per clip)
+    ideal_scene_count = max(2 if total_duration >= 6.0 else 1, round(total_duration / 4.2))
     
-    # If we have too few segments for a long audio, break text further
-    if len(refined_segments) < ideal_scene_count and total_duration > 12.0:
+    # If we have too few segments for the audio duration, break text further
+    if len(refined_segments) < ideal_scene_count and total_duration >= 6.0:
         further_split = []
         for seg in refined_segments:
             words = seg.split()
-            if len(words) >= 8 and len(further_split) + len(refined_segments) <= ideal_scene_count:
-                mid = len(words) // 2
-                further_split.append(" ".join(words[:mid]))
-                further_split.append(" ".join(words[mid:]))
+            if len(words) >= 6 and len(further_split) + len(refined_segments) <= ideal_scene_count + 1:
+                clauses = [c.strip() for c in re.split(r"[,—–;]|\b(?:and|but|while|so|then|as|with)\b", seg) if len(c.strip().split()) >= 2]
+                if len(clauses) >= 2:
+                    further_split.extend(clauses)
+                else:
+                    mid = len(words) // 2
+                    further_split.append(" ".join(words[:mid]))
+                    further_split.append(" ".join(words[mid:]))
             else:
                 further_split.append(seg)
         refined_segments = further_split

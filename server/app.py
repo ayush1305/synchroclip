@@ -90,6 +90,20 @@ class CaptionRequest(BaseModel):
     template_id: Optional[str] = "capcut_classic"
     is_word_pop: Optional[bool] = False
 
+class AnalyzeGenerateRequest(BaseModel):
+    audio_id: str
+    script_text: Optional[str] = ""
+    api_key: Optional[str] = None
+    aspect_ratio: Optional[str] = "9:16"
+    target_scene_duration: Optional[float] = 4.0
+    template_id: Optional[str] = "hormozi_classic"
+
+class SwapClipRequest(BaseModel):
+    query: str
+    api_key: Optional[str] = None
+    aspect_ratio: Optional[str] = "9:16"
+    exclude_ids: Optional[list[str]] = []
+
 class RenderRequest(BaseModel):
     audio_id: str
     scenes: Optional[list[dict]] = None
@@ -306,6 +320,82 @@ async def auto_match_all(req: AutoMatchRequest):
         "status": "success",
         "scenes": updated_scenes
     }
+
+@app.post("/api/analyze-and-generate")
+async def analyze_and_generate(req: AnalyzeGenerateRequest):
+    """
+    Core unified endpoint:
+    Analyzes audio (speech transcription or acoustic rhythm),
+    segments into natural scenes,
+    matches distinct high-definition clips for every scene,
+    and aligns word-by-word captions in a single seamless operation.
+    """
+    if req.audio_id not in AUDIO_REGISTRY:
+        raise HTTPException(status_code=404, detail="Audio ID not found")
+
+    audio_entry = AUDIO_REGISTRY[req.audio_id]
+    audio_path = audio_entry["path"]
+    total_duration = float(audio_entry["info"]["duration"])
+
+    script_text = (req.script_text or "").strip()
+    # 1. Automatic Speech Recognition or Acoustic Rhythm Analysis
+    if not script_text:
+        transcribed = caption_generator.transcribe_audio_file(audio_path)
+        if transcribed and len(transcribed.split()) >= 3:
+            script_text = transcribed
+        else:
+            script_text = caption_generator.generate_acoustic_script(audio_path, total_duration)
+
+    # 2. Scene segmentation
+    scenes = text_segmenter.segment_script_and_allocate_time(
+        script_text=script_text,
+        total_duration=total_duration,
+        min_segment_duration=2.5,
+        max_segment_duration=7.0
+    )
+
+    # 3. Match distinct HD clips for every scene
+    used_clip_ids = set()
+    for idx, scene in enumerate(scenes):
+        query = scene.get("primary_query") or "cinematic scenery"
+        clip = pexels_client.select_distinct_clip(
+            query=query,
+            scene_idx=idx,
+            used_clip_ids=used_clip_ids,
+            api_key=req.api_key
+        )
+        scene["selected_clip"] = clip
+
+    # 4. Generate synchronized caption cards
+    cards, words = caption_generator.align_words_to_audio(
+        audio_path=audio_path,
+        text=script_text,
+        total_duration=total_duration
+    )
+
+    return {
+        "status": "success",
+        "audio_id": req.audio_id,
+        "total_duration": total_duration,
+        "transcript": script_text,
+        "scenes": scenes,
+        "caption_cards": cards,
+        "timed_words": words
+    }
+
+@app.post("/api/swap-clip")
+async def swap_clip(req: SwapClipRequest):
+    """
+    Searches clips for swapping a specific scene's video clip.
+    """
+    orientation = "portrait" if req.aspect_ratio == "9:16" else "landscape"
+    results = pexels_client.search_pexels_videos(
+        query=req.query,
+        api_key=req.api_key,
+        orientation=orientation,
+        per_page=12
+    )
+    return results
 
 @app.post("/api/render")
 async def render_video(req: RenderRequest):
