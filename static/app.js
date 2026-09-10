@@ -64,6 +64,8 @@ const el = {
   // Audio & AI Modal
   btnOpenAIAudioWizard: document.getElementById('btnOpenAIAudioWizard'),
   audioLibraryList: document.getElementById('audioLibraryList'),
+  audioTabDropzone: document.getElementById('audioTabDropzone'),
+  audioTabFileInput: document.getElementById('audioTabFileInput'),
   aiAudioModal: document.getElementById('aiAudioModal'),
   btnCloseAIModal: document.getElementById('btnCloseAIModal'),
   aiAudioDropzone: document.getElementById('aiAudioDropzone'),
@@ -220,13 +222,62 @@ function bindEvents() {
     });
   });
 
-  // Media Upload
-  el.mediaDropzone.addEventListener('click', () => el.mediaFileInput.click());
-  el.mediaFileInput.addEventListener('change', (e) => {
-    if (e.target.files && e.target.files.length) {
-      Array.from(e.target.files).forEach(f => uploadMediaFile(f));
-    }
-  });
+  // Drag & Drop Helper
+  function setupDragAndDrop(dropzoneEl, onFilesDropped) {
+    if (!dropzoneEl) return;
+    ['dragenter', 'dragover'].forEach(name => {
+      dropzoneEl.addEventListener(name, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropzoneEl.classList.add('border-brand-500', 'bg-brand-500/10');
+      });
+    });
+    ['dragleave', 'drop'].forEach(name => {
+      dropzoneEl.addEventListener(name, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropzoneEl.classList.remove('border-brand-500', 'bg-brand-500/10');
+      });
+    });
+    dropzoneEl.addEventListener('drop', (e) => {
+      const files = e.dataTransfer && e.dataTransfer.files;
+      if (files && files.length) {
+        onFilesDropped(Array.from(files));
+      }
+    });
+  }
+
+  // Prevent default window drop so files don't open in a new browser tab
+  window.addEventListener('dragover', (e) => e.preventDefault());
+  window.addEventListener('drop', (e) => e.preventDefault());
+
+  // Media Upload (Media Tab)
+  if (el.mediaDropzone && el.mediaFileInput) {
+    el.mediaDropzone.addEventListener('click', () => el.mediaFileInput.click());
+    el.mediaFileInput.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files.length) {
+        Array.from(e.target.files).forEach(f => uploadMediaFile(f));
+        e.target.value = '';
+      }
+    });
+    setupDragAndDrop(el.mediaDropzone, (files) => {
+      files.forEach(f => uploadMediaFile(f));
+    });
+  }
+
+  // Dedicated Audio Tab Upload
+  if (el.audioTabDropzone && el.audioTabFileInput) {
+    el.audioTabDropzone.addEventListener('click', () => el.audioTabFileInput.click());
+    el.audioTabFileInput.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files.length) {
+        Array.from(e.target.files).forEach(f => uploadAudioFile(f));
+        e.target.value = '';
+      }
+    });
+    setupDragAndDrop(el.audioTabDropzone, (files) => {
+      files.forEach(f => uploadAudioFile(f));
+    });
+  }
 
   // Pexels Search
   el.btnPexelsSearch.addEventListener('click', () => {
@@ -337,17 +388,35 @@ function bindEvents() {
   });
 
   const sidebarAudioDrop = document.getElementById('sidebarAudioDropzone');
-  if (sidebarAudioDrop) sidebarAudioDrop.addEventListener('click', () => {
-    openAIAudioWizard();
-    el.aiAudioFileInput.click();
-  });
+  if (sidebarAudioDrop) {
+    sidebarAudioDrop.addEventListener('click', () => {
+      openAIAudioWizard();
+      el.aiAudioFileInput.click();
+    });
+    setupDragAndDrop(sidebarAudioDrop, (files) => {
+      if (files && files[0]) {
+        openAIAudioWizard();
+        handleAIAudioUpload(files[0]);
+      }
+    });
+  }
 
   // AI Audio Modal
   if (el.btnOpenAIAudioWizard) el.btnOpenAIAudioWizard.addEventListener('click', openAIAudioWizard);
   el.btnCloseAIModal.addEventListener('click', () => el.aiAudioModal.classList.add('hidden'));
-  el.aiAudioDropzone.addEventListener('click', () => el.aiAudioFileInput.click());
+  if (el.aiAudioDropzone) {
+    el.aiAudioDropzone.addEventListener('click', () => el.aiAudioFileInput.click());
+    setupDragAndDrop(el.aiAudioDropzone, (files) => {
+      if (files && files[0]) {
+        handleAIAudioUpload(files[0]);
+      }
+    });
+  }
   el.aiAudioFileInput.addEventListener('change', (e) => {
-    if (e.target.files && e.target.files[0]) handleAIAudioUpload(e.target.files[0]);
+    if (e.target.files && e.target.files[0]) {
+      handleAIAudioUpload(e.target.files[0]);
+      e.target.value = '';
+    }
   });
   el.btnUseDemoAudioInModal.addEventListener('click', handleLoadDemoAudioInModal);
   el.btnOptionAGenerate.addEventListener('click', handleExecuteOptionAGenerate);
@@ -489,7 +558,7 @@ function addClipToTrack(trackId, clipData, atTime = null) {
     id: `clip_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
     trackId: trackId,
     type: clipData.type || (trackId.startsWith('V') ? 'video' : trackId.startsWith('A') ? 'audio' : 'text'),
-    title: clipData.title || 'Untitled Clip',
+    title: clipData.title || clipData.name || 'Untitled Clip',
     url: clipData.url || '',
     thumbnail_url: clipData.thumbnail_url || '',
     startTime: insertTime,
@@ -747,6 +816,7 @@ function seekTo(time) {
   updatePlayheadPosition();
   updateTimecodeDisplays();
   renderCanvas();
+  syncAudioPlayback(state.playheadTime, state.isPlaying);
 }
 
 function startTrimming(e, clip, edge) {
@@ -976,18 +1046,69 @@ function drawTextToCanvas(clip, offset, cw, ch) {
 }
 
 // ================= PLAYBACK TRANSPORT LOOP =================
+function updatePlayPauseButton(isPlaying) {
+  if (!el.btnTransportPlayPause) return;
+  if (isPlaying) {
+    el.btnTransportPlayPause.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+    `;
+    el.btnTransportPlayPause.title = 'Pause (Space)';
+  } else {
+    el.btnTransportPlayPause.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 ml-0.5"><polygon points="6 3 20 12 6 21 6 3"/></svg>
+    `;
+    el.btnTransportPlayPause.title = 'Play (Space)';
+  }
+}
+
 function togglePlayback() {
   state.isPlaying = !state.isPlaying;
+  updatePlayPauseButton(state.isPlaying);
   if (state.isPlaying) {
-    el.iconPlayPause.setAttribute('data-lucide', 'pause');
     lastPlayTimestamp = performance.now();
     playbackLoop(performance.now());
   } else {
-    el.iconPlayPause.setAttribute('data-lucide', 'play');
     if (animationFrameId) cancelAnimationFrame(animationFrameId);
     pauseAllMediaElements();
   }
-  if (window.lucide) lucide.createIcons();
+}
+
+function syncAudioPlayback(t, isPlaying) {
+  const audioTracks = state.timeline.tracks.filter(tr => tr.id === 'A1' || tr.id === 'A2');
+  audioTracks.forEach(track => {
+    track.clips.forEach(clip => {
+      let audioEl = document.getElementById(`audio_${clip.id}`);
+      if (!audioEl) {
+        audioEl = document.createElement('audio');
+        audioEl.id = `audio_${clip.id}`;
+        audioEl.src = clip.url;
+        audioEl.preload = 'auto';
+        el.mediaPool.appendChild(audioEl);
+      }
+
+      const isClipActive = t >= clip.startTime && t < clip.startTime + clip.duration;
+      if (isClipActive) {
+        const clipOffset = t - clip.startTime;
+        const targetAudioTime = (clip.sourceStart || 0) + (clipOffset * (clip.properties.speed || 1.0));
+        const vol = (clip.properties.volume !== undefined ? clip.properties.volume : 1.0) * (state.isMuted ? 0 : 1);
+        audioEl.volume = Math.max(0, Math.min(1, vol));
+
+        if (Math.abs(audioEl.currentTime - targetAudioTime) > 0.3) {
+          audioEl.currentTime = targetAudioTime;
+        }
+
+        if (isPlaying && audioEl.paused) {
+          audioEl.play().catch(() => {});
+        } else if (!isPlaying && !audioEl.paused) {
+          audioEl.pause();
+        }
+      } else {
+        if (!audioEl.paused) {
+          audioEl.pause();
+        }
+      }
+    });
+  });
 }
 
 function playbackLoop(timestamp) {
@@ -998,18 +1119,26 @@ function playbackLoop(timestamp) {
   state.playheadTime += delta;
   if (state.playheadTime >= state.timeline.duration) {
     state.playheadTime = state.timeline.duration;
-    togglePlayback();
+    state.isPlaying = false;
+    updatePlayPauseButton(false);
+    if (animationFrameId) cancelAnimationFrame(animationFrameId);
+    pauseAllMediaElements();
+    updatePlayheadPosition();
+    updateTimecodeDisplays();
+    renderCanvas();
+    return;
   }
 
   updatePlayheadPosition();
   updateTimecodeDisplays();
   renderCanvas();
+  syncAudioPlayback(state.playheadTime, true);
 
   animationFrameId = requestAnimationFrame(playbackLoop);
 }
 
 function pauseAllMediaElements() {
-  document.querySelectorAll('#mediaPool video').forEach(v => v.pause());
+  document.querySelectorAll('#mediaPool video, #mediaPool audio').forEach(v => v.pause());
 }
 
 // ================= PROPERTIES INSPECTOR UI =================
@@ -1231,6 +1360,53 @@ function renderInspector() {
 }
 
 // ================= MEDIA BIN & UPLOAD =================
+async function uploadAudioFile(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  try {
+    let resp = await fetch('/api/upload-audio', {
+      method: 'POST',
+      body: formData
+    });
+    if (!resp.ok) {
+      resp = await fetch('/api/upload-media', {
+        method: 'POST',
+        body: formData
+      });
+    }
+    if (!resp.ok) {
+      const errJson = await resp.json().catch(() => ({}));
+      throw new Error(errJson.detail || `Upload failed with status ${resp.status}`);
+    }
+
+    const data = await resp.json();
+    const media = data.media || {
+      id: data.audio_id,
+      name: file.name,
+      type: 'audio',
+      url: `/api/audio/${data.filename || file.name}`,
+      duration: data.duration || 10.0
+    };
+
+    state.mediaBin.push(media);
+    renderMediaBin();
+
+    // Auto-place on voiceover track A1
+    addClipToTrack('A1', {
+      type: 'audio',
+      title: file.name,
+      url: media.url,
+      duration: media.duration,
+      sourceDuration: media.duration
+    });
+
+    showToast(`🎵 Uploaded "${file.name}"! Placed on Voiceover track A1.`);
+  } catch (err) {
+    alert('Audio upload error: ' + err.message);
+  }
+}
+
 async function uploadMediaFile(file) {
   const formData = new FormData();
   formData.append('file', file);
@@ -1240,7 +1416,10 @@ async function uploadMediaFile(file) {
       method: 'POST',
       body: formData
     });
-    if (!resp.ok) throw new Error('Upload failed');
+    if (!resp.ok) {
+      const errJson = await resp.json().catch(() => ({}));
+      throw new Error(errJson.detail || `Upload failed with status ${resp.status}`);
+    }
     const data = await resp.json();
     const media = data.media;
 
@@ -1249,11 +1428,33 @@ async function uploadMediaFile(file) {
 
     // Auto-place on timeline
     if (media.type === 'video') {
-      addClipToTrack('V1', media);
+      addClipToTrack('V1', {
+        type: 'video',
+        title: media.name,
+        url: media.url,
+        thumbnail_url: media.thumbnail_url,
+        duration: Math.min(10.0, media.duration || 5.0),
+        sourceDuration: media.duration
+      });
+      showToast(`🎬 Added "${media.name}" to Main Video track!`);
     } else if (media.type === 'audio') {
-      addClipToTrack('A1', media);
+      addClipToTrack('A1', {
+        type: 'audio',
+        title: media.name,
+        url: media.url,
+        duration: media.duration,
+        sourceDuration: media.duration
+      });
+      showToast(`🎵 Added "${media.name}" to Voiceover track!`);
     } else if (media.type === 'image') {
-      addClipToTrack('V2', media);
+      addClipToTrack('V2', {
+        type: 'image',
+        title: media.name,
+        url: media.url,
+        duration: 5.0,
+        sourceDuration: 5.0
+      });
+      showToast(`🖼 Added "${media.name}" to Overlay track!`);
     }
   } catch (err) {
     alert('Media import error: ' + err.message);
@@ -1353,24 +1554,34 @@ function openAIAudioWizard() {
 }
 
 async function handleAIAudioUpload(file) {
-  el.aiAudioFileName.textContent = `Analyzing: ${file.filename || file.name}...`;
+  el.aiAudioFileName.textContent = `Uploading & analyzing: ${file.name}...`;
 
   const formData = new FormData();
   formData.append('file', file);
 
   try {
-    const resp = await fetch('/api/upload-media', {
+    let resp = await fetch('/api/upload-audio', {
       method: 'POST',
       body: formData
     });
-    if (!resp.ok) throw new Error('Audio upload failed');
+    if (!resp.ok) {
+      resp = await fetch('/api/upload-media', {
+        method: 'POST',
+        body: formData
+      });
+    }
+    if (!resp.ok) {
+      const errJson = await resp.json().catch(() => ({}));
+      throw new Error(errJson.detail || 'Audio upload failed');
+    }
     const data = await resp.json();
-    const media = data.media;
+    const audioId = data.audio_id || (data.media && data.media.id);
 
-    // Run AI analysis
-    await triggerAudioAnalysis(media.id);
+    el.aiAudioFileName.textContent = `Audio: ${file.name}`;
+    await triggerAudioAnalysis(audioId);
   } catch (err) {
-    alert('Audio analysis error: ' + err.message);
+    el.aiAudioFileName.textContent = 'Upload failed. Click or drop to try again.';
+    alert('Audio upload error: ' + err.message);
   }
 }
 

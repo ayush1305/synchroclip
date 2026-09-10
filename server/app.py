@@ -108,6 +108,22 @@ class ProjectSaveReq(BaseModel):
     aspect_ratio: Optional[str] = "9:16"
     media_items: Optional[List[Dict[str, Any]]] = []
 
+def safe_float(val, default=0.0):
+    try:
+        if val is None or val == "N/A":
+            return default
+        return float(val)
+    except (ValueError, TypeError):
+        return default
+
+def safe_int(val, default=0):
+    try:
+        if val is None or val == "N/A":
+            return default
+        return int(val)
+    except (ValueError, TypeError):
+        return default
+
 # Helper: Probe video/audio info
 def probe_media_file(file_path: str) -> dict:
     info = {"duration": 0.0, "width": 1920, "height": 1080, "type": "video"}
@@ -118,24 +134,29 @@ def probe_media_file(file_path: str) -> dict:
             "-show_format", "-show_streams",
             file_path
         ]
-        res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=True)
-        data = json.loads(res.stdout)
-        info["duration"] = float(data.get("format", {}).get("duration", 0))
+        res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        if res.returncode == 0 and res.stdout:
+            data = json.loads(res.stdout)
+            info["duration"] = safe_float(data.get("format", {}).get("duration"), 0.0)
 
-        has_video = False
-        has_audio = False
-        for s in data.get("streams", []):
-            if s.get("codec_type") == "video":
-                has_video = True
-                info["width"] = int(s.get("width", 1920))
-                info["height"] = int(s.get("height", 1080))
-            elif s.get("codec_type") == "audio":
-                has_audio = True
+            has_video = False
+            has_audio = False
+            for s in data.get("streams", []):
+                if s.get("codec_type") == "video":
+                    has_video = True
+                    info["width"] = safe_int(s.get("width"), 1920)
+                    info["height"] = safe_int(s.get("height"), 1080)
+                    if info["duration"] <= 0:
+                        info["duration"] = safe_float(s.get("duration"), 0.0)
+                elif s.get("codec_type") == "audio":
+                    has_audio = True
+                    if info["duration"] <= 0:
+                        info["duration"] = safe_float(s.get("duration"), 0.0)
 
-        if has_video:
-            info["type"] = "video"
-        elif has_audio:
-            info["type"] = "audio"
+            if has_video:
+                info["type"] = "video"
+            elif has_audio:
+                info["type"] = "audio"
     except Exception as e:
         print(f"ffprobe warning on {file_path}: {e}")
     return info
@@ -234,6 +255,59 @@ async def upload_media(file: UploadFile = File(...)):
     }
     MEDIA_REGISTRY[media_id] = entry
     return {"status": "success", "media": entry}
+
+@app.post("/api/upload-audio")
+async def upload_audio_endpoint(file: UploadFile = File(...)):
+    """
+    Dedicated audio file uploader.
+    Saves the audio file, registers it in AUDIO_REGISTRY and MEDIA_REGISTRY,
+    and returns metadata with waveform for instant timeline placement or AI generation.
+    """
+    ext = os.path.splitext(file.filename)[1].lower() or ".mp3"
+    audio_id = uuid.uuid4().hex[:10]
+    safe_filename = f"audio_{audio_id}{ext}"
+    target_path = os.path.join(AUDIO_DIR, safe_filename)
+
+    with open(target_path, "wb") as buf:
+        shutil.copyfileobj(file.file, buf)
+
+    audio_info = audio_analyzer.get_audio_info(target_path)
+    waveform = audio_analyzer.get_waveform_peaks(target_path, num_points=70)
+
+    entry = {
+        "id": audio_id,
+        "filename": file.filename,
+        "name": file.filename,
+        "type": "audio",
+        "path": target_path,
+        "url": f"/api/audio/{safe_filename}",
+        "duration": audio_info["duration"],
+        "info": audio_info,
+        "waveform": waveform
+    }
+    AUDIO_REGISTRY[audio_id] = entry
+    media_entry = {
+        "id": audio_id,
+        "name": file.filename,
+        "type": "audio",
+        "url": f"/api/audio/{safe_filename}",
+        "local_path": target_path,
+        "thumbnail_url": "",
+        "duration": audio_info["duration"],
+        "width": 1920,
+        "height": 1080,
+        "waveform": waveform
+    }
+    MEDIA_REGISTRY[audio_id] = media_entry
+
+    return {
+        "status": "success",
+        "audio_id": audio_id,
+        "filename": file.filename,
+        "duration": audio_info["duration"],
+        "waveform": waveform,
+        "media": media_entry
+    }
 
 @app.get("/api/search-pexels")
 async def search_pexels_endpoint(

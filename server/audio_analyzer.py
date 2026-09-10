@@ -5,33 +5,71 @@ import struct
 import math
 import re
 
+def safe_float(val, default=0.0):
+    try:
+        if val is None or val == "N/A":
+            return default
+        return float(val)
+    except (ValueError, TypeError):
+        return default
+
+def safe_int(val, default=0):
+    try:
+        if val is None or val == "N/A":
+            return default
+        return int(val)
+    except (ValueError, TypeError):
+        return default
+
 def get_audio_info(audio_path: str) -> dict:
     """
-    Extracts duration, format, sample rate, and bit rate using ffprobe.
+    Extracts duration, format, sample rate, and bit rate using ffprobe with robust fallbacks.
     """
     if not os.path.exists(audio_path):
         raise FileNotFoundError(f"Audio file not found: {audio_path}")
 
-    cmd = [
-        "ffprobe",
-        "-v", "error",
-        "-show_entries", "format=duration,bit_rate,format_name",
-        "-show_entries", "stream=channels,sample_rate,codec_name",
-        "-of", "json",
-        audio_path
-    ]
+    fmt = {}
+    stream0 = {}
+    try:
+        cmd = [
+            "ffprobe",
+            "-v", "error",
+            "-show_entries", "format=duration,bit_rate,format_name",
+            "-show_entries", "stream=channels,sample_rate,codec_name,duration",
+            "-of", "json",
+            audio_path
+        ]
+        result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        if result.returncode == 0 and result.stdout:
+            data = json.loads(result.stdout)
+            fmt = data.get("format", {})
+            streams = data.get("streams", [{}])
+            stream0 = streams[0] if streams else {}
+    except Exception as e:
+        print(f"ffprobe warning for {audio_path}: {e}")
 
-    result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=True)
-    data = json.loads(result.stdout)
-    
-    fmt = data.get("format", {})
-    streams = data.get("streams", [{}])
-    stream0 = streams[0] if streams else {}
+    duration = safe_float(fmt.get("duration"), 0.0)
+    if duration <= 0:
+        duration = safe_float(stream0.get("duration"), 0.0)
 
-    duration = float(fmt.get("duration", 0.0))
-    bit_rate = int(fmt.get("bit_rate", 0)) if fmt.get("bit_rate") else 192000
-    sample_rate = int(stream0.get("sample_rate", 44100)) if stream0.get("sample_rate") else 44100
-    channels = int(stream0.get("channels", 2)) if stream0.get("channels") else 2
+    # If duration still 0, decode with ffmpeg to get exact duration
+    if duration <= 0:
+        try:
+            dec_cmd = ["ffmpeg", "-i", audio_path, "-f", "null", "-"]
+            dec_res = subprocess.run(dec_cmd, stderr=subprocess.PIPE, stdout=subprocess.DEVNULL, text=True)
+            matches = re.findall(r"time=(\d+):(\d+):(\d+\.?\d*)", dec_res.stderr)
+            if matches:
+                last_match = matches[-1]
+                duration = int(last_match[0]) * 3600 + int(last_match[1]) * 60 + float(last_match[2])
+        except Exception:
+            pass
+
+    if duration <= 0:
+        duration = 10.0
+
+    bit_rate = safe_int(fmt.get("bit_rate"), 192000)
+    sample_rate = safe_int(stream0.get("sample_rate"), 44100)
+    channels = safe_int(stream0.get("channels"), 2)
     codec = stream0.get("codec_name", "unknown")
 
     mins = int(duration // 60)
